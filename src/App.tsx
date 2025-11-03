@@ -1,26 +1,52 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from 'styled-components';
+import { theme } from './styles/theme';
 
-function App() {
+// Auth Pages
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import BusinessDetailsRegistration from './pages/auth/BusinessDetailsRegistration';
+
+// Customer Pages
+import LandingPage from './pages/customer/LandingPage';
+import Homepage from './pages/customer/Homepage';
+import BusinessPage from './pages/customer/BusinessPage';
+import BookingsPage from './pages/customer/BookingsPage';
+import CustomerProfile from './pages/customer/Profile';
+
+// Business Pages
+import BusinessDashboard from './pages/business/Dashboard';
+import BusinessServices from './pages/business/Services';
+import BusinessBookings from './pages/business/Bookings';
+import BusinessProfile from './pages/business/Profile';
+
+const App: React.FC = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/register/business-details" element={<BusinessDetailsRegistration />} />
+
+          {/* Customer Routes */}
+          <Route path="/home" element={<Homepage />} />
+          <Route path="/business/:id" element={<BusinessPage />} />
+          <Route path="/bookings" element={<BookingsPage />} />
+          <Route path="/profile" element={<CustomerProfile />} />
+
+          {/* Business Routes */}
+          <Route path="/business/dashboard" element={<BusinessDashboard />} />
+          <Route path="/business/services" element={<BusinessServices />} />
+          <Route path="/business/bookings" element={<BusinessBookings />} />
+          <Route path="/business/profile" element={<BusinessProfile />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;
