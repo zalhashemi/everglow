@@ -1,69 +1,61 @@
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
-interface TabItem {
+// ---- Props ----
+export interface Tab {
   id: string;
   label: string;
-  icon?: React.ReactNode;
 }
 
 interface TabBarProps {
-  tabs: TabItem[];
+  tabs: Tab[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
 }
 
-const TabContainer = styled.div`
-  display: flex;
-  background: ${props => props.theme.colors.white};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  padding: ${props => props.theme.spacing.xs};
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const Tab = styled.button<{ active: boolean }>`
-  flex: 1;
+// ---- Styles ----
+const Bar = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${props => props.theme.spacing.xs};
-  padding: ${props => `${props.theme.spacing.sm} ${props.theme.spacing.md}`};
+  gap: ${(p) => p.theme.spacing.lg};
+  background: ${(p) => p.theme.colors.white};
+  border-bottom: 2px solid ${(p) => p.theme.colors.background};
+  padding: ${(p) => p.theme.spacing.sm} ${(p) => p.theme.spacing.lg};
+`;
+
+const TabButton = styled.button<{ active?: boolean }>`
+  background: none;
   border: none;
-  background: ${props => props.active ? props.theme.colors.primary : 'transparent'};
-  color: ${props => props.active ? props.theme.colors.white : props.theme.colors.gray.dark};
-  border-radius: ${props => props.theme.borderRadius.small};
   cursor: pointer;
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  color: ${(p) =>
+    p.active ? p.theme.colors.secondary : p.theme.colors.gray.dark};
+  font-weight: ${(p) => (p.active ? 600 : 400)};
+  border-bottom: 2px solid
+    ${(p) => (p.active ? p.theme.colors.primary : "transparent")};
+  padding-bottom: 6px;
   transition: all 0.2s ease-in-out;
-  font-family: ${props => props.theme.typography.fontFamily};
-  font-size: ${props => props.theme.typography.fontSizes.medium};
 
   &:hover {
-    background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.gray.light};
-  }
-
-  svg {
-    width: 20px;
-    height: 20px;
+    color: ${(p) => p.theme.colors.primary};
   }
 `;
 
-const TabBar: React.FC<TabBarProps> = ({
-  tabs,
-  activeTab,
-  onTabChange
-}) => {
+// ---- Component ----
+const TabBar: React.FC<TabBarProps> = ({ tabs, activeTab, onTabChange }) => {
   return (
-    <TabContainer>
-      {tabs.map(tab => (
-        <Tab
+    <Bar>
+      {tabs.map((tab) => (
+        <TabButton
           key={tab.id}
-          active={activeTab === tab.id}
+          active={tab.id === activeTab}
           onClick={() => onTabChange(tab.id)}
         >
-          {tab.icon}
           {tab.label}
-        </Tab>
+        </TabButton>
       ))}
-    </TabContainer>
+    </Bar>
   );
 };
 

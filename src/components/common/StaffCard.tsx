@@ -1,36 +1,55 @@
+import React from 'react';
 import styled from 'styled-components';
+import { Star, Edit2 } from 'react-feather';
 
 interface StaffCardProps {
   name: string;
   role: string;
-  image: string;
+  image?: string;
   specialties: string[];
   rating: number;
-  availability?: string;
-  onClick?: () => void;
+  reviews?: number; // ✅ made optional
+  onEdit?: () => void;
+  onClick?: () => void; // ✅ added for business page
   selected?: boolean;
 }
 
 const Card = styled.div<{ selected?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: ${props => props.theme.colors.white};
-  border: 2px solid ${props => props.selected ? props.theme.colors.primary : 'transparent'};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
+  border-radius: ${props => props.theme.borderRadius.large};
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: ${props => props.theme.spacing.md};
   transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  border: 2px solid
+    ${props => (props.selected ? props.theme.colors.primary : 'transparent')};
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const ImageContainer = styled.div`
-  position: relative;
-  width: 120px;
-  height: 120px;
-  margin: ${props => props.theme.spacing.md} auto;
+const LeftSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.md};
+`;
+
+const Avatar = styled.div`
+  width: 60px;
+  height: 60px;
+  border-radius: ${props => props.theme.borderRadius.round};
+  background: ${props => props.theme.colors.gray.medium};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: ${props => props.theme.colors.white};
+  overflow: hidden;
 `;
 
 const Image = styled.img`
@@ -40,49 +59,71 @@ const Image = styled.img`
   object-fit: cover;
 `;
 
-const Content = styled.div`
-  padding: ${props => props.theme.spacing.md};
-  text-align: center;
+const Info = styled.div`
+  display: flex;
+  flex-direction: column;
 `;
 
 const Name = styled.h3`
   margin: 0;
   color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.large};
+  font-size: ${props => props.theme.typography.fontSizes.medium};
+  font-weight: 600;
 `;
 
 const Role = styled.p`
+  margin: 0;
   color: ${props => props.theme.colors.gray.dark};
   font-size: ${props => props.theme.typography.fontSizes.small};
-  margin: ${props => props.theme.spacing.xs} 0;
 `;
 
-const Rating = styled.div`
-  color: ${props => props.theme.colors.primary};
-  font-size: ${props => props.theme.typography.fontSizes.medium};
-  margin: ${props => props.theme.spacing.sm} 0;
+const Specialty = styled.p`
+  margin: 0;
+  color: ${props => props.theme.colors.gray.dark};
+  font-size: ${props => props.theme.typography.fontSizes.small};
+  opacity: 0.8;
 `;
 
-const SpecialtiesList = styled.div`
+const RatingRow = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  gap: ${props => props.theme.spacing.xs};
-  justify-content: center;
-  margin: ${props => props.theme.spacing.sm} 0;
+  align-items: center;
+  gap: 4px;
+  color: ${props => props.theme.colors.gray.dark};
+  font-size: ${props => props.theme.typography.fontSizes.small};
+  margin-top: ${props => props.theme.spacing.xs};
 `;
 
-const Specialty = styled.span`
-  background: ${props => props.theme.colors.background};
-  color: ${props => props.theme.colors.secondary};
-  padding: ${props => `${props.theme.spacing.xs} ${props.theme.spacing.sm}`};
-  border-radius: ${props => props.theme.borderRadius.small};
-  font-size: ${props => props.theme.typography.fontSizes.small};
+const StarIcon = styled(Star)`
+  color: #f5b301;
+  width: 14px;
+  height: 14px;
+  fill: #f5b301;
 `;
 
-const Availability = styled.p`
-  color: ${props => props.theme.colors.primary};
-  font-size: ${props => props.theme.typography.fontSizes.small};
-  margin: ${props => props.theme.spacing.sm} 0 0 0;
+const RightSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.sm};
+`;
+
+const EditButton = styled.button`
+  background: ${props => props.theme.colors.gray.light};
+  border: none;
+  border-radius: ${props => props.theme.borderRadius.round};
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.white};
+  }
+`;
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 20px;
+  height: 20px;
+  accent-color: ${props => props.theme.colors.primary};
 `;
 
 const StaffCard: React.FC<StaffCardProps> = ({
@@ -91,26 +132,35 @@ const StaffCard: React.FC<StaffCardProps> = ({
   image,
   specialties,
   rating,
-  availability,
+  reviews,
+  onEdit,
   onClick,
-  selected = false
+  selected = false,
 }) => {
   return (
     <Card onClick={onClick} selected={selected}>
-      <ImageContainer>
-        <Image src={image} alt={name} />
-      </ImageContainer>
-      <Content>
-        <Name>{name}</Name>
-        <Role>{role}</Role>
-        <Rating>★ {rating.toFixed(1)}</Rating>
-        <SpecialtiesList>
-          {specialties.map((specialty, index) => (
-            <Specialty key={index}>{specialty}</Specialty>
-          ))}
-        </SpecialtiesList>
-        {availability && <Availability>{availability}</Availability>}
-      </Content>
+      <LeftSection>
+        <Avatar>{image ? <Image src={image} alt={name} /> : '👩‍🎨'}</Avatar>
+        <Info>
+          <Name>{name}</Name>
+          <Role>{role}</Role>
+          <Specialty>Specialties: {specialties.join(', ')}</Specialty>
+          <RatingRow>
+            <StarIcon />
+            {rating.toFixed(1)}
+            {reviews !== undefined && ` (${reviews} reviews)`}
+          </RatingRow>
+        </Info>
+      </LeftSection>
+
+      <RightSection>
+        {onEdit && (
+          <EditButton onClick={onEdit}>
+            <Edit2 size={14} />
+          </EditButton>
+        )}
+        <Checkbox checked={selected} readOnly />
+      </RightSection>
     </Card>
   );
 };

@@ -1,4 +1,6 @@
+import React from 'react';
 import styled from 'styled-components';
+import { Plus } from 'react-feather'; // Icon for add button
 
 interface ServiceTileProps {
   name: string;
@@ -10,46 +12,90 @@ interface ServiceTileProps {
 }
 
 const TileContainer = styled.div<{ selected?: boolean }>`
-  background: ${props => props.selected ? props.theme.colors.primary + '22' : props.theme.colors.white};
-  border: 2px solid ${props => props.selected ? props.theme.colors.primary : props.theme.colors.gray.medium};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  padding: ${props => props.theme.spacing.md};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: ${props => props.theme.colors.white};
+  border-bottom: 1px solid ${props => props.theme.colors.gray.medium};
+  padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.sm};
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease;
 
   &:hover {
-    border-color: ${props => props.theme.colors.primary};
-    transform: translateY(-2px);
+    background-color: ${props => props.theme.colors.gray.light};
   }
+
+  ${props =>
+    props.selected &&
+    `
+    background-color: ${props.theme.colors.gray.light};
+    border-left: 3px solid ${props.theme.colors.primary};
+  `}
+`;
+
+const LeftSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
 
 const ServiceName = styled.h4`
   margin: 0;
-  color: ${props => props.theme.colors.secondary};
+  font-family: ${props => props.theme.typography.fontFamily};
   font-size: ${props => props.theme.typography.fontSizes.medium};
+  color: ${props => props.theme.colors.secondary};
+  font-weight: 600;
 `;
 
-const ServiceDetails = styled.div`
+const SubInfo = styled.div`
   display: flex;
-  justify-content: space-between;
-  margin-top: ${props => props.theme.spacing.xs};
+  align-items: center;
+  gap: ${props => props.theme.spacing.sm};
+`;
+
+const Price = styled.span`
+  color: ${props => props.theme.colors.gray.dark};
+  font-size: ${props => props.theme.typography.fontSizes.small};
+  font-weight: 500;
 `;
 
 const Duration = styled.span`
   color: ${props => props.theme.colors.gray.dark};
   font-size: ${props => props.theme.typography.fontSizes.small};
-`;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 
-const Price = styled.span`
-  color: ${props => props.theme.colors.primary};
-  font-weight: bold;
-  font-size: ${props => props.theme.typography.fontSizes.medium};
+  &::before {
+    content: '⏱️';
+    font-size: 0.9em;
+  }
 `;
 
 const Description = styled.p`
+  margin: 0;
   color: ${props => props.theme.colors.gray.dark};
   font-size: ${props => props.theme.typography.fontSizes.small};
-  margin: ${props => props.theme.spacing.sm} 0 0 0;
+  opacity: 0.8;
+`;
+
+const AddButton = styled.button`
+  background: none;
+  border: 1.5px solid ${props => props.theme.colors.gray.medium};
+  color: ${props => props.theme.colors.secondary};
+  border-radius: ${props => props.theme.borderRadius.round};
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.primary};
+    transform: scale(1.05);
+  }
 `;
 
 const ServiceTile: React.FC<ServiceTileProps> = ({
@@ -62,12 +108,17 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
 }) => {
   return (
     <TileContainer onClick={onClick} selected={selected}>
-      <ServiceName>{name}</ServiceName>
-      <ServiceDetails>
-        <Duration>{duration}</Duration>
-        <Price>${price.toFixed(2)}</Price>
-      </ServiceDetails>
-      {description && <Description>{description}</Description>}
+      <LeftSection>
+        <ServiceName>{name}</ServiceName>
+        <SubInfo>
+          <Price>{price} BD</Price>
+          <Duration>{duration}</Duration>
+        </SubInfo>
+        {description && <Description>{description}</Description>}
+      </LeftSection>
+      <AddButton>
+        <Plus size={16} />
+      </AddButton>
     </TileContainer>
   );
 };
