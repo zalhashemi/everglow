@@ -1,62 +1,41 @@
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 interface TimeCardProps {
-  time: string;
-  available: boolean;
-  selected?: boolean;
-  onClick?: () => void;
+  day: string;
+  startTime: string; // "9:00 AM"
+  endTime: string;   // "7:00 PM"
 }
 
-const Card = styled.div<{ available: boolean; selected?: boolean }>`
-  background: ${props => {
-    if (!props.available) return props.theme.colors.gray.light;
-    if (props.selected) return props.theme.colors.primary;
-    return props.theme.colors.white;
-  }};
-  border: 2px solid ${props => {
-    if (!props.available) return props.theme.colors.gray.medium;
-    if (props.selected) return props.theme.colors.primary;
-    return props.theme.colors.gray.light;
-  }};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  padding: ${props => props.theme.spacing.md};
-  cursor: ${props => props.available ? 'pointer' : 'not-allowed'};
-  transition: all 0.2s ease-in-out;
-  text-align: center;
-
-  &:hover {
-    ${props => props.available && !props.selected && `
-      border-color: ${props.theme.colors.primary};
-      transform: translateY(-2px);
-    `}
-  }
+const Card = styled.div`
+  width: 370px;
+  height: 52px;
+  background: #f7f7f7;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  font-family: "Inter", sans-serif;
 `;
 
-const Time = styled.span<{ available: boolean; selected?: boolean }>`
-  font-size: ${props => props.theme.typography.fontSizes.medium};
-  color: ${props => {
-    if (!props.available) return props.theme.colors.gray.dark;
-    if (props.selected) return props.theme.colors.white;
-    return props.theme.colors.secondary;
-  }};
-  font-weight: ${props => props.selected ? 'bold' : 'normal'};
+const DayText = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  color: #2b2b2b;
 `;
 
-const TimeCard: React.FC<TimeCardProps> = ({
-  time,
-  available,
-  selected = false,
-  onClick
-}) => {
+const TimeText = styled.div`
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a2c42;
+`;
+
+const TimeCard: React.FC<TimeCardProps> = ({ day, startTime, endTime }) => {
   return (
-    <Card
-      available={available}
-      selected={selected}
-      onClick={available ? onClick : undefined}
-    >
-      <Time available={available} selected={selected}>
-        {time}
-      </Time>
+    <Card>
+      <DayText>{day}</DayText>
+      <TimeText>{startTime} - {endTime}</TimeText>
     </Card>
   );
 };

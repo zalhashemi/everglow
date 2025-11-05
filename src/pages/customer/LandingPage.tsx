@@ -1,6 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Button from '../../components/common/Button';
+import SecondaryButton from '../../components/common/SecondaryButton';
+import SalonCard from '../../components/common/SalonCard';
+import BookingTile from '../../components/common/BookingTile';
+import TimeCard from '../../components/common/TimeCard';
+import ProfileHeader from '../../components/common/ProfileHeader';
+import ServiceTile from '../../components/common/ServiceTile';
+import LoyaltyTile from '../../components/common/LoyaltyTile';
+import StaffCard from '../../components/common/StaffCard';
+
+
 
 const Container = styled.div`
   min-height: 100vh;
@@ -72,6 +83,36 @@ const FeatureDescription = styled.p`
 `;
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  // Mock data
+  const exampleService = {
+    name: "Premium Haircut",
+    duration: "45 min",
+    price: 55,
+    description: "Includes wash and style"
+  };
+
+  const exampleLoyalty = {
+    points: 450,
+    level: "Gold Member",
+    nextLevel: "Platinum",
+    pointsToNext: 550,
+    rewards: [
+      "10% off on all services",
+      "Free birthday treatment",
+      "Priority booking"
+    ]
+  };
+
+  const exampleStaff = {
+    name: "Sarah Johnson",
+    role: "Senior Stylist",
+    image: "https://example.com/staff1.jpg",
+    specialties: ["Haircut", "Coloring"],
+    rating: 4.9
+  };
+
   return (
     <Container>
       <Hero>
@@ -79,13 +120,26 @@ const LandingPage: React.FC = () => {
         <Subtitle>
           Find, book, and experience top-rated beauty and wellness services in your area
         </Subtitle>
+
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
+          <ServiceTile {...exampleService} />
+          <LoyaltyTile {...exampleLoyalty} />
+          <StaffCard {...exampleStaff} />
+        </div>
+        
         <ButtonGroup>
-          <Button variant="primary" size="large">
+          <Button
+            width="200px"
+            onClick={() => navigate('/register')}
+          >
             Get Started
           </Button>
-          <Button variant="outline" size="large">
-            Learn More
-          </Button>
+          <SecondaryButton
+            width="200px"
+            onClick={() => navigate('/login')}
+          >
+            Login
+          </SecondaryButton>
         </ButtonGroup>
       </Hero>
 

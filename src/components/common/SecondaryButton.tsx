@@ -19,14 +19,14 @@ const StyledButton = styled.button<ButtonProps>`
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 500;
-  color: ${props => props.theme.colors.white};
-  background-color: ${props => props.backgroundColor || '#76949F'};
+  color: ${props => props.theme.colors.primary};
+  background-color: transparent;
+  border: 2px solid ${props => props.theme.colors.primary};
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  border: none;
 
   &:hover {
-    opacity: 0.9;
+    background-color: ${props => props.theme.colors.primary}15;
   }
 
   &:disabled {

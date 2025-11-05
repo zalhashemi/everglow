@@ -1,101 +1,108 @@
-import styled from 'styled-components';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { AiFillStar } from "react-icons/ai";
+import { FiMapPin } from "react-icons/fi";
+import errorImage from '../../images/errorLoading.png';
 
 interface SalonCardProps {
-  name: string;
+  id: string;
   image: string;
-  rating: number;
+  name: string;
+  distance: string;
   location: string;
-  services: string[];
-  onClick?: () => void;
+  rating: number;
+  reviews: number;
+  onClick: () => void;  // Add this line
 }
 
-const Card = styled.div`
-  background: ${props => props.theme.colors.white};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.2s ease-in-out;
-  cursor: pointer;
-
-  &:hover {
-    transform: translateY(-4px);
-  }
-`;
-
-const ImageContainer = styled.div`
-  height: 200px;
-  width: 100%;
-  position: relative;
-`;
-
-const Image = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
-const Content = styled.div`
-  padding: ${props => props.theme.spacing.md};
-`;
-
-const Name = styled.h3`
-  margin: 0;
-  color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.large};
-  margin-bottom: ${props => props.theme.spacing.xs};
-`;
-
-const Location = styled.p`
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.small};
-  margin: ${props => props.theme.spacing.xs} 0;
-`;
-
-const Rating = styled.div`
-  color: ${props => props.theme.colors.primary};
-  font-size: ${props => props.theme.typography.fontSizes.medium};
-  margin-bottom: ${props => props.theme.spacing.sm};
-`;
-
-const ServicesList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${props => props.theme.spacing.xs};
-  margin-top: ${props => props.theme.spacing.sm};
-`;
-
-const ServiceTag = styled.span`
-  background: ${props => props.theme.colors.background};
-  color: ${props => props.theme.colors.secondary};
-  padding: ${props => `${props.theme.spacing.xs} ${props.theme.spacing.sm}`};
-  border-radius: ${props => props.theme.borderRadius.small};
-  font-size: ${props => props.theme.typography.fontSizes.small};
-`;
-
 const SalonCard: React.FC<SalonCardProps> = ({
-  name,
+  id,
   image,
-  rating,
+  name,
+  distance,
   location,
-  services,
-  onClick
+  rating,
+  reviews,
+  onClick   // Add this line
 }) => {
+  const navigate = useNavigate();
+  const [imgSrc, setImgSrc] = React.useState(image || errorImage);
+
   return (
-    <Card onClick={onClick}>
-      <ImageContainer>
-        <Image src={image} alt={name} />
-      </ImageContainer>
-      <Content>
-        <Name>{name}</Name>
-        <Location>{location}</Location>
-        <Rating>★ {rating.toFixed(1)}</Rating>
-        <ServicesList>
-          {services.map((service, index) => (
-            <ServiceTag key={index}>{service}</ServiceTag>
-          ))}
-        </ServicesList>
-      </Content>
-    </Card>
+    <div
+      onClick={onClick}  // Replace navigate with onClick
+      style={{
+        width: "280px",
+        height: "211px",
+        backgroundColor: "#fff",
+        borderRadius: "10px",
+        boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+        cursor: "pointer",
+        overflow: "hidden",
+      }}
+    >
+      {/* Image */}
+      <div style={{ position: "relative" }}>
+        <img
+          src={imgSrc}
+          alt={name}
+          onError={() => setImgSrc(errorImage)}
+          style={{
+            width: "100%",
+            height: "120px",
+            objectFit: "cover",
+          }}
+        />
+      </div>
+
+      {/* Text */}
+      <div style={{ padding: "8px 12px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontWeight: 600,
+            fontSize: "15px",
+          }}
+        >
+          <span>{name}</span>
+          <span style={{ color: "#7A7A7A", fontSize: "13px" }}>{distance}</span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginTop: "3px",
+            color: "#7A7A7A",
+            fontSize: "13px",
+          }}
+        >
+          <FiMapPin size={14 as number} style={{ marginRight: "4px" }} />
+          {location}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            marginTop: "4px",
+            fontSize: "13px",
+            fontWeight: 500,
+          }}
+        >
+          <AiFillStar
+            color="#FFD03F"
+            size={16 as number}
+            style={{ marginRight: "4px" }}
+          />
+          <span>{rating}</span>
+          <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>
+            ({reviews})
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };
 

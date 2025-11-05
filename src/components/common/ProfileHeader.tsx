@@ -1,161 +1,153 @@
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
+import ellieProfile from "../../images/ellieProfile.jpg";
 
 interface ProfileHeaderProps {
+  type: "customer" | "business";
   name: string;
-  image: string;
-  coverImage?: string;
-  role?: string;
-  stats?: {
-    label: string;
-    value: string | number;
-  }[];
-  actions?: {
-    label: string;
-    onClick: () => void;
-    variant?: 'primary' | 'secondary';
-  }[];
+  stat1: number;
+  stat2: number;
+  stat3: number;
 }
 
 const Container = styled.div`
-  position: relative;
-  background: ${props => props.theme.colors.white};
-  border-radius: ${props => props.theme.borderRadius.medium};
+  width: 1200px;
+  background: #ffffff;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const CoverImage = styled.div<{ url?: string }>`
-  height: 200px;
-  background: ${props => props.url ? 
-    `url(${props.url}) no-repeat center center / cover` : 
-    props.theme.colors.primary};
-`;
-
-const ProfileContent = styled.div`
-  padding: ${props => props.theme.spacing.xl};
-  margin-top: -60px;
-  position: relative;
   display: flex;
   flex-direction: column;
+`;
+
+const HeaderBanner = styled.div`
+  height: 140px;
+  background-color: #76949F;
+  width: 100%;
+`;
+
+const Content = styled.div`
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between; // Add space between profile and stats
+  position: relative;
+`;
+
+const ProfileSection = styled.div`
+  display: flex;
+  gap: 32px;
+`;
+
+const AvatarWrapper = styled.div`
+  display: flex;
   align-items: center;
+`;
+
+const InfoColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+`;
+
+const InfoRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
 `;
 
 const ProfileImage = styled.img`
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  border: 4px solid ${props => props.theme.colors.white};
-  background: ${props => props.theme.colors.white};
+  border: 4px solid #fff;
+  margin-top: -65px;
   object-fit: cover;
-  margin-bottom: ${props => props.theme.spacing.md};
 `;
 
-const Name = styled.h2`
-  margin: 0;
-  color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.xlarge};
-  text-align: center;
+const Name = styled.div`
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
 `;
 
-const Role = styled.p`
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.medium};
-  margin: ${props => props.theme.spacing.xs} 0;
-`;
-
-const Stats = styled.div`
+const StatsRow = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing.xl};
-  margin: ${props => props.theme.spacing.lg} 0;
+  gap: 60px;
+  padding-top: 8px; // Align with name
 `;
 
-const StatItem = styled.div`
+const StatBlock = styled.div`
+  display: flex;
+  flex-direction: column;
   text-align: center;
 `;
 
-const StatValue = styled.div`
-  color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.large};
-  font-weight: bold;
+const StatNumber = styled.div`
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
 `;
 
 const StatLabel = styled.div`
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.small};
-  margin-top: ${props => props.theme.spacing.xs};
-`;
-
-const Actions = styled.div`
-  display: flex;
-  gap: ${props => props.theme.spacing.md};
-  margin-top: ${props => props.theme.spacing.md};
-`;
-
-const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
-  padding: ${props => `${props.theme.spacing.sm} ${props.theme.spacing.lg}`};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  border: none;
-  cursor: pointer;
-  font-family: ${props => props.theme.typography.fontFamily};
-  font-size: ${props => props.theme.typography.fontSizes.medium};
-  transition: all 0.2s ease-in-out;
-
-  ${props => props.variant === 'secondary' ? `
-    background-color: ${props.theme.colors.gray.light};
-    color: ${props.theme.colors.secondary};
-    &:hover {
-      background-color: ${props.theme.colors.gray.medium};
-    }
-  ` : `
-    background-color: ${props.theme.colors.primary};
-    color: ${props.theme.colors.white};
-    &:hover {
-      background-color: ${props.theme.colors.primary}dd;
-    }
-  `}
+  font-size: 13px;
+  color: #6d6d6d;
+  margin-top: 2px;
 `;
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
+  type,
   name,
-  image,
-  coverImage,
-  role,
-  stats,
-  actions
+  stat1,
+  stat2,
+  stat3,
 }) => {
   return (
     <Container>
-      <CoverImage url={coverImage} />
-      <ProfileContent>
-        <ProfileImage src={image} alt={name} />
-        <Name>{name}</Name>
-        {role && <Role>{role}</Role>}
-        
-        {stats && stats.length > 0 && (
-          <Stats>
-            {stats.map((stat, index) => (
-              <StatItem key={index}>
-                <StatValue>{stat.value}</StatValue>
-                <StatLabel>{stat.label}</StatLabel>
-              </StatItem>
-            ))}
-          </Stats>
-        )}
+      <HeaderBanner />
 
-        {actions && actions.length > 0 && (
-          <Actions>
-            {actions.map((action, index) => (
-              <ActionButton
-                key={index}
-                onClick={action.onClick}
-                variant={action.variant}
-              >
-                {action.label}
-              </ActionButton>
-            ))}
-          </Actions>
-        )}
-      </ProfileContent>
+      <Content>
+        <ProfileSection>
+          <AvatarWrapper>
+            <ProfileImage src={ellieProfile} alt="Profile" />
+          </AvatarWrapper>
+          <InfoColumn>
+            <Name>{name}</Name>
+          </InfoColumn>
+        </ProfileSection>
+
+        <StatsRow>
+          {type === "customer" ? (
+            <>
+              <StatBlock>
+                <StatNumber>{stat1}</StatNumber>
+                <StatLabel>Bookings</StatLabel>
+              </StatBlock>
+              <StatBlock>
+                <StatNumber>{stat2}</StatNumber>
+                <StatLabel>Visited</StatLabel>
+              </StatBlock>
+              <StatBlock>
+                <StatNumber>{stat3}</StatNumber>
+                <StatLabel>Active Loyalty Programs</StatLabel>
+              </StatBlock>
+            </>
+          ) : (
+            <>
+              <StatBlock>
+                <StatNumber>{stat1}</StatNumber>
+                <StatLabel>Avg Rating</StatLabel>
+              </StatBlock>
+              <StatBlock>
+                <StatNumber>{stat2}</StatNumber>
+                <StatLabel>Total Clients</StatLabel>
+              </StatBlock>
+              <StatBlock>
+                <StatNumber>{stat3}</StatNumber>
+                <StatLabel>Staff Members</StatLabel>
+              </StatBlock>
+            </>
+          )}
+        </StatsRow>
+      </Content>
     </Container>
   );
 };

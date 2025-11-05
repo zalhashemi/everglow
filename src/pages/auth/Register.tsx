@@ -1,140 +1,194 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import TextBox from '../../components/common/TextBox';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 import Button from '../../components/common/Button';
+import SecondaryButton from '../../components/common/SecondaryButton';
+import TextBox from '../../components/common/TextBox';
 
-const Container = styled.div`
+const PageWrapper = styled.div`
+  width: 100vw;
   min-height: 100vh;
+  background: #F2DCDC;
   display: flex;
   justify-content: center;
-  align-items: center;
-  background-color: ${props => props.theme.colors.background};
-  padding: ${props => props.theme.spacing.xl};
+  align-items: flex-start;
+  padding-top: 80px;
 `;
 
 const FormContainer = styled.div`
-  background: ${props => props.theme.colors.white};
-  padding: ${props => props.theme.spacing.xl};
-  border-radius: ${props => props.theme.borderRadius.large};
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled.h1`
-  color: ${props => props.theme.colors.secondary};
-  text-align: center;
-  margin-bottom: ${props => props.theme.spacing.lg};
-  font-size: ${props => props.theme.typography.fontSizes.xxlarge};
-`;
-
-const Form = styled.form`
+  width: 1270px;
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing.md};
+  gap: 18px;
 `;
 
-const ToggleText = styled.p`
-  text-align: center;
-  margin-top: ${props => props.theme.spacing.md};
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.small};
+const Title = styled.h2`
+  color: #6B868F;
+  font-family: "Inter", sans-serif;
+  font-size: 36px;
+  font-weight: 600;
+  margin-bottom: 12px;
+`;
+
+const Row = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+`;
+
+const TermsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 8px;
+  font-size: 14px;
+`;
+
+const BottomText = styled.div`
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  font-size: 14px;
+  color: #333;
 
   span {
-    color: ${props => props.theme.colors.primary};
+    color: #6B868F;
     cursor: pointer;
     font-weight: 500;
+    &:hover {
+      text-decoration: underline;
+    }
   }
 `;
 
-const UserTypeToggle = styled.div`
-  display: flex;
-  gap: ${props => props.theme.spacing.sm};
-  margin-bottom: ${props => props.theme.spacing.md};
+const HalfWidth = styled.div`
+  width: 630px;
+`;
+
+const FullWidth = styled.div`
+  width: 1270px;
 `;
 
 const Register: React.FC = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [userType, setUserType] = useState<'customer' | 'business'>('customer');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle registration logic here
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  const handleCustomerSignup = () => {
+    if (!acceptedTerms) {
+      alert("You must agree to the terms & conditions.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    navigate("/homepage");
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleBusinessSignup = () => {
+    if (!acceptedTerms) {
+      alert("You must agree to the terms & conditions.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    navigate("/register/business-details");
   };
 
   return (
-    <Container>
+    <PageWrapper>
       <FormContainer>
-        <Title>Create Account</Title>
-        <Form onSubmit={handleSubmit}>
-          <UserTypeToggle>
-            <Button
-              variant={userType === 'customer' ? 'primary' : 'outline'}
-              onClick={() => setUserType('customer')}
-              fullWidth
-            >
-              Customer
-            </Button>
-            <Button
-              variant={userType === 'business' ? 'primary' : 'outline'}
-              onClick={() => setUserType('business')}
-              fullWidth
-            >
-              Business
-            </Button>
-          </UserTypeToggle>
+        <Title>Sign Up</Title>
 
+        <Row>
+          <HalfWidth>
+            <Label>First Name</Label>
+            <TextBox
+              placeholder="Placeholder"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+          </HalfWidth>
+
+          <HalfWidth>
+            <Label>Last Name</Label>
+            <TextBox
+              placeholder="Placeholder"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </HalfWidth>
+        </Row>
+
+        <FullWidth>
+          <Label>Email</Label>
           <TextBox
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={handleChange}
-            name="name"
+            placeholder="Placeholder"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
-          <TextBox
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            name="email"
-          />
+        </FullWidth>
+
+        <FullWidth>
+          <Label>Password</Label>
           <TextBox
             type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            name="password"
+            placeholder="Placeholder"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
+        </FullWidth>
+
+        <FullWidth>
+          <Label>Confirm Password</Label>
           <TextBox
             type="password"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            name="confirmPassword"
+            placeholder="Placeholder"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
-          <Button onClick={handleSubmit} fullWidth>
-            Register
-          </Button>
-        </Form>
+        </FullWidth>
 
-        <ToggleText>
-          Already have an account?{' '}
-          <span>Login</span>
-        </ToggleText>
+        <TermsRow>
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+          />
+          Agree to terms & conditions
+        </TermsRow>
+
+        <Button fullWidth onClick={handleCustomerSignup}>
+          I am a Customer
+        </Button>
+
+        <Button
+          fullWidth
+          backgroundColor="#0B1C36"
+          onClick={handleBusinessSignup}
+        >
+          I am a Business
+        </Button>
+
+        <BottomText>
+          Already have an account?{" "}
+          <span onClick={() => navigate("/login")}>Login</span>
+        </BottomText>
       </FormContainer>
-    </Container>
+    </PageWrapper>
   );
 };
 
