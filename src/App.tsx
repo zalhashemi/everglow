@@ -5,7 +5,7 @@ import { theme } from './styles/theme';
 
 // Auth Pages
 import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
+import Signup from './pages/auth/Signup';  // Update import name
 import BusinessDetailsRegistration from './pages/auth/BusinessDetailsRegistration';
 
 // Customer Pages
@@ -29,7 +29,7 @@ const App: React.FC = () => {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/signup" element={<Signup />} />  // Update route path
           <Route path="/register/business-details" element={<BusinessDetailsRegistration />} />
 
           {/* Customer Routes */}

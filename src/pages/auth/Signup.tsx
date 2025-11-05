@@ -74,7 +74,7 @@ const FullWidth = styled.div`
   width: 1270px;
 `;
 
-const Register: React.FC = () => {
+const Signup: React.FC = () => {
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
@@ -192,4 +192,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register;
+export default Signup;

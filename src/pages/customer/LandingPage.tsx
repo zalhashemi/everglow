@@ -1,181 +1,174 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import Button from '../../components/common/Button';
-import SecondaryButton from '../../components/common/SecondaryButton';
-import SalonCard from '../../components/common/SalonCard';
-import BookingTile from '../../components/common/BookingTile';
-import TimeCard from '../../components/common/TimeCard';
-import ProfileHeader from '../../components/common/ProfileHeader';
-import ServiceTile from '../../components/common/ServiceTile';
-import LoyaltyTile from '../../components/common/LoyaltyTile';
-import StaffCard from '../../components/common/StaffCard';
-
-
+import React from "react";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import everglowLogo from "../../images/everglowLogo.png";
 
 const Container = styled.div`
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-`;
-
-const Hero = styled.div`
-  background-color: ${props => props.theme.colors.background};
-  padding: ${props => props.theme.spacing.xl} ${props => props.theme.spacing.xl};
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  min-height: 80vh;
+  background: ${(p) => p.theme.colors.background};
+  min-height: 100vh;
+`;
+
+const Header = styled.header`
+  width: 100%;
+  background: ${(p) => p.theme.colors.white};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: ${(p) => p.theme.spacing.md} 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+`;
+
+const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${(p) => p.theme.spacing.sm};
+  font-family: "Playfair Display", serif;
+  font-size: ${(p) => p.theme.typography.fontSizes.xxlarge};
+  color: ${(p) => p.theme.colors.secondary};
+  width: 100%;
+
+  img {
+    width: 40%;
+    height: 40%;
+    object-fit: contain;
+  }
+`;
+
+const Content = styled.section`
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  max-width: 1200px;
+  gap: ${(p) => p.theme.spacing.xl};
+  margin-top: ${(p) => p.theme.spacing.lg};
+  flex-wrap: wrap;
+`;
+
+const LeftColumn = styled.div`
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
 `;
 
-const Title = styled.h1`
-  color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.xxlarge};
-  margin-bottom: ${props => props.theme.spacing.md};
-  max-width: 800px;
+const Headline = styled.h1`
+  font-size: 3rem;
+  font-weight: 800;
+  color: ${(p) => p.theme.colors.secondary};
+  line-height: 1.2;
+  margin-bottom: ${(p) => p.theme.spacing.lg};
+
+  span {
+    display: block;
+  }
 `;
 
-const Subtitle = styled.p`
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.large};
-  margin-bottom: ${props => props.theme.spacing.xl};
-  max-width: 600px;
+const SubText = styled.p`
+  color: ${(p) => p.theme.colors.gray.dark};
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  margin-bottom: ${(p) => p.theme.spacing.lg};
+  max-width: 400px;
 `;
 
-const ButtonGroup = styled.div`
+const ButtonRow = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing.md};
+  align-items: center;
+  gap: ${(p) => p.theme.spacing.md};
 `;
 
-const Features = styled.div`
-  padding: ${props => props.theme.spacing.xl};
+const PrimaryButton = styled.button`
+  background: ${(p) => p.theme.colors.primary};
+  color: ${(p) => p.theme.colors.white};
+  border: none;
+  border-radius: ${(p) => p.theme.borderRadius.small};
+  padding: ${(p) => `${p.theme.spacing.sm} ${p.theme.spacing.lg}`};
+  cursor: pointer;
+  font-weight: 600;
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background: ${(p) => p.theme.colors.secondary};
+  }
+`;
+
+const SecondaryButton = styled.button`
+  background: transparent;
+  border: 1px solid ${(p) => p.theme.colors.gray.medium};
+  color: ${(p) => p.theme.colors.secondary};
+  border-radius: ${(p) => p.theme.borderRadius.small};
+  padding: ${(p) => `${p.theme.spacing.sm} ${p.theme.spacing.lg}`};
+  cursor: pointer;
+  font-weight: 500;
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    border-color: ${(p) => p.theme.colors.primary};
+    color: ${(p) => p.theme.colors.primary};
+  }
+`;
+
+const RightColumn = styled.div`
+  flex: 1;
+  min-width: 320px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${props => props.theme.spacing.xl};
-  background: ${props => props.theme.colors.white};
-`;
+  grid-template-columns: repeat(2, 1fr);
+  gap: ${(p) => p.theme.spacing.sm};
 
-const FeatureCard = styled.div`
-  padding: ${props => props.theme.spacing.lg};
-  background: ${props => props.theme.colors.white};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: center;
-`;
-
-const FeatureIcon = styled.div`
-  font-size: 2rem;
-  color: ${props => props.theme.colors.primary};
-  margin-bottom: ${props => props.theme.spacing.md};
-`;
-
-const FeatureTitle = styled.h3`
-  color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.large};
-  margin-bottom: ${props => props.theme.spacing.sm};
-`;
-
-const FeatureDescription = styled.p`
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.medium};
+  img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: ${(p) => p.theme.borderRadius.small};
+  }
 `;
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Mock data
-  const exampleService = {
-    name: "Premium Haircut",
-    duration: "45 min",
-    price: 55,
-    description: "Includes wash and style"
-  };
-
-  const exampleLoyalty = {
-    points: 450,
-    level: "Gold Member",
-    nextLevel: "Platinum",
-    pointsToNext: 550,
-    rewards: [
-      "10% off on all services",
-      "Free birthday treatment",
-      "Priority booking"
-    ]
-  };
-
-  const exampleStaff = {
-    name: "Sarah Johnson",
-    role: "Senior Stylist",
-    image: "https://example.com/staff1.jpg",
-    specialties: ["Haircut", "Coloring"],
-    rating: 4.9
-  };
-
   return (
     <Container>
-      <Hero>
-        <Title>Discover and Book the Best Beauty & Wellness Services</Title>
-        <Subtitle>
-          Find, book, and experience top-rated beauty and wellness services in your area
-        </Subtitle>
+      <Header>
+        <Logo>
+          {/* Replace with your logo file if available */}
+          <img src={everglowLogo} alt="EverGlow" />
+        </Logo>
+      </Header>
 
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
-          <ServiceTile {...exampleService} />
-          <LoyaltyTile {...exampleLoyalty} />
-          <StaffCard {...exampleStaff} />
-        </div>
-        
-        <ButtonGroup>
-          <Button
-            width="200px"
-            onClick={() => navigate('/register')}
-          >
-            Get Started
-          </Button>
-          <SecondaryButton
-            width="200px"
-            onClick={() => navigate('/login')}
-          >
-            Login
-          </SecondaryButton>
-        </ButtonGroup>
-      </Hero>
+      <Content>
+        <LeftColumn>
+          <Headline>
+            <span>Browse.</span>
+            <span>Book.</span>
+            <span>Beauty.</span>
+          </Headline>
 
-      <Features>
-        <FeatureCard>
-          <FeatureIcon>🔍</FeatureIcon>
-          <FeatureTitle>Easy Search</FeatureTitle>
-          <FeatureDescription>
-            Find the perfect service provider with our smart search and filtering system
-          </FeatureDescription>
-        </FeatureCard>
+          <SubText>
+            Unlock your beauty journey with ease — explore salons, book appointments,
+            and glow with confidence.
+          </SubText>
 
-        <FeatureCard>
-          <FeatureIcon>📅</FeatureIcon>
-          <FeatureTitle>Simple Booking</FeatureTitle>
-          <FeatureDescription>
-            Book appointments instantly with our real-time scheduling system
-          </FeatureDescription>
-        </FeatureCard>
+          <ButtonRow>
+            <PrimaryButton onClick={() => navigate("/signup")}>Sign Up →</PrimaryButton>
+            <SecondaryButton onClick={() => navigate("/login")}>Login</SecondaryButton>
+          </ButtonRow>
+        </LeftColumn>
 
-        <FeatureCard>
-          <FeatureIcon>⭐</FeatureIcon>
-          <FeatureTitle>Verified Reviews</FeatureTitle>
-          <FeatureDescription>
-            Make informed decisions with authentic reviews from real customers
-          </FeatureDescription>
-        </FeatureCard>
-
-        <FeatureCard>
-          <FeatureIcon>🎁</FeatureIcon>
-          <FeatureTitle>Loyalty Rewards</FeatureTitle>
-          <FeatureDescription>
-            Earn points and get exclusive rewards with every booking
-          </FeatureDescription>
-        </FeatureCard>
-      </Features>
+        <RightColumn>
+          <img src="/images/lash.jpg" alt="Lash Extension" />
+          <img src="/images/nails.jpg" alt="Nail Art" />
+          <img src="/images/facial.jpg" alt="Facial Treatment" />
+          <img src="/images/hair.jpg" alt="Hair Styling" />
+        </RightColumn>
+      </Content>
     </Container>
   );
 };
