@@ -2,6 +2,8 @@ import React from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import everglowLogo from "../../images/everglowLogo.png";
+import ProfileHeader from "../../components/common/ProfileHeader";
+import SalonCard from "../../components/common/SalonCard";
 
 const Container = styled.div`
   display: flex;
@@ -142,7 +144,7 @@ const LandingPage: React.FC = () => {
           <img src={everglowLogo} alt="EverGlow" />
         </Logo>
       </Header>
-
+      
       <Content>
         <LeftColumn>
           <Headline>

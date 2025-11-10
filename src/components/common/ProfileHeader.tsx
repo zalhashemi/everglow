@@ -21,7 +21,7 @@ const Container = styled.div`
 
 const HeaderBanner = styled.div`
   height: 140px;
-  background-color: #76949F;
+  background-color: #4A5074;
   width: 100%;
 `;
 

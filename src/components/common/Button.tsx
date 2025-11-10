@@ -20,7 +20,7 @@ const StyledButton = styled.button<ButtonProps>`
   font-size: 18px;
   font-weight: 500;
   color: ${props => props.theme.colors.white};
-  background-color: ${props => props.backgroundColor || '#76949F'};
+  background-color: ${props => props.backgroundColor || '#4A5074'};
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   border: none;
