@@ -1,179 +1,262 @@
 import React from "react";
 import styled from "styled-components";
-import SecondaryButton from "../../components/common/SecondaryButton";
-import Button from "../../components/common/Button";
+import { useNavigate } from "react-router-dom";
+import TabBar from "../../components/common/TabBar";
+import { AiOutlineCheckSquare, AiFillStar } from "react-icons/ai";
+import { FiCalendar } from "react-icons/fi";
+import { IconFix } from "../../utils/IconFix";
 
-const Container = styled.div`
-  background-color: #f9ecec;
+/* ---- Styled Components ---- */
+const PageWrapper = styled.div`
+  background-color: ${(p) => p.theme.colors.background || "#f2dcdc"};
   min-height: 100vh;
-  font-family: "Inter", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
-const Header = styled.div`
+const ContentWrapper = styled.div`
+  width: 90%;
+  max-width: 1400px;
+  padding: 40px 0 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+`;
+
+const HeaderRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 48px;
-  background-color: #fff;
-  border-bottom: 1px solid #e5e5e5;
 `;
 
-const Logo = styled.h2`
-  font-weight: 700;
-  color: #5a5a5a;
+const WelcomeText = styled.h1`
+  font-family: "Inter", sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+  color: ${(p) => p.theme.colors.primary || "#0b1c36"};
 `;
 
-const Nav = styled.div`
+const DateAndButton = styled.div`
   display: flex;
-  gap: 24px;
   align-items: center;
+  gap: 16px;
+`;
 
-  a {
-    color: #444;
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
+const DateBox = styled.div`
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  color: #333;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+`;
 
-    &:hover {
-      color: #ff69b4;
-    }
+const NewBookingButton = styled.button`
+  background-color: ${(p) => p.theme.colors.primary || "#0b1c36"};
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+  &:hover {
+    opacity: 0.9;
   }
 `;
 
-const Main = styled.div`
-  padding: 40px 48px;
-`;
-
-const Title = styled.h1`
-  font-size: 28px;
-  font-weight: 700;
-  color: #444;
-`;
-
-const StatGrid = styled.div`
+/* ---- Dashboard Grids ---- */
+const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
-  margin-top: 24px;
 `;
 
 const StatCard = styled.div`
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 `;
 
-const StatTitle = styled.p`
-  font-size: 14px;
-  color: #777;
-  margin-bottom: 8px;
-`;
-
-const StatValue = styled.h3`
-  font-size: 28px;
+const StatTitle = styled.div`
   font-weight: 700;
-  margin: 0;
+  color: #27374d;
+  font-size: 14px;
 `;
 
-const SubText = styled.p`
+const StatValue = styled.div`
+  font-size: 28px;
+  font-weight: 800;
+  color: #0b1c36;
+`;
+
+const StatSubText = styled.div`
   font-size: 13px;
-  color: #777;
-  margin-top: 4px;
+  color: #999;
 `;
 
 const SectionGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-top: 40px;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1000px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const Card = styled.div`
-  background: #fff;
+  background-color: #fff;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 `;
 
-const CardTitle = styled.h3`
+const SectionTitle = styled.h3`
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #27374d;
   margin-bottom: 16px;
 `;
 
-const AppointmentRow = styled.div<{ status?: string }>`
+const AppointmentContainer = styled.div`
+  background-color: #f7f7f7;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+`;
+
+const AppointmentRow = styled.div<{ status: "CONFIRMED" | "CANCELLED" }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #333;
+
+  span.status {
+    font-weight: 600;
+    color: ${(p) =>
+      p.status === "CONFIRMED"
+        ? "#3FAE57"
+        : p.status === "CANCELLED"
+        ? "#E03B3B"
+        : "#888"};
+  }
+`;
+
+const ProgressBarWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+`;
+
+const ProgressRow = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
-
-  span {
-    font-size: 14px;
-    color: #555;
-  }
-
-  .status {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 13px;
-    color: ${(p) =>
-      p.status === "confirmed"
-        ? "#155724"
-        : p.status === "cancelled"
-        ? "#721c24"
-        : "#555"};
-    background-color: ${(p) =>
-      p.status === "confirmed"
-        ? "#d4edda"
-        : p.status === "cancelled"
-        ? "#f8d7da"
-        : "#eee"};
-  }
+  font-size: 13px;
 `;
 
-const ProgressBarContainer = styled.div`
-  background-color: #f0f0f0;
-  height: 6px;
-  border-radius: 4px;
+const ProgressBar = styled.div<{ percent: number }>`
+  background-color: #eaeaea;
+  border-radius: 8px;
+  height: 8px;
   overflow: hidden;
-  margin-top: 4px;
+  &::after {
+    content: "";
+    display: block;
+    width: ${(p) => p.percent}%;
+    height: 100%;
+    background-color: #76949f;
+  }
 `;
 
-const ProgressBarFill = styled.div<{ width: number }>`
-  height: 100%;
-  background-color: #5a6acf;
-  width: ${(p) => p.width}%;
-  border-radius: 4px;
-`;
-
+/* ---- Quick Stats ---- */
 const QuickStatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  text-align: center;
-  gap: 16px;
-  margin-top: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  padding: 20px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const QuickStatItem = styled.div`
-  background: #fff;
-  padding: 16px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 `;
 
-const Dashboard: React.FC = () => {
+const QuickStatLabel = styled.div`
+  font-size: 13px;
+  color: #7a7a7a;
+  text-transform: uppercase;
+`;
+
+const QuickStatValue = styled.div`
+  font-size: 22px;
+  font-weight: 800;
+  color: #0b1c36;
+`;
+
+const RatingRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #f5c518;
+`;
+
+/* ---- Component ---- */
+const BusinessDashboard: React.FC = () => {
+  const navigate = useNavigate();
+
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
   const appointments = [
-    { time: "09:00 AM", name: "Sarah Johnson", service: "Haircut • 60 min", status: "confirmed" },
-    { time: "10:30 AM", name: "Mike Chen", service: "Hair Coloring • 120 min", status: "confirmed" },
-    { time: "01:00 PM", name: "Emily Davis", service: "Manicure • 45 min", status: "cancelled" },
-    { time: "03:00 PM", name: "James Wilson", service: "Massage • 90 min", status: "confirmed" },
+    {
+      time: "09:00 AM",
+      name: "Sarah Johnson",
+      service: "Haircut • 60 min",
+      status: "CONFIRMED",
+    },
+    {
+      time: "10:30 AM",
+      name: "Mike Chen",
+      service: "Hair Coloring • 120 min",
+      status: "CONFIRMED",
+    },
+    {
+      time: "01:00 PM",
+      name: "Emily Davis",
+      service: "Manicure • 45 min",
+      status: "CANCELLED",
+    },
+    {
+      time: "03:00 PM",
+      name: "James Wilson",
+      service: "Massage • 90 min",
+      status: "CONFIRMED",
+    },
   ];
 
   const popularServices = [
@@ -185,112 +268,129 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <Container>
-      <Header>
-        <Logo>EVERGLOW</Logo>
-        <Nav>
-          <a href="#">Home</a>
-          <a href="#">Services</a>
-          <a href="#">Bookings</a>
-          <a href="#">Profile</a>
-          <Button width="130px">+ New Booking</Button>
-        </Nav>
-      </Header>
+    <PageWrapper>
+      <TabBar type="business" />
 
-      <Main>
-        <Title>Welcome Back!</Title>
+      <ContentWrapper>
+        {/* Header */}
+        <HeaderRow>
+          <WelcomeText>Welcome Back!</WelcomeText>
+          <DateAndButton>
+  <DateBox>
+  {IconFix(FiCalendar, { size: 18 })}
+  {today}
+</DateBox>
+  <NewBookingButton onClick={() => navigate("/business/bookings")}>
+    + New Booking
+  </NewBookingButton>
+</DateAndButton>
+
+        </HeaderRow>
 
         {/* Top Stats */}
-        <StatGrid>
+        <StatsRow>
           <StatCard>
-            <StatTitle>TODAY’S BOOKINGS</StatTitle>
+            <StatTitle>TODAY'S BOOKINGS</StatTitle>
             <StatValue>18</StatValue>
-            <SubText>3 pending confirmation</SubText>
+            <StatSubText>3 pending confirmation</StatSubText>
           </StatCard>
-
           <StatCard>
             <StatTitle>NEW CLIENTS</StatTitle>
             <StatValue>5</StatValue>
-            <SubText>+2 from last week</SubText>
+            <StatSubText>+2 from last week</StatSubText>
           </StatCard>
-
           <StatCard>
             <StatTitle>COMPLETION RATE</StatTitle>
-            <StatValue>94%</StatValue>
-            <SubText>+3% this month</SubText>
-          </StatCard>
-        </StatGrid>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+  {IconFix(AiOutlineCheckSquare, { color: "#3FAE57", size: 20 })}
+  <StatValue>94%</StatValue>
+</div>
 
-        {/* Main Two Columns */}
+            <StatSubText>+3% this month</StatSubText>
+          </StatCard>
+        </StatsRow>
+
+        {/* Appointments + Popular Services */}
         <SectionGrid>
-          {/* Upcoming Appointments */}
           <Card>
-            <CardTitle>Upcoming Appointments</CardTitle>
-            {appointments.map((appt, idx) => (
-              <AppointmentRow key={idx} status={appt.status}>
-                <span>
-                  <strong>{appt.time}</strong> — {appt.name} ({appt.service})
-                </span>
-                <span className="status">{appt.status.toUpperCase()}</span>
-              </AppointmentRow>
+            <SectionTitle>Upcoming Appointments</SectionTitle>
+            {appointments.map((appt) => (
+              <AppointmentContainer key={appt.time}>
+                <AppointmentRow status={appt.status as any}>
+                  <div>
+                    <strong>{appt.time}</strong> — {appt.name}
+                    <div
+                      style={{ fontSize: "13px", color: "#7a7a7a" }}
+                    >
+                      {appt.service}
+                    </div>
+                  </div>
+                  <span className="status">{appt.status}</span>
+                </AppointmentRow>
+              </AppointmentContainer>
             ))}
-            <div style={{ textAlign: "center", marginTop: "16px" }}>
-              <SecondaryButton width="fit-content">
-                View All Appointments →
-              </SecondaryButton>
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "12px",
+                fontSize: "14px",
+                color: "#27374d",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              onClick={() => navigate("/business/bookings")}
+            >
+              View All Appointments →
             </div>
           </Card>
 
-          {/* Popular Services */}
           <Card>
-            <CardTitle>Popular Services</CardTitle>
-            {popularServices.map((s, i) => (
-              <div key={i} style={{ marginBottom: "12px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: "14px",
-                    color: "#555",
-                    fontWeight: 500,
-                  }}
-                >
-                  <span>{s.name}</span>
-                  <span>{s.bookings} bookings</span>
-                </div>
-                <ProgressBarContainer>
-                  <ProgressBarFill width={(s.bookings / 45) * 100} />
-                </ProgressBarContainer>
-              </div>
+            <SectionTitle>Popular Services</SectionTitle>
+            {popularServices.map((service) => (
+              <ProgressBarWrapper key={service.name}>
+                <ProgressRow>
+                  <span>{service.name}</span>
+                  <span style={{ color: "#7a7a7a" }}>
+                    {service.bookings} bookings
+                  </span>
+                </ProgressRow>
+                <ProgressBar
+                  percent={(service.bookings / 45) * 100}
+                />
+              </ProgressBarWrapper>
             ))}
           </Card>
         </SectionGrid>
 
         {/* Quick Stats */}
-        <Card style={{ marginTop: "40px" }}>
-          <CardTitle>Quick Stats</CardTitle>
+        <Card>
+          <SectionTitle>Quick Stats</SectionTitle>
           <QuickStatsGrid>
             <QuickStatItem>
-              <p className="text-sm text-gray-500">WEEKLY REVENUE</p>
-              <h3>$8,045</h3>
+              <QuickStatLabel>WEEKLY REVENUE</QuickStatLabel>
+              <QuickStatValue>$8,045</QuickStatValue>
             </QuickStatItem>
             <QuickStatItem>
-              <p className="text-sm text-gray-500">AVG. RATING</p>
-              <h3>⭐ 4.8</h3>
+              <QuickStatLabel>AVG. RATING</QuickStatLabel>
+              <RatingRow>
+  {IconFix(AiFillStar, { color: "#FFD03F", size: 18 })}
+  <QuickStatValue>4.8</QuickStatValue>
+</RatingRow>
+
             </QuickStatItem>
             <QuickStatItem>
-              <p className="text-sm text-gray-500">TOTAL CLIENTS</p>
-              <h3>342</h3>
+              <QuickStatLabel>TOTAL CLIENTS</QuickStatLabel>
+              <QuickStatValue>342</QuickStatValue>
             </QuickStatItem>
             <QuickStatItem>
-              <p className="text-sm text-gray-500">STAFF MEMBERS</p>
-              <h3>8</h3>
+              <QuickStatLabel>STAFF MEMBERS</QuickStatLabel>
+              <QuickStatValue>8</QuickStatValue>
             </QuickStatItem>
           </QuickStatsGrid>
         </Card>
-      </Main>
-    </Container>
+      </ContentWrapper>
+    </PageWrapper>
   );
 };
 
-export default Dashboard;
+export default BusinessDashboard;

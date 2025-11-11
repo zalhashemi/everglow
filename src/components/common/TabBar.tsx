@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
-import logo from "../../images/everglowLogo.png"; 
+import logo from "../../images/everglowLogo.png";
 
 export type TabType = "customer" | "business";
 
@@ -69,7 +69,7 @@ const TabButton = styled.button<{ active?: boolean }>`
   font-family: "Inter", sans-serif;
   font-size: 15px;
   color: ${(p) => (p.active ? "#0B1C36" : "#333")};
-  font-weight: 700; /* ✅ Bold font */
+  font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease-in-out;
 
@@ -87,52 +87,51 @@ const TabBar: React.FC<TabBarProps> = ({ type }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-const customerTabs = [
-  { id: "home", label: "Home", path: "/" },
-  { id: "bookings", label: "My Bookings", path: "/bookings" },
-  { id: "profile", label: "My Profile", path: "/profile" },
-];
+  const customerTabs = [
+    { id: "home", label: "Home", path: "/" },
+    { id: "bookings", label: "My Bookings", path: "/bookings" },
+    { id: "profile", label: "My Profile", path: "/profile" },
+  ];
 
-
-
-const businessTabs = [
-  { id: "dashboard", label: "Home", path: "/business" },
-  { id: "services", label: "Services", path: "/business/services" },
-  { id: "bookings", label: "Bookings", path: "/business/bookings" },
-  { id: "profile", label: "Profile", path: "/business/profile" },
-];
-
+  const businessTabs = [
+    { id: "dashboard", label: "Home", path: "/business" },
+    { id: "services", label: "Services", path: "/business/services" },
+    { id: "bookings", label: "Bookings", path: "/business/bookings" },
+    { id: "profile", label: "Profile", path: "/business/profile" },
+  ];
 
   const tabs = type === "customer" ? customerTabs : businessTabs;
   const activePath = location.pathname;
 
   return (
     <Bar>
-      {/* Left Section — Logo and Search */}
+      {/* Left Section — Logo and optional Search */}
       <LeftSection>
         <Logo
           src={logo}
           alt="Everglow Logo"
           onClick={() => navigate(type === "customer" ? "/" : "/business")}
-
         />
-        <SearchBox>
-          <FiSearch size={18} />
-          <input type="text" placeholder="Enter Salon/Barber or City Name" />
-        </SearchBox>
+
+        {/* ✅ Show search bar only for customer view */}
+        {type === "customer" && (
+          <SearchBox>
+            <FiSearch size={18} />
+            <input type="text" placeholder="Enter Salon/Barber or City Name" />
+          </SearchBox>
+        )}
       </LeftSection>
 
       {/* Right Section — Tabs */}
       <RightSection>
         {tabs.map((tab) => (
           <TabButton
-  key={tab.id}
-  active={activePath === tab.path}
-  onClick={() => navigate(tab.path)}
->
-  {tab.label}
-</TabButton>
-
+            key={tab.id}
+            active={activePath === tab.path}
+            onClick={() => navigate(tab.path)}
+          >
+            {tab.label}
+          </TabButton>
         ))}
       </RightSection>
     </Bar>

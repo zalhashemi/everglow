@@ -133,11 +133,7 @@ const BusinessBookings: React.FC = () => {
       <Content>
         <Header>
           <Title>Bookings</Title>
-          <TabBar
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
+          <TabBar type="business" />
         </Header>
 
         <FilterBar>

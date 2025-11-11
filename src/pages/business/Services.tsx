@@ -1,108 +1,56 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import Button from '../../components/common/Button';
-import TextBox from '../../components/common/TextBox';
-import ServiceTile from '../../components/common/ServiceTile';
-
-const Container = styled.div`
-  min-height: 100vh;
-  background-color: ${props => props.theme.colors.background};
-  padding: ${props => props.theme.spacing.xl};
-`;
-
-const Content = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: ${props => props.theme.spacing.xl};
-`;
-
-const Title = styled.h1`
-  color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.xxlarge};
-`;
-
-const ServicesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: ${props => props.theme.spacing.lg};
-`;
-
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: ${props => props.theme.colors.white};
-  padding: ${props => props.theme.spacing.xl};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  width: 100%;
-  max-width: 500px;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${props => props.theme.spacing.md};
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${props => props.theme.spacing.sm};
-  margin-top: ${props => props.theme.spacing.lg};
-`;
+import React, { useState } from "react";
+import TabBar from "../../components/common/TabBar";
+import { AiFillStar } from "react-icons/ai";
+import { FiMapPin, FiEdit2 } from "react-icons/fi";
+import ServiceTile from "../../components/common/ServiceTile";
+import TextBox from "../../components/common/TextBox";
+import Button from "../../components/common/Button";
+import errorImage from "../../images/errorLoading.png";
+import oliviaSalon from "../../images/oliviaSalon.jpg";
 
 const BusinessServices: React.FC = () => {
+  const salon = {
+    name: "Glamour Beauty Salon",
+    image: oliviaSalon,
+    location: "Seef, Bahrain",
+    hours: "9AM - 10PM, Mon - Sun",
+    rating: 4.8,
+    reviews: 312,
+    description:
+      "We offer professional hair, nail, and beauty services using premium products.",
+    categories: ["Hair", "Coloring", "Styling", "Nails", "Spa"],
+  };
+
+  const [activeTab, setActiveTab] = useState(salon.categories[0]);
+  const [imgSrc, setImgSrc] = useState(salon.image || errorImage);
   const [showModal, setShowModal] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [services, setServices] = useState([
     {
-      id: '1',
-      name: 'Haircut',
-      duration: '45 min',
-      price: 50,
-      description: 'Professional haircut service including wash and style'
+      id: "1",
+      name: "Haircut",
+      duration: "45 min",
+      price: "22 BD",
+      description: "Professional haircut service including wash and style",
     },
     {
-      id: '2',
-      name: 'Hair Coloring',
-      duration: '2 hrs',
-      price: 120,
-      description: 'Full hair coloring service with premium products'
+      id: "2",
+      name: "Hair Coloring",
+      duration: "2 hrs",
+      price: "30 BD",
+      description: "Full hair coloring service with premium products",
     },
-    // Add more services
   ]);
-
   const [formData, setFormData] = useState({
-    name: '',
-    duration: '',
-    price: '',
-    description: ''
+    name: "",
+    duration: "",
+    price: "",
+    description: "",
   });
 
   const handleAddService = () => {
     setSelectedService(null);
-    setFormData({
-      name: '',
-      duration: '',
-      price: '',
-      description: ''
-    });
+    setFormData({ name: "", duration: "", price: "", description: "" });
     setShowModal(true);
   };
 
@@ -111,8 +59,8 @@ const BusinessServices: React.FC = () => {
     setFormData({
       name: service.name,
       duration: service.duration,
-      price: service.price.toString(),
-      description: service.description
+      price: service.price,
+      description: service.description,
     });
     setShowModal(true);
   };
@@ -120,98 +68,291 @@ const BusinessServices: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedService) {
-      // Update existing service
-      setServices(services.map(service =>
-        service.id === selectedService.id
-          ? { ...service, ...formData, price: parseFloat(formData.price) }
-          : service
-      ));
+      setServices(
+        services.map((s) =>
+          s.id === selectedService.id ? { ...s, ...formData } : s
+        )
+      );
     } else {
-      // Add new service
       setServices([
         ...services,
         {
           id: (services.length + 1).toString(),
           ...formData,
-          price: parseFloat(formData.price)
-        }
+        },
       ]);
     }
     setShowModal(false);
   };
 
   return (
-    <Container>
-      <Content>
-        <Header>
-          <Title>Services</Title>
-          <Button onClick={handleAddService}>
-            Add New Service
-          </Button>
-        </Header>
+    <div
+      style={{
+        backgroundColor: "#F1DEDE",
+        minHeight: "100vh",
+        paddingBottom: "40px",
+      }}
+    >
+      <TabBar type="business" />
 
-        <ServicesGrid>
-          {services.map(service => (
-            <ServiceTile
-              key={service.id}
-              name={service.name}
-              duration={service.duration}
-              price={service.price}
-              description={service.description}
-              onClick={() => handleEditService(service)}
-            />
-          ))}
-        </ServicesGrid>
+      <div
+        style={{
+          width: "90%",
+          maxWidth: "900px",
+          margin: "40px auto 0 auto",
+          backgroundColor: "#fff",
+          borderRadius: "16px",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Salon Header */}
+        <img
+          src={imgSrc}
+          alt={salon.name}
+          onError={() => setImgSrc(errorImage)}
+          style={{
+            width: "100%",
+            height: "220px",
+            objectFit: "cover",
+          }}
+        />
 
-        {showModal && (
-          <Modal>
-            <ModalContent>
-              <Title>
-                {selectedService ? 'Edit Service' : 'Add New Service'}
-              </Title>
-              <Form onSubmit={handleSubmit}>
-                <TextBox
-                  placeholder="Service Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+        <div style={{ padding: "24px" }}>
+          <h2 style={{ fontSize: "24px", fontWeight: 700 }}>{salon.name}</h2>
+
+          {/* Location */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginTop: "6px",
+              color: "#7A7A7A",
+              fontSize: "14px",
+            }}
+          >
+            {React.createElement(FiMapPin as any, {
+              size: 16,
+              style: { marginRight: "4px" },
+            })}
+            {salon.location}
+          </div>
+
+          {/* Hours */}
+          <div
+            style={{
+              color: "#7A7A7A",
+              fontSize: "14px",
+              marginTop: "4px",
+            }}
+          >
+            {salon.hours}
+          </div>
+
+          {/* Rating */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginTop: "6px",
+              fontSize: "14px",
+            }}
+          >
+            {React.createElement(AiFillStar as any, {
+              color: "#FFD03F",
+              size: 16,
+              style: { marginRight: "4px" },
+            })}
+            <span>{salon.rating}</span>
+            <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>
+              ({salon.reviews})
+            </span>
+          </div>
+
+          {/* Description */}
+          <p style={{ marginTop: "12px", color: "#555", fontSize: "14px" }}>
+            {salon.description}
+          </p>
+
+          {/* Tabs */}
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              borderBottom: "1px solid #e5e5e5",
+              marginTop: "20px",
+            }}
+          >
+            {salon.categories.map((tab: string) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  border: "none",
+                  background: "none",
+                  fontWeight: 500,
+                  color: activeTab === tab ? "#000" : "#7A7A7A",
+                  borderBottom:
+                    activeTab === tab
+                      ? "2px solid #000"
+                      : "2px solid transparent",
+                  padding: "10px 0",
+                  cursor: "pointer",
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Services List */}
+          <div style={{ marginTop: "20px" }}>
+            {services.map((service) => (
+              <div
+                key={service.id}
+                style={{
+                  position: "relative",
+                  marginBottom: "12px",
+                }}
+              >
+                <ServiceTile
+                  name="Haircut"
+                  price={22}
+                  duration="45 min"
+                  icon={<FiEdit2 size={16} />} 
+                  onClick={() => handleEditService(service)}
                 />
-                <TextBox
-                  placeholder="Duration (e.g., 45 min)"
-                  value={formData.duration}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                />
-                <ButtonGroup>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                  >
-                    {selectedService ? 'Update' : 'Add'} Service
-                  </Button>
-                </ButtonGroup>
-              </Form>
-            </ModalContent>
-          </Modal>
-        )}
-      </Content>
-    </Container>
+              </div>
+            ))}
+
+            {/* ✅ Add New Service Button (fits container width) */}
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "24px",
+              }}
+            >
+              <Button
+                onClick={handleAddService}
+                style={{
+                  width: "100%",
+                  maxWidth: "850px",
+                  height: "46px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  backgroundColor: "#4A5074",
+                }}
+              >
+                + Add New Service
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ✅ Modal for Edit/Add */}
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(241, 222, 222, 0.95)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: "32px",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "480px",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "20px",
+                fontWeight: 700,
+                marginBottom: "16px",
+              }}
+            >
+              {selectedService ? "Edit Service" : "Add New Service"}
+            </h3>
+
+            <form
+              onSubmit={handleSubmit}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
+              <TextBox
+                placeholder="Service Name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, name: e.target.value }))
+                }
+              />
+              <TextBox
+                placeholder="Duration (e.g., 45 min)"
+                value={formData.duration}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, duration: e.target.value }))
+                }
+              />
+              <TextBox
+                placeholder="Price"
+                value={formData.price}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, price: e.target.value }))
+                }
+              />
+              <TextBox
+                placeholder="Description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, description: e.target.value }))
+                }
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                  marginTop: "20px",
+                }}
+              >
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </Button>
+
+                {/* ✅ Pencil icon inside button */}
+                <Button type="submit">
+                  <FiEdit2
+                    size={16}
+                    style={{ marginRight: "8px", verticalAlign: "middle" }}
+                  />
+                  {selectedService ? "Update Service" : "Add Service"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

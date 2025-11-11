@@ -59,41 +59,41 @@ import { theme } from './styles/theme';
 // Customer pages
 
 // Customer pages
-import HomePage from './pages/customer/Homepage';
-import BookingsPage from './pages/customer/BookingsPage';
-import Profile from './pages/customer/Profile';
-import BusinessPage from './pages/customer/BusinessPage';
+// import HomePage from './pages/customer/Homepage';
+// import BookingsPage from './pages/customer/BookingsPage';
+// import Profile from './pages/customer/Profile';
+// import BusinessPage from './pages/customer/BusinessPage';
 
-// Business pages
-import Dashboard from './pages/business/Dashboard';
-import Services from './pages/business/Services';
-import BusinessBookings from './pages/business/Bookings';
-import BusinessProfile from './pages/business/Profile';
+// // Business pages
+// import Dashboard from './pages/business/Dashboard';
+// import Services from './pages/business/Services';
+// import BusinessBookings from './pages/business/Bookings';
+// import BusinessProfile from './pages/business/Profile';
 
-const App: React.FC = () => {
-  console.log("✅ App mounted");
+// const App: React.FC = () => {
+//   console.log("✅ App mounted");
 
-  return (
-    <Router>
-      <Routes>
-        {/* CUSTOMER ROUTES */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/bookings" element={<BookingsPage />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/business/:salonId" element={<BusinessPage />} />
+//   return (
+//     <Router>
+//       <Routes>
+//         {/* CUSTOMER ROUTES */}
+//         <Route path="/" element={<HomePage />} />
+//         <Route path="/bookings" element={<BookingsPage />} />
+//         <Route path="/profile" element={<Profile />} />
+//         <Route path="/business/:salonId" element={<BusinessPage />} />
 
 
-        {/* BUSINESS ROUTES */}
-        <Route path="/business" element={<Dashboard />} />
-        <Route path="/business/services" element={<Services />} />
-        <Route path="/business/bookings" element={<BusinessBookings />} />
-        <Route path="/business/profile" element={<BusinessProfile />} />
-      </Routes>
-    </Router>
-  );
-};
+//         {/* BUSINESS ROUTES */}
+//         <Route path="/business" element={<Dashboard />} />
+//         <Route path="/business/services" element={<Services />} />
+//         <Route path="/business/bookings" element={<BusinessBookings />} />
+//         <Route path="/business/profile" element={<BusinessProfile />} />
+//       </Routes>
+//     </Router>
+//   );
+// };
 
-export default App;
+// export default App;
 
 
 
@@ -126,3 +126,29 @@ export default App;
 
 // export default App;
 
+// ✅ Business Pages Only
+import Dashboard from "./pages/business/Dashboard";
+import Services from "./pages/business/Services";
+import BusinessBookings from "./pages/business/Bookings";
+import BusinessProfile from "./pages/business/Profile";
+
+const App: React.FC = () => {
+  console.log("🚀 Running Business Pages");
+
+  return (
+    <ThemeProvider theme={theme}>
+      <Router>
+        <Routes>
+          {/* BUSINESS ROUTES */}
+          <Route path="/" element={<Dashboard />} /> {/* Default route */}
+          <Route path="/business" element={<Dashboard />} />
+          <Route path="/business/services" element={<Services />} />
+          <Route path="/business/bookings" element={<BusinessBookings />} />
+          <Route path="/business/profile" element={<BusinessProfile />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
+  );
+};
+
+export default App;

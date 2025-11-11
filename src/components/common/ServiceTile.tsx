@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus } from "react-feather"; // Icon for add button
+import { Plus } from "react-feather";
 
 interface ServiceTileProps {
   name: string;
@@ -8,6 +8,7 @@ interface ServiceTileProps {
   description?: string;
   onClick?: () => void;
   selected?: boolean;
+  icon?: React.ReactNode; // 👈 optional custom icon prop
 }
 
 const ServiceTile: React.FC<ServiceTileProps> = ({
@@ -16,7 +17,8 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
   price,
   description,
   onClick,
-  selected = false
+  selected = false,
+  icon, // 👈 use this
 }) => {
   return (
     <div
@@ -73,7 +75,7 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
         )}
       </div>
 
-      {/* Add Button */}
+      {/* Dynamic Button */}
       <button
         style={{
           background: "none",
@@ -88,8 +90,8 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
           transition: "all 0.2s ease-in-out",
         }}
         onMouseOver={(e) => {
-          e.currentTarget.style.borderColor = "#ff69b4";
-          e.currentTarget.style.color = "#ff69b4";
+          e.currentTarget.style.borderColor = "#76949F";
+          e.currentTarget.style.color = "#76949F";
           e.currentTarget.style.transform = "scale(1.05)";
         }}
         onMouseOut={(e) => {
@@ -98,7 +100,8 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
           e.currentTarget.style.transform = "scale(1)";
         }}
       >
-        <Plus size={16} />
+        {/* 👇 Default to Plus if no icon prop passed */}
+        {icon || <Plus size={16} />}
       </button>
     </div>
   );

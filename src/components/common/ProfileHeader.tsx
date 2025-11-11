@@ -21,7 +21,7 @@ interface ProfileHeaderProps {
 }
 
 const Container = styled.div`
-  width: 1200px;
+  width: 1300px;
   background: #ffffff;
   border-radius: 16px;
   overflow: hidden;

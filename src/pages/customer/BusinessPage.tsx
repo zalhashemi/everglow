@@ -21,7 +21,7 @@ const BusinessPage: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: "#F7F1F3",
+        backgroundColor: '#F1DEDE',
         minHeight: "100vh",
         paddingBottom: "40px",
       }}
