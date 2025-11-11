@@ -17,7 +17,7 @@ const StyledButton = styled.button<ButtonProps>`
   width: ${props => props.width || '1280px'};
   border-radius: 10px;
   font-family: 'Inter', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: ${props => props.theme.colors.white};
   background-color: ${props => props.backgroundColor || '#4A5074'};

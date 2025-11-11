@@ -1,18 +1,15 @@
 import React from "react";
 import styled from "styled-components";
-import Button from "../common/Button";                // ✅ Primary button
-import SecondaryButton from "../common/SecondaryButton"; // ✅ Secondary button
-import errorImage from '../../images/errorLoading.png';
+import Button from "../common/Button";
+import SecondaryButton from "../common/SecondaryButton";
+import errorImage from "../../images/errorLoading.png";
 
 interface BookingTileProps {
   id: number | string;
-  // allow either Date or formatted string
   date: Date | string;
   image?: string;
-  // callers may pass `businessName` or `salonName`
   salonName?: string;
   businessName?: string;
-  // callers may pass either an array of services or a single serviceName
   services?: string[] | string;
   serviceName?: string;
   location?: string;
@@ -23,19 +20,23 @@ interface BookingTileProps {
   onReschedule?: () => void;
 }
 
+/* ---- STYLED COMPONENTS ---- */
 const Tile = styled.div`
-  width: 95%;
+  width: 1600px;
   background-color: #ffffff;
   border-radius: 12px;
-  padding: 16px;
+  padding: 28px 32px; /* Slightly more breathing room */
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  border: 1px solid rgba(0,0,0,0.05);
+  align-items: flex-start;
+  gap: 22px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-align: left;
 `;
 
 const DateText = styled.div`
-  font-size: 14px;
+  font-size: 17px; /* +2 */
   font-weight: 800;
   color: #555;
   text-align: left;
@@ -44,46 +45,48 @@ const DateText = styled.div`
 
 const InfoRow = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 20px;
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
 `;
 
 const SalonImage = styled.img`
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
+  width: 96px; /* +16px from 80px */
+  height: 96px;
+  border-radius: 14px;
   object-fit: cover;
 `;
 
 const Details = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
 `;
 
 const SalonName = styled.div`
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px; /* +2 */
+  font-weight: 700;
+  color: #0b1c36;
   text-align: left;
 `;
 
 const LocationText = styled.div`
-  font-size: 14px;
+  font-size: 17px; /* +2 */
   color: #7a7a7a;
   text-align: left;
 `;
 
 const ServiceText = styled.div`
-  font-size: 13px;
+  font-size: 16px; /* +2 */
   color: #9aa0a6;
   text-align: left;
 `;
 
 const ButtonRow = styled.div`
   display: flex;
-  gap: 15px;
+  gap: 20px;
+  justify-content: flex-start;
   width: 100%;
 `;
 
@@ -94,9 +97,12 @@ const ReceiptButton = styled(Button)`
 
 const LeftSection = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: flex-start;
 `;
 
+/* ---- COMPONENT ---- */
 const BookingTile: React.FC<BookingTileProps> = ({
   date,
   image,
@@ -111,71 +117,67 @@ const BookingTile: React.FC<BookingTileProps> = ({
   onLeaveRating,
   onReschedule,
 }) => {
-  // Normalize incoming props to the shape this component expects
   const displayName = salonName || businessName || "Salon";
   const serviceList = Array.isArray(services)
-    ? services.join(', ')
-    : services || serviceName || '';
+    ? services.join(", ")
+    : services || serviceName || "";
 
   const [imgSrc, setImgSrc] = React.useState(image || errorImage);
+  const isPast = status === "past" || status === "completed";
 
-  const isPast = status === 'past' || status === 'completed';
-
-  const displayDate = typeof date === 'string'
-    ? date
-    : date.toLocaleString('en-US', {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric'
-      });
+  const displayDate =
+    typeof date === "string"
+      ? date
+      : date.toLocaleString("en-US", {
+          weekday: "short",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+        });
 
   return (
     <Tile>
-  <DateText>{displayDate}</DateText>
+      <DateText>{displayDate}</DateText>
 
       <InfoRow>
         <LeftSection>
-          <SalonImage 
-            src={imgSrc} 
-            alt={salonName} 
+          <SalonImage
+            src={imgSrc}
+            alt={displayName}
             onError={() => setImgSrc(errorImage)}
           />
-
           <Details>
-            <SalonName>{salonName}</SalonName>
+            <SalonName>{displayName}</SalonName>
             <LocationText>{location}</LocationText>
             <ServiceText>Services: {serviceList}</ServiceText>
           </Details>
         </LeftSection>
 
         {isPast && (
-          <SecondaryButton width="150px" onClick={onLeaveRating}>
+          <SecondaryButton width="180px" onClick={onLeaveRating}>
             Leave a Rating
           </SecondaryButton>
         )}
       </InfoRow>
 
-      {/* UPCOMING BOOKING UI */}
+      {/* ✅ Upcoming Booking Buttons (Left-aligned, unchanged size) */}
       {status === "upcoming" && (
         <ButtonRow>
-          <SecondaryButton width="160px" onClick={onReschedule}>
+          <SecondaryButton width="180px" onClick={onReschedule}>
             Reschedule
           </SecondaryButton>
-
-          <SecondaryButton width="160px" onClick={onCancel}>
-            Cancel Booking
+          <SecondaryButton width="180px" onClick={onCancel}>
+            Cancel 
           </SecondaryButton>
-
-          <Button width="160px" onClick={onViewReceipt}>
+          <Button width="180px" onClick={onViewReceipt}>
             View Receipt
           </Button>
         </ButtonRow>
       )}
 
-      {/* PAST BOOKING UI */}
+      {/* Past Booking Button */}
       {status === "past" && (
         <ReceiptButton fullWidth onClick={onViewReceipt}>
           View Receipt

@@ -1,7 +1,7 @@
-// import React from 'react';
-// import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import { ThemeProvider } from 'styled-components';
-// import { theme } from './styles/theme';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from 'styled-components';
+import { theme } from './styles/theme';
 
 // // Auth Pages
 // import Login from './pages/auth/Login';
@@ -55,49 +55,74 @@
 //import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // 👇 Customer pages only
-//import HomePage from "./pages/customer/Homepage";
-//import BookingsPage from "./pages/customer/BookingsPage";
 
-//const App: React.FC = () => {
-  //return (
-    //<Router>
-      //<Routes>
-        //{/* Customer homepage showing salons */}
-        //<Route path="/" element={<HomePage />} />
+// Customer pages
 
-        //{/* Dynamic booking page when a salon is clicked */}
-        //<Route path="/booking/:salonId" element={<BookingsPage />} />
-      //</Routes>
-    //</Router>
-  //);
-//};
+// Customer pages
+import HomePage from './pages/customer/Homepage';
+import BookingsPage from './pages/customer/BookingsPage';
+import Profile from './pages/customer/Profile';
+import BusinessPage from './pages/customer/BusinessPage';
 
-//export default App;
-
-import React from "react";
-import { ThemeProvider } from "styled-components";
-import { theme } from "./styles/theme";
-//import ProfilePage from "./pages/business/Dashboard"; // ✅ make sure this path is correct
-//import Dashboard from "./pages/business/Dashboard";
-import BusinessProfile from "./pages/business/Profile";
+// Business pages
+import Dashboard from './pages/business/Dashboard';
+import Services from './pages/business/Services';
+import BusinessBookings from './pages/business/Bookings';
+import BusinessProfile from './pages/business/Profile';
 
 const App: React.FC = () => {
+  console.log("✅ App mounted");
+
   return (
-    <ThemeProvider theme={theme}>
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: theme.colors.background,
-          padding: "40px 0",
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
-        <BusinessProfile />
-      </div>
-    </ThemeProvider>
+    <Router>
+      <Routes>
+        {/* CUSTOMER ROUTES */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/business/:salonId" element={<BusinessPage />} />
+
+
+        {/* BUSINESS ROUTES */}
+        <Route path="/business" element={<Dashboard />} />
+        <Route path="/business/services" element={<Services />} />
+        <Route path="/business/bookings" element={<BusinessBookings />} />
+        <Route path="/business/profile" element={<BusinessProfile />} />
+      </Routes>
+    </Router>
   );
 };
 
 export default App;
+
+
+
+
+
+// import React from "react";
+// import { ThemeProvider } from "styled-components";
+// import { theme } from "./styles/theme";
+// //import ProfilePage from "./pages/business/Dashboard"; // ✅ make sure this path is correct
+// //import Dashboard from "./pages/business/Dashboard";
+// import BusinessProfile from "./pages/business/Profile";
+
+// const App: React.FC = () => {
+//   return (
+//     <ThemeProvider theme={theme}>
+//       <div
+//         style={{
+//           minHeight: "100vh",
+//           backgroundColor: theme.colors.background,
+//           padding: "40px 0",
+//           display: "flex",
+//           justifyContent: "center",
+//         }}
+//       >
+//         <BusinessProfile />
+//       </div>
+//     </ThemeProvider>
+//   );
+// };
+
+// export default App;
 

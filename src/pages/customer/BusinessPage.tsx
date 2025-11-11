@@ -1,218 +1,159 @@
 import React, { useState } from "react";
-import styled from "styled-components";
-import ProfileHeader from "../../components/common/ProfileHeader";
+import { useLocation } from "react-router-dom";
+import { AiFillStar } from "react-icons/ai";
+import { FiMapPin } from "react-icons/fi";
+import TabBar from "../../components/common/TabBar"; // ✅ Added tab bar
 import ServiceTile from "../../components/common/ServiceTile";
-import StaffCard from "../../components/common/StaffCard";
-import TimeCard from "../../components/common/TimeCard";
-import TabBar from "../../components/common/TabBar";
-import Button from "../../components/common/Button";
-
-const Container = styled.div`
-  min-height: 100vh;
-  background-color: ${(props) => props.theme.colors.background};
-`;
-
-const Content = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: ${(props) => props.theme.spacing.xl};
-`;
-
-const Section = styled.div`
-  background: ${(props) => props.theme.colors.white};
-  border-radius: ${(props) => props.theme.borderRadius.medium};
-  padding: ${(props) => props.theme.spacing.xl};
-  margin-bottom: ${(props) => props.theme.spacing.xl};
-`;
-
-const SectionTitle = styled.h2`
-  color: ${(props) => props.theme.colors.secondary};
-  font-size: ${(props) => props.theme.typography.fontSizes.xlarge};
-  margin-bottom: ${(props) => props.theme.spacing.lg};
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: ${(props) => props.theme.spacing.lg};
-`;
-
-const BookingSummary = styled.div`
-  border: 1px solid ${(props) => props.theme.colors.gray.medium};
-  border-radius: ${(props) => props.theme.borderRadius.medium};
-  padding: ${(props) => props.theme.spacing.lg};
-  margin-top: ${(props) => props.theme.spacing.xl};
-`;
-
-const SummaryItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: ${(props) => props.theme.spacing.sm};
-  font-size: ${(props) => props.theme.typography.fontSizes.medium};
-`;
+import errorImage from "../../images/errorLoading.png";
 
 const BusinessPage: React.FC = () => {
-  const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [selectedStaff, setSelectedStaff] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("services");
+  const location = useLocation();
+  const salon = location.state as any;
 
-  // Mock business data
-  const businessData = {
-    name: "Elegant Beauty Salon",
-    stat1: 4.8,
-    stat2: 256,
-    stat3: 12, // bookings or staff count
-  };
+  // ✅ Hooks first
+  const [activeTab, setActiveTab] = useState(salon?.categories?.[0] || "");
+  const [imgSrc, setImgSrc] = useState(salon?.image || errorImage);
 
-  const services = [
-    { id: "1", name: "Haircut", duration: "45 min", price: 50 },
-    { id: "2", name: "Hair Coloring", duration: "2 hrs", price: 120 },
-    { id: "3", name: "Styling", duration: "30 min", price: 40 },
-  ];
-
-  const staff = [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      role: "Senior Stylist",
-      image: "https://example.com/staff1.jpg",
-      specialties: ["Haircut", "Coloring"],
-      rating: 4.9,
-    },
-  ];
-
-  const timeSlots = [
-    { id: "1", day: "Monday", startTime: "9:00 AM", endTime: "10:00 AM" },
-    { id: "2", day: "Monday", startTime: "10:00 AM", endTime: "11:00 AM" },
-    { id: "3", day: "Monday", startTime: "11:00 AM", endTime: "12:00 PM" },
-  ];
-
-  const tabs = [
-    { id: "services", label: "Services" },
-    { id: "gallery", label: "Gallery" },
-    { id: "reviews", label: "Reviews" },
-    { id: "about", label: "About" },
-  ];
+  if (!salon) {
+    return <div style={{ padding: "20px" }}>Salon not found.</div>;
+  }
 
   return (
-    <Container>
-      <Content>
-        <ProfileHeader
-          type="business"
-          name={businessData.name}
-          stat1={businessData.stat1}
-          stat2={businessData.stat2}
-          stat3={businessData.stat3}
+    <div
+      style={{
+        backgroundColor: "#F7F1F3",
+        minHeight: "100vh",
+        paddingBottom: "40px",
+      }}
+    >
+      {/* ✅ Tab Bar for navigation */}
+      <TabBar type="customer" />
+
+      {/* Page content */}
+      <div
+        style={{
+          width: "90%",
+          maxWidth: "900px",
+          margin: "40px auto 0 auto",
+          backgroundColor: "#fff",
+          borderRadius: "16px",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Salon Header */}
+        <img
+          src={imgSrc}
+          alt={salon.name}
+          onError={() => setImgSrc(errorImage)}
+          style={{
+            width: "100%",
+            height: "220px",
+            objectFit: "cover",
+          }}
         />
 
-        <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <div style={{ padding: "24px" }}>
+          <h2 style={{ fontSize: "24px", fontWeight: 700 }}>{salon.name}</h2>
 
-        {activeTab === "services" && (
-          <>
-            <Section>
-              <SectionTitle>Services</SectionTitle>
-              <Grid>
-                {services.map((service) => (
-                  <ServiceTile
-                    key={service.id}
-                    name={service.name}
-                    duration={service.duration}
-                    price={service.price}
-                    selected={selectedService === service.id}
-                    onClick={() => setSelectedService(service.id)}
-                  />
-                ))}
-              </Grid>
-            </Section>
+          {/* Location */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginTop: "6px",
+              color: "#7A7A7A",
+              fontSize: "14px",
+            }}
+          >
+            {React.createElement(FiMapPin as any, {
+              size: 16,
+              style: { marginRight: "4px" },
+            })}
+            {salon.location}
+          </div>
 
-            {selectedService && (
-              <Section>
-                <SectionTitle>Choose Your Stylist</SectionTitle>
-                <Grid>
-                  {staff.map((member) => (
-                    <StaffCard
-                      key={member.id}
-                      name={member.name}
-                      role={member.role}
-                      image={member.image}
-                      specialties={member.specialties}
-                      rating={member.rating}
-                      selected={selectedStaff === member.id}
-                      onClick={() => setSelectedStaff(member.id)}
-                    />
-                  ))}
-                </Grid>
-              </Section>
-            )}
+          {/* Hours */}
+          <div
+            style={{
+              color: "#7A7A7A",
+              fontSize: "14px",
+              marginTop: "4px",
+            }}
+          >
+            {salon.hours}
+          </div>
 
-            {selectedStaff && (
-              <Section>
-                <SectionTitle>Choose Time</SectionTitle>
-                <Grid>
-                  {timeSlots.map((slot) => (
-                    <div
-                      key={slot.id}
-                      onClick={() => setSelectedTime(`${slot.startTime}`)}
-                      style={{
-                        border:
-                          selectedTime === slot.startTime
-                            ? `2px solid ${"#4A5074"}`
-                            : "1px solid #ddd",
-                        borderRadius: "12px",
-                        cursor: "pointer",
-                        transition: "0.2s ease",
-                      }}
-                    >
-                      <TimeCard
-                        day={slot.day}
-                        startTime={slot.startTime}
-                        endTime={slot.endTime}
-                      />
-                    </div>
-                  ))}
-                </Grid>
-              </Section>
-            )}
+          {/* Rating */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginTop: "6px",
+              fontSize: "14px",
+            }}
+          >
+            {React.createElement(AiFillStar as any, {
+              color: "#FFD03F",
+              size: 16,
+              style: { marginRight: "4px" },
+            })}
+            <span>{salon.rating}</span>
+            <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>
+              ({salon.reviews})
+            </span>
+          </div>
 
-            {selectedTime && (
-              <BookingSummary>
-                <SectionTitle>Booking Summary</SectionTitle>
-                <SummaryItem>
-                  <span>Service:</span>
-                  <span>
-                    {services.find((s) => s.id === selectedService)?.name}
-                  </span>
-                </SummaryItem>
-                <SummaryItem>
-                  <span>Stylist:</span>
-                  <span>
-                    {staff.find((s) => s.id === selectedStaff)?.name}
-                  </span>
-                </SummaryItem>
-                <SummaryItem>
-                  <span>Time:</span>
-                  <span>{selectedTime}</span>
-                </SummaryItem>
-                <SummaryItem>
-                  <span>Price:</span>
-                  <span>
-                    ${services.find((s) => s.id === selectedService)?.price}
-                  </span>
-                </SummaryItem>
-                <Button
-                  variant="primary"
-                  fullWidth
-                  onClick={() => alert("Booking confirmed!")}
-                >
-                  Confirm Booking
-                </Button>
-              </BookingSummary>
-            )}
-          </>
-        )}
-      </Content>
-    </Container>
+          {/* Description */}
+          <p style={{ marginTop: "12px", color: "#555", fontSize: "14px" }}>
+            {salon.description}
+          </p>
+
+          {/* Tabs */}
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              borderBottom: "1px solid #e5e5e5",
+              marginTop: "20px",
+            }}
+          >
+            {salon.categories.map((tab: string) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  border: "none",
+                  background: "none",
+                  fontWeight: 500,
+                  color: activeTab === tab ? "#000" : "#7A7A7A",
+                  borderBottom:
+                    activeTab === tab
+                      ? "2px solid #000"
+                      : "2px solid transparent",
+                  padding: "10px 0",
+                  cursor: "pointer",
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Services */}
+          <div style={{ marginTop: "20px" }}>
+            {salon.services.map((service: any) => (
+              <ServiceTile
+                key={service.id}
+                name={service.name}
+                price={service.price}
+                duration={service.duration}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

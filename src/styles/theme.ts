@@ -25,7 +25,7 @@ export const theme = {
     round: '50%'
   },
   typography: {
-    fontFamily: "'Poppins', sans-serif",
+    fontFamily: "'Inter', sans-serif",
     fontSizes: {
       small: '0.875rem',
       medium: '1rem',

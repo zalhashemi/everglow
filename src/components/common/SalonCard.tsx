@@ -30,13 +30,25 @@ const SalonCard: React.FC<SalonCardProps> = ({
     <div
       onClick={onClick}
       style={{
-        width: "280px",
-        height: "211px",
+        width: "310px", // ✅ Larger so 4 fit across 1340px width (with gaps)
+        height: "250px",
         backgroundColor: "#fff",
-        borderRadius: "10px",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+        borderRadius: "14px",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
         cursor: "pointer",
         overflow: "hidden",
+        flexShrink: 0,
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
+        (e.currentTarget as HTMLDivElement).style.boxShadow =
+          "0 6px 14px rgba(0, 0, 0, 0.18)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+        (e.currentTarget as HTMLDivElement).style.boxShadow =
+          "0 4px 12px rgba(0, 0, 0, 0.12)";
       }}
     >
       {/* Image */}
@@ -47,58 +59,67 @@ const SalonCard: React.FC<SalonCardProps> = ({
           onError={() => setImgSrc(errorImage)}
           style={{
             width: "100%",
-            height: "120px",
+            height: "150px",
             objectFit: "cover",
           }}
         />
       </div>
 
       {/* Details */}
-      <div style={{ padding: "8px 12px" }}>
+      <div style={{ padding: "10px 14px" }}>
+        {/* Name + Distance */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             fontWeight: 600,
-            fontSize: "15px",
+            fontSize: "16px",
           }}
         >
           <span>{name}</span>
           <span style={{ color: "#7A7A7A", fontSize: "13px" }}>{distance}</span>
         </div>
 
+        {/* Location */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            marginTop: "3px",
+            marginTop: "5px",
             color: "#7A7A7A",
             fontSize: "13px",
+            whiteSpace: "nowrap", // ✅ one line only
+            overflow: "hidden", // ✅ truncate
+            textOverflow: "ellipsis", // ✅ adds "..."
+            maxWidth: "100%", // ensures ellipsis fits correctly
           }}
+          title={location} // shows full location on hover
         >
-          {React.createElement(FiMapPin as React.JSXElementConstructor<any>, {
-            size: 14,
-            style: { marginRight: "4px" },
-          })}
-          {location}
+          <FiMapPin size={14} style={{ marginRight: "4px", flexShrink: 0 }} />
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+            {location}
+          </span>
         </div>
 
+        {/* Rating */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            marginTop: "4px",
-            fontSize: "13px",
+            marginTop: "6px",
+            fontSize: "14px",
             fontWeight: 500,
           }}
         >
-          {React.createElement(AiFillStar as React.JSXElementConstructor<any>, {
-            color: "#FFD03F",
-            size: 16,
-            style: { marginRight: "4px" },
-          })}
+          <AiFillStar
+            color="#FFD03F"
+            size={16}
+            style={{ marginRight: "5px", flexShrink: 0 }}
+          />
           <span>{rating}</span>
-          <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>({reviews})</span>
+          <span style={{ color: "#7A7A7A", marginLeft: "5px" }}>
+            ({reviews})
+          </span>
         </div>
       </div>
     </div>
