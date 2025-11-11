@@ -2,12 +2,22 @@ import React from "react";
 import styled from "styled-components";
 import ellieProfile from "../../images/ellieProfile.jpg";
 
+interface ProfileStat {
+  label: string;
+  value: string | number;
+}
+
 interface ProfileHeaderProps {
   type: "customer" | "business";
   name: string;
-  stat1: number;
-  stat2: number;
-  stat3: number;
+  // legacy numeric stats
+  stat1?: number;
+  stat2?: number;
+  stat3?: number;
+  // optional richer props
+  image?: string;
+  coverImage?: string;
+  stats?: ProfileStat[];
 }
 
 const Container = styled.div`
@@ -96,18 +106,27 @@ const StatLabel = styled.div`
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   type,
   name,
-  stat1,
-  stat2,
-  stat3,
+  stat1 = 0,
+  stat2 = 0,
+  stat3 = 0,
+  image,
+  coverImage,
+  stats,
 }) => {
   return (
     <Container>
-      <HeaderBanner />
+      <HeaderBanner
+        style={
+          coverImage
+            ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover' }
+            : undefined
+        }
+      />
 
       <Content>
         <ProfileSection>
           <AvatarWrapper>
-            <ProfileImage src={ellieProfile} alt="Profile" />
+            <ProfileImage src={image || ellieProfile} alt="Profile" />
           </AvatarWrapper>
           <InfoColumn>
             <Name>{name}</Name>
@@ -115,7 +134,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </ProfileSection>
 
         <StatsRow>
-          {type === "customer" ? (
+          {stats && stats.length > 0 ? (
+            stats.map((s) => (
+              <StatBlock key={s.label}>
+                <StatNumber>{s.value}</StatNumber>
+                <StatLabel>{s.label}</StatLabel>
+              </StatBlock>
+            ))
+          ) : type === "customer" ? (
             <>
               <StatBlock>
                 <StatNumber>{stat1}</StatNumber>

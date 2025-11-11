@@ -5,16 +5,22 @@ import SecondaryButton from "../common/SecondaryButton"; // ✅ Secondary button
 import errorImage from '../../images/errorLoading.png';
 
 interface BookingTileProps {
-  id: string;
-  date: string; // "Sep 10, 2024 - 9:30 AM"
-  image: string;
-  salonName: string;
-  location: string;
-  services: string[];
-  status: "upcoming" | "past";
+  id: number | string;
+  // allow either Date or formatted string
+  date: Date | string;
+  image?: string;
+  // callers may pass `businessName` or `salonName`
+  salonName?: string;
+  businessName?: string;
+  // callers may pass either an array of services or a single serviceName
+  services?: string[] | string;
+  serviceName?: string;
+  location?: string;
+  status: "upcoming" | "past" | "completed" | "cancelled";
   onCancel?: () => void;
   onViewReceipt?: () => void;
   onLeaveRating?: () => void;
+  onReschedule?: () => void;
 }
 
 const Tile = styled.div`
@@ -95,19 +101,40 @@ const BookingTile: React.FC<BookingTileProps> = ({
   date,
   image,
   salonName,
+  businessName,
   location,
   services,
+  serviceName,
   status,
   onCancel,
   onViewReceipt,
   onLeaveRating,
+  onReschedule,
 }) => {
-  const serviceList = services.join(", ");
+  // Normalize incoming props to the shape this component expects
+  const displayName = salonName || businessName || "Salon";
+  const serviceList = Array.isArray(services)
+    ? services.join(', ')
+    : services || serviceName || '';
+
   const [imgSrc, setImgSrc] = React.useState(image || errorImage);
+
+  const isPast = status === 'past' || status === 'completed';
+
+  const displayDate = typeof date === 'string'
+    ? date
+    : date.toLocaleString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric'
+      });
 
   return (
     <Tile>
-      <DateText>{date}</DateText>
+  <DateText>{displayDate}</DateText>
 
       <InfoRow>
         <LeftSection>
@@ -124,7 +151,7 @@ const BookingTile: React.FC<BookingTileProps> = ({
           </Details>
         </LeftSection>
 
-        {status === "past" && (
+        {isPast && (
           <SecondaryButton width="150px" onClick={onLeaveRating}>
             Leave a Rating
           </SecondaryButton>
@@ -134,6 +161,10 @@ const BookingTile: React.FC<BookingTileProps> = ({
       {/* UPCOMING BOOKING UI */}
       {status === "upcoming" && (
         <ButtonRow>
+          <SecondaryButton width="160px" onClick={onReschedule}>
+            Reschedule
+          </SecondaryButton>
+
           <SecondaryButton width="160px" onClick={onCancel}>
             Cancel Booking
           </SecondaryButton>

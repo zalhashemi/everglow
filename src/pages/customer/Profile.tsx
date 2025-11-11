@@ -1,188 +1,191 @@
-// import React, { useState } from 'react';
-// import styled from 'styled-components';
-// import ProfileHeader from '../../components/common/ProfileHeader';
-// import TabBar from '../../components/common/TabBar';
-// import TextBox from '../../components/common/TextBox';
-// import Button from '../../components/common/Button';
-// import LoyaltyTile from '../../components/common/LoyaltyTile';
+import React from "react";
+import ProfileHeader from "../../components/common/ProfileHeader";
+import LoyaltyTile from "../../components/common/LoyaltyTile";
+import TextBox from "../../components/common/TextBox";
+import Button from "../../components/common/Button";
 
-// const Container = styled.div`
-//   min-height: 100vh;
-//   background-color: ${props => props.theme.colors.background};
-// `;
+const ProfilePage: React.FC = () => {
+  const [isEditing, setIsEditing] = React.useState(false);
 
-// const Content = styled.div`
-//   max-width: 800px;
-//   margin: 0 auto;
-//   padding: ${props => props.theme.spacing.xl};
-// `;
+  // 🧍 Mock user data
+  const user = {
+    name: "Enid Sinclair",
+    bookings: 32,
+    visited: 9,
+    loyaltyPrograms: 3,
+    salonName: "Glamour Beauty Salon",
+    email: "contact@glamoursalon.com",
+    phone: "+1 (555) 123-4567",
+    loyalty: [
+      {
+        id: 1,
+        name: "Hair Avenue",
+        location: "Lakewood, California",
+        rating: 4.7,
+        reviews: 312,
+        offer: "FREE BLOWDRY",
+        filledCircles: 2,
+        totalCircles: 5,
+        distance: "2 wk",
+      },
+      {
+        id: 2,
+        name: "Hair Avenue",
+        location: "Lakewood, California",
+        rating: 4.7,
+        reviews: 312,
+        offer: "25% OFF HAIR TREATMENT",
+        filledCircles: 3,
+        totalCircles: 5,
+        distance: "3 wk",
+      },
+      {
+        id: 3,
+        name: "Hair Avenue",
+        location: "Lakewood, California",
+        rating: 4.7,
+        reviews: 312,
+        offer: "ONE NAIL SERVICE FREE",
+        filledCircles: 4,
+        totalCircles: 5,
+        distance: "4 wk",
+      },
+    ],
+  };
 
-// const Section = styled.div`
-//   background: ${props => props.theme.colors.white};
-//   border-radius: ${props => props.theme.borderRadius.medium};
-//   padding: ${props => props.theme.spacing.xl};
-//   margin-bottom: ${props => props.theme.spacing.xl};
-// `;
+  return (
+    <div
+      style={{
+        width: "90%",
+        maxWidth: "1200px",
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px",
+      }}
+    >
+      {/* ---------- Profile Header ---------- */}
+      <ProfileHeader
+        type="customer"
+        name={user.name}
+        stat1={user.bookings}
+        stat2={user.visited}
+        stat3={user.loyaltyPrograms}
+      />
 
-// const SectionTitle = styled.h2`
-//   color: ${props => props.theme.colors.secondary};
-//   font-size: ${props => props.theme.typography.fontSizes.xlarge};
-//   margin-bottom: ${props => props.theme.spacing.lg};
-// `;
+      {/* ---------- Personal Information ---------- */}
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "32px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "20px",
+              fontWeight: 700,
+              color: "#2D2D2D",
+              margin: 0,
+            }}
+          >
+            Personal Information
+          </h2>
 
-// const Form = styled.form`
-//   display: flex;
-//   flex-direction: column;
-//   gap: ${props => props.theme.spacing.md};
-// `;
+          {/* ✅ Button uses children instead of label */}
+          <Button
+  onClick={() => setIsEditing(!isEditing)}
+  style={{
+    padding: "8px 16px",
+    fontSize: "14px",
+    borderRadius: "8px",
+    width: "auto",
+    alignSelf: "flex-start",
+  }}
+>
+  {isEditing ? "Save" : "Edit"}
+</Button>
+        </div>
 
-// const Grid = styled.div`
-//   display: grid;
-//   grid-template-columns: 1fr 1fr;
-//   gap: ${props => props.theme.spacing.md};
-// `;
+        {/* Input fields */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+          }}
+        >
+          <TextBox
+            label="Name"
+            value={user.salonName}
+            readOnly={!isEditing}
+            onChange={() => {}}
+          />
+          <TextBox
+            label="Phone"
+            value={user.phone}
+            readOnly={!isEditing}
+            onChange={() => {}}
+          />
+          <div style={{ gridColumn: "1 / span 2" }}>
+            <TextBox
+              label="Email"
+              value={user.email}
+              readOnly={!isEditing}
+              onChange={() => {}}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+      </div>
 
-// const CustomerProfile: React.FC = () => {
-//   const [activeTab, setActiveTab] = useState('profile');
-//   const [profileData, setProfileData] = useState({
-//     firstName: 'John',
-//     lastName: 'Doe',
-//     email: 'john.doe@example.com',
-//     phone: '+1 234 567 8900',
-//     address: '123 Main St',
-//     city: 'New York',
-//     state: 'NY',
-//     zipCode: '10001',
-//   });
+      {/* ---------- Loyalty Programs ---------- */}
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "32px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "20px",
+            fontWeight: 700,
+            color: "#2D2D2D",
+            marginBottom: "20px",
+          }}
+        >
+          My Loyalty Programs
+        </h2>
 
-//   const loyaltyData = {
-//     points: 450,
-//     level: 'Gold Member',
-//     nextLevel: 'Platinum',
-//     pointsToNext: 550,
-//     rewards: [
-//       'Free service after 10 bookings',
-//       '10% off on all spa services',
-//       'Priority booking',
-//       'Special birthday rewards'
-//     ]
-//   };
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {user.loyalty.map((item) => (
+            <LoyaltyTile
+              key={item.id}
+              name={item.name}
+              location={item.location}
+              rating={item.rating}
+              reviews={item.reviews}
+              offer={item.offer}
+              filledCircles={item.filledCircles}
+              totalCircles={item.totalCircles}
+              distance={item.distance}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
-//   const handleProfileUpdate = (e: React.FormEvent<HTMLFormElement>) => {
-//     e.preventDefault();
-//     // TODO: Implement profile update logic
-//     console.log('Profile update submitted:', profileData);
-//   };
-
-//   const tabs = [
-//     { id: 'profile', label: 'Profile Details' },
-//     { id: 'loyalty', label: 'Loyalty & Rewards' },
-//     { id: 'preferences', label: 'Preferences' }
-//   ];
-
-//   return (
-//     <Container>
-//       <ProfileHeader
-//         name={`${profileData.firstName} ${profileData.lastName}`}
-//         image="https://example.com/profile.jpg"
-//         stats={[
-//           { label: 'Bookings', value: '24' },
-//           { label: 'Reviews', value: '12' },
-//           { label: 'Points', value: loyaltyData.points.toString() }
-//         ]}
-//       />
-
-//       <Content>
-//         <TabBar
-//           tabs={tabs}
-//           activeTab={activeTab}
-//           onTabChange={setActiveTab}
-//         />
-
-//         {activeTab === 'profile' && (
-//           <Section>
-//             <SectionTitle>Personal Information</SectionTitle>
-//             <Form onSubmit={handleProfileUpdate}>
-//               <Grid>
-//                 <TextBox
-//                   placeholder="First Name"
-//                   value={profileData.firstName}
-//                   onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
-//                 />
-//                 <TextBox
-//                   placeholder="Last Name"
-//                   value={profileData.lastName}
-//                   onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
-//                 />
-//               </Grid>
-
-//               <TextBox
-//                 type="email"
-//                 placeholder="Email"
-//                 value={profileData.email}
-//                 onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-//               />
-
-//               <TextBox
-//                 placeholder="Phone Number"
-//                 value={profileData.phone}
-//                 onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-//               />
-
-//               <TextBox
-//                 placeholder="Address"
-//                 value={profileData.address}
-//                 onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
-//               />
-
-//               <Grid>
-//                 <TextBox
-//                   placeholder="City"
-//                   value={profileData.city}
-//                   onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value }))}
-//                 />
-//                 <TextBox
-//                   placeholder="State"
-//                   value={profileData.state}
-//                   onChange={(e) => setProfileData(prev => ({ ...prev, state: e.target.value }))}
-//                 />
-//               </Grid>
-
-//               <TextBox
-//                 placeholder="ZIP Code"
-//                 value={profileData.zipCode}
-//                 onChange={(e) => setProfileData(prev => ({ ...prev, zipCode: e.target.value }))}
-//               />
-
-//               <Button variant="primary" type="submit">
-//                 Save Changes
-//               </Button>
-//             </Form>
-//           </Section>
-//         )}
-
-//         {activeTab === 'loyalty' && (
-//           <Section>
-//             <SectionTitle>Loyalty Program</SectionTitle>
-//             <LoyaltyTile
-//               points={loyaltyData.points}
-//               level={loyaltyData.level}
-//               nextLevel={loyaltyData.nextLevel}
-//               pointsToNext={loyaltyData.pointsToNext}
-//               rewards={loyaltyData.rewards}
-//             />
-//           </Section>
-//         )}
-
-//         {activeTab === 'preferences' && (
-//           <Section>
-//             <SectionTitle>Notification Preferences</SectionTitle>
-//             {/* Add notification preferences UI here */}
-//           </Section>
-//         )}
-//       </Content>
-//     </Container>
-//   );
-// };
-
-// export default CustomerProfile;
+export default ProfilePage;

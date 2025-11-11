@@ -51,24 +51,49 @@
 
 // export default App;
 
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+//import React from "react";
+//import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // 👇 Customer pages only
-import HomePage from "./pages/customer/Homepage";
-import BookingsPage from "./pages/customer/BookingsPage";
+//import HomePage from "./pages/customer/Homepage";
+//import BookingsPage from "./pages/customer/BookingsPage";
+
+//const App: React.FC = () => {
+  //return (
+    //<Router>
+      //<Routes>
+        //{/* Customer homepage showing salons */}
+        //<Route path="/" element={<HomePage />} />
+
+        //{/* Dynamic booking page when a salon is clicked */}
+        //<Route path="/booking/:salonId" element={<BookingsPage />} />
+      //</Routes>
+    //</Router>
+  //);
+//};
+
+//export default App;
+
+import React from "react";
+import { ThemeProvider } from "styled-components";
+import { theme } from "./styles/theme";
+import ProfilePage from "./pages/customer/Profile"; // ✅ make sure this path is correct
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Routes>
-        {/* Customer homepage showing salons */}
-        <Route path="/" element={<HomePage />} />
-
-        {/* Dynamic booking page when a salon is clicked */}
-        <Route path="/booking/:salonId" element={<BookingsPage />} />
-      </Routes>
-    </Router>
+    <ThemeProvider theme={theme}>
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: theme.colors.background,
+          padding: "40px 0",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <ProfilePage />
+      </div>
+    </ThemeProvider>
   );
 };
 
