@@ -1,8 +1,7 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { AiFillStar } from "react-icons/ai";
 import { FiMapPin } from "react-icons/fi";
-import errorImage from '../../images/errorLoading.png';
+import errorImage from "../../images/errorLoading.png";
 
 interface SalonCardProps {
   id: string;
@@ -12,7 +11,7 @@ interface SalonCardProps {
   location: string;
   rating: number;
   reviews: number;
-  onClick: () => void;  // Add this line
+  onClick: () => void;
 }
 
 const SalonCard: React.FC<SalonCardProps> = ({
@@ -23,14 +22,13 @@ const SalonCard: React.FC<SalonCardProps> = ({
   location,
   rating,
   reviews,
-  onClick   // Add this line
+  onClick,
 }) => {
-  const navigate = useNavigate();
   const [imgSrc, setImgSrc] = React.useState(image || errorImage);
 
   return (
     <div
-      onClick={onClick}  // Replace navigate with onClick
+      onClick={onClick}
       style={{
         width: "280px",
         height: "211px",
@@ -55,7 +53,7 @@ const SalonCard: React.FC<SalonCardProps> = ({
         />
       </div>
 
-      {/* Text */}
+      {/* Details */}
       <div style={{ padding: "8px 12px" }}>
         <div
           style={{
@@ -78,7 +76,10 @@ const SalonCard: React.FC<SalonCardProps> = ({
             fontSize: "13px",
           }}
         >
-          <FiMapPin size={14 as number} style={{ marginRight: "4px" }} />
+          {React.createElement(FiMapPin as React.JSXElementConstructor<any>, {
+            size: 14,
+            style: { marginRight: "4px" },
+          })}
           {location}
         </div>
 
@@ -91,15 +92,13 @@ const SalonCard: React.FC<SalonCardProps> = ({
             fontWeight: 500,
           }}
         >
-          <AiFillStar
-            color="#FFD03F"
-            size={16 as number}
-            style={{ marginRight: "4px" }}
-          />
+          {React.createElement(AiFillStar as React.JSXElementConstructor<any>, {
+            color: "#FFD03F",
+            size: 16,
+            style: { marginRight: "4px" },
+          })}
           <span>{rating}</span>
-          <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>
-            ({reviews})
-          </span>
+          <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>({reviews})</span>
         </div>
       </div>
     </div>

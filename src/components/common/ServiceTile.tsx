@@ -1,6 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Plus } from 'react-feather'; // Icon for add button
+import React from "react";
+import { Plus } from "react-feather"; // Icon for add button
 
 interface ServiceTileProps {
   name: string;
@@ -11,93 +10,6 @@ interface ServiceTileProps {
   selected?: boolean;
 }
 
-const TileContainer = styled.div<{ selected?: boolean }>`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: ${props => props.theme.colors.white};
-  border-bottom: 1px solid ${props => props.theme.colors.gray.medium};
-  padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.sm};
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: ${props => props.theme.colors.gray.light};
-  }
-
-  ${props =>
-    props.selected &&
-    `
-    background-color: ${props.theme.colors.gray.light};
-    border-left: 3px solid ${props.theme.colors.primary};
-  `}
-`;
-
-const LeftSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const ServiceName = styled.h4`
-  margin: 0;
-  font-family: ${props => props.theme.typography.fontFamily};
-  font-size: ${props => props.theme.typography.fontSizes.medium};
-  color: ${props => props.theme.colors.secondary};
-  font-weight: 600;
-`;
-
-const SubInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${props => props.theme.spacing.sm};
-`;
-
-const Price = styled.span`
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.small};
-  font-weight: 500;
-`;
-
-const Duration = styled.span`
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.small};
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  &::before {
-    content: '⏱️';
-    font-size: 0.9em;
-  }
-`;
-
-const Description = styled.p`
-  margin: 0;
-  color: ${props => props.theme.colors.gray.dark};
-  font-size: ${props => props.theme.typography.fontSizes.small};
-  opacity: 0.8;
-`;
-
-const AddButton = styled.button`
-  background: none;
-  border: 1.5px solid ${props => props.theme.colors.gray.medium};
-  color: ${props => props.theme.colors.secondary};
-  border-radius: ${props => props.theme.borderRadius.round};
-  padding: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    border-color: ${props => props.theme.colors.primary};
-    color: ${props => props.theme.colors.primary};
-    transform: scale(1.05);
-  }
-`;
-
 const ServiceTile: React.FC<ServiceTileProps> = ({
   name,
   duration,
@@ -107,19 +19,88 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
   selected = false
 }) => {
   return (
-    <TileContainer onClick={onClick} selected={selected}>
-      <LeftSection>
-        <ServiceName>{name}</ServiceName>
-        <SubInfo>
-          <Price>{price} BD</Price>
-          <Duration>{duration}</Duration>
-        </SubInfo>
-        {description && <Description>{description}</Description>}
-      </LeftSection>
-      <AddButton>
+    <div
+      onClick={onClick}
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        backgroundColor: selected ? "#f5f5f5" : "#ffffff",
+        borderBottom: "1px solid #ddd",
+        padding: "16px 12px",
+        cursor: "pointer",
+        transition: "background-color 0.2s ease",
+      }}
+    >
+      {/* Left section */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <h4
+          style={{
+            margin: 0,
+            fontSize: "15px",
+            color: "#333",
+            fontWeight: 600,
+            fontFamily: "Poppins, sans-serif",
+          }}
+        >
+          {name}
+        </h4>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "13px",
+            color: "#666",
+          }}
+        >
+          <span>{price} BD</span>
+          <span>⏱️ {duration}</span>
+        </div>
+
+        {description && (
+          <p
+            style={{
+              margin: 0,
+              fontSize: "12px",
+              color: "#777",
+              opacity: 0.8,
+            }}
+          >
+            {description}
+          </p>
+        )}
+      </div>
+
+      {/* Add Button */}
+      <button
+        style={{
+          background: "none",
+          border: "1.5px solid #bbb",
+          color: "#333",
+          borderRadius: "50%",
+          padding: "4px",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "all 0.2s ease-in-out",
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.borderColor = "#ff69b4";
+          e.currentTarget.style.color = "#ff69b4";
+          e.currentTarget.style.transform = "scale(1.05)";
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.borderColor = "#bbb";
+          e.currentTarget.style.color = "#333";
+          e.currentTarget.style.transform = "scale(1)";
+        }}
+      >
         <Plus size={16} />
-      </AddButton>
-    </TileContainer>
+      </button>
+    </div>
   );
 };
 
