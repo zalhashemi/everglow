@@ -77,7 +77,9 @@
 import React from "react";
 import { ThemeProvider } from "styled-components";
 import { theme } from "./styles/theme";
-import ProfilePage from "./pages/customer/Profile"; // ✅ make sure this path is correct
+//import ProfilePage from "./pages/business/Dashboard"; // ✅ make sure this path is correct
+//import Dashboard from "./pages/business/Dashboard";
+import BusinessProfile from "./pages/business/Profile";
 
 const App: React.FC = () => {
   return (
@@ -91,10 +93,11 @@ const App: React.FC = () => {
           justifyContent: "center",
         }}
       >
-        <ProfilePage />
+        <BusinessProfile />
       </div>
     </ThemeProvider>
   );
 };
 
 export default App;
+

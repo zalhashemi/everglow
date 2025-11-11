@@ -1,32 +1,34 @@
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'small' | 'medium' | 'large';
+  variant?: "primary" | "secondary" | "outline";
+  size?: "small" | "medium" | "large";
   fullWidth?: boolean;
   width?: string;
   backgroundColor?: string;
   onClick?: () => void;
 }
 
-const StyledButton = styled.button<ButtonProps>`
+const StyledSecondaryButton = styled.button<ButtonProps>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 48px;
-  width: ${props => props.width || '1280px'};
+  width: ${(props) => props.width || "fit-content"};
+  padding: 0 24px;
   border-radius: 10px;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 18px;
   font-weight: 500;
-  color: ${props => props.theme.colors.primary};
+  color: ${(props) => props.theme.colors.primary};
   background-color: transparent;
-  border: 2px solid ${props => props.theme.colors.primary};
+  border: 2px solid ${(props) => props.theme.colors.primary};
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background-color: ${props => props.theme.colors.primary}15;
+    background-color: ${(props) => props.theme.colors.primary}15;
   }
 
   &:disabled {
@@ -35,7 +37,7 @@ const StyledButton = styled.button<ButtonProps>`
   }
 `;
 
-const Button: React.FC<ButtonProps> = ({
+const SecondaryButton: React.FC<ButtonProps> = ({
   width,
   backgroundColor,
   children,
@@ -43,15 +45,15 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   return (
-    <StyledButton
+    <StyledSecondaryButton
       width={width}
       backgroundColor={backgroundColor}
       onClick={onClick}
       {...props}
     >
       {children}
-    </StyledButton>
+    </StyledSecondaryButton>
   );
 };
 
-export default Button;
+export default SecondaryButton;

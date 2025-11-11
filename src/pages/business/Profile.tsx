@@ -1,299 +1,309 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import ProfileHeader from '../../components/common/ProfileHeader';
-import TabBar from '../../components/common/TabBar';
-import TextBox from '../../components/common/TextBox';
-import Button from '../../components/common/Button';
-import StaffCard from '../../components/common/StaffCard';
+import React from "react";
+import styled from "styled-components";
+import TextBox from "../../components/common/TextBox";
+import { AiFillStar } from "react-icons/ai";
+import { FiEdit2 } from "react-icons/fi";
+import placeholderImage from "../../images/errorLoading.png";
 
-const Container = styled.div`
+const PageContainer = styled.div`
+  background: ${(p) => p.theme.colors.background};
   min-height: 100vh;
-  background-color: ${props => props.theme.colors.background};
+  padding: ${(p) => p.theme.spacing.xl};
+  display: flex;
+  justify-content: center;
 `;
 
-const Content = styled.div`
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: ${props => props.theme.spacing.xl};
+const Wrapper = styled.div`
+  background: ${(p) => p.theme.colors.white};
+  border-radius: ${(p) => p.theme.borderRadius.large};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 900px; /* match BusinessDetailsRegistration */
+  padding: ${(p) => p.theme.spacing.lg};
+  display: flex;
+  flex-direction: column;
+  gap: ${(p) => p.theme.spacing.lg};
 `;
 
+const Title = styled.h1`
+  font-size: ${(p) => p.theme.typography.fontSizes.xxlarge};
+  color: ${(p) => p.theme.colors.secondary};
+  font-weight: 700;
+`;
+
+const Subtitle = styled.p`
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  color: ${(p) => p.theme.colors.gray.dark};
+  margin-top: ${(p) => p.theme.spacing.xs};
+`;
+
+/* -------- Salon Header -------- */
+const SalonHeader = styled.div`
+  background: ${(p) => p.theme.colors.white};
+  border-radius: ${(p) => p.theme.borderRadius.medium};
+  padding: ${(p) => p.theme.spacing.lg};
+  display: flex;
+  align-items: center;
+  gap: ${(p) => p.theme.spacing.lg};
+`;
+
+const SalonImage = styled.img`
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const SalonDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const SalonName = styled.h2`
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+`;
+
+const StatsRow = styled.div`
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  color: #444;
+  font-size: 15px;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  svg {
+    color: #f5b300;
+  }
+`;
+
+/* -------- Section Styles -------- */
 const Section = styled.div`
-  background: ${props => props.theme.colors.white};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  padding: ${props => props.theme.spacing.xl};
-  margin-bottom: ${props => props.theme.spacing.xl};
+  background: ${(p) => p.theme.colors.white};
+  border-radius: ${(p) => p.theme.borderRadius.medium};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: ${(p) => p.theme.spacing.lg};
+  position: relative;
 `;
 
-const SectionTitle = styled.h2`
-  color: ${props => props.theme.colors.secondary};
-  font-size: ${props => props.theme.typography.fontSizes.xlarge};
-  margin-bottom: ${props => props.theme.spacing.lg};
+const SectionHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
 `;
 
-const Form = styled.form`
+const SectionTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 600;
+  color: #444;
+`;
+
+const EditButton = styled.button`
+  border: none;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 6px 14px;
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: ${props => props.theme.spacing.md};
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f9d2e2;
+    color: #c84679;
+  }
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${props => props.theme.spacing.md};
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: ${(p) => p.theme.spacing.md};
+  margin-bottom: ${(p) => p.theme.spacing.sm};
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  height: 120px;
+  border: 1px solid ${(p) => p.theme.colors.gray.medium};
+  border-radius: ${(p) => p.theme.borderRadius.small};
+  padding: ${(p) => p.theme.spacing.md};
+  resize: none;
+  font-family: ${(p) => p.theme.typography.fontFamily};
+  font-size: ${(p) => p.theme.typography.fontSizes.medium};
+  color: ${(p) => p.theme.colors.secondary};
+
+  &:focus {
+    outline: none;
+    border-color: ${(p) => p.theme.colors.primary};
+    background-color: ${(p) => p.theme.colors.white};
+  }
 `;
 
 const StaffGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: ${props => props.theme.spacing.lg};
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
 `;
 
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+const StaffCard = styled.div`
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  z-index: 1000;
+  gap: 10px;
 `;
 
-const ModalContent = styled.div`
-  background: ${props => props.theme.colors.white};
-  padding: ${props => props.theme.spacing.xl};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  width: 100%;
-  max-width: 500px;
+const StaffAvatar = styled.img`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const StaffName = styled.h3`
+  font-size: 16px;
+  font-weight: 600;
+`;
+
+const StaffRole = styled.p`
+  font-size: 14px;
+  color: #777;
+`;
+
+const SocialGrid = styled(Grid)`
+  margin-top: 8px;
 `;
 
 const BusinessProfile: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [showStaffModal, setShowStaffModal] = useState(false);
-  const [businessData, setBusinessData] = useState({
-    name: 'Elegant Beauty Salon',
-    description: 'Premier beauty salon offering top-quality services',
-    phone: '+1 234 567 8900',
-    email: 'contact@elegantbeauty.com',
-    website: 'www.elegantbeauty.com',
-    address: '123 Main St',
-    city: 'New York',
-    state: 'NY',
-    zipCode: '10001',
-    openingHours: '9:00 AM',
-    closingHours: '8:00 PM'
-  });
-
-  const [staff, setStaff] = useState([
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      role: 'Senior Stylist',
-      image: 'https://example.com/staff1.jpg',
-      specialties: ['Haircut', 'Coloring'],
-      rating: 4.9
-    },
-    // Add more staff members
-  ]);
-
-  const [newStaffData, setNewStaffData] = useState({
-    name: '',
-    role: '',
-    image: '',
-    specialties: '',
-    rating: ''
-  });
-
-  const handleBusinessUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle business update logic
-  };
-
-  const handleAddStaff = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newStaff = {
-      id: (staff.length + 1).toString(),
-      name: newStaffData.name,
-      role: newStaffData.role,
-      image: newStaffData.image,
-      specialties: newStaffData.specialties.split(',').map(s => s.trim()),
-      rating: parseFloat(newStaffData.rating)
-    };
-    setStaff([...staff, newStaff]);
-    setShowStaffModal(false);
-  };
-
-  const tabs = [
-    { id: 'profile', label: 'Business Profile' },
-    { id: 'staff', label: 'Staff Management' },
-    { id: 'settings', label: 'Settings' }
-  ];
-
   return (
-    <Container>
-      <ProfileHeader
-        name={businessData.name}
-        image="https://example.com/business-logo.jpg"
-        coverImage="https://example.com/business-cover.jpg"
-        stats={[
-          { label: 'Bookings', value: '1.2k+' },
-          { label: 'Reviews', value: '4.8★' },
-          { label: 'Services', value: '15+' }
-        ]}
-      />
+    <PageContainer>
+      <Wrapper>
+        <div>
+          <Title>Your Profile</Title>
+          <Subtitle>Manage your salon information and settings.</Subtitle>
+        </div>
 
-      <Content>
-        <TabBar
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        {/* Salon Header */}
+        <SalonHeader>
+          <SalonImage src={placeholderImage} alt="Salon" />
+          <SalonDetails>
+            <SalonName>Glamour Beauty Salon</SalonName>
+            <StatsRow>
+              <span>
+                {React.createElement(AiFillStar as any)} 4.8
+              </span>
+              <span>342 Clients</span>
+              <span>8 Staff</span>
+            </StatsRow>
+          </SalonDetails>
+        </SalonHeader>
 
-        {activeTab === 'profile' && (
-          <Section>
+        {/* Business Info */}
+        <Section>
+          <SectionHeader>
             <SectionTitle>Business Information</SectionTitle>
-            <Form onSubmit={handleBusinessUpdate}>
-              <TextBox
-                placeholder="Business Name"
-                value={businessData.name}
-                onChange={(e) => setBusinessData(prev => ({ ...prev, name: e.target.value }))}
-              />
-              
-              <TextBox
-                placeholder="Description"
-                value={businessData.description}
-                onChange={(e) => setBusinessData(prev => ({ ...prev, description: e.target.value }))}
-              />
+            <EditButton>
+              {React.createElement(FiEdit2 as any, { size: 14 })} Edit
+            </EditButton>
+          </SectionHeader>
+          <Grid>
+            <TextBox placeholder="Business Name" value="Glamour Beauty Salon" />
+            <TextBox placeholder="Business Type" value="Beauty & Salon" />
+            <TextBox placeholder="Email" value="glamour@example.com" />
+            <TextBox placeholder="Phone Number" value="+973 0000 0000" />
+            <TextBox placeholder="Address" value="Seef Mall, Bahrain" />
+          </Grid>
+          <TextArea
+            placeholder="Description"
+            value="Glamour Beauty Salon offers top-tier hair, nail, and skincare services. Experience relaxation in style."
+          />
+        </Section>
 
-              <Grid>
-                <TextBox
-                  placeholder="Phone"
-                  value={businessData.phone}
-                  onChange={(e) => setBusinessData(prev => ({ ...prev, phone: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Email"
-                  value={businessData.email}
-                  onChange={(e) => setBusinessData(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </Grid>
+        {/* Operating Hours */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Operating Hours</SectionTitle>
+            <EditButton>
+              {React.createElement(FiEdit2 as any, { size: 14 })} Edit
+            </EditButton>
+          </SectionHeader>
+          <Grid>
+            <TextBox placeholder="Monday" value="9:00 AM - 6:00 PM" />
+            <TextBox placeholder="Tuesday" value="9:00 AM - 6:00 PM" />
+            <TextBox placeholder="Wednesday" value="9:00 AM - 6:00 PM" />
+            <TextBox placeholder="Thursday" value="9:00 AM - 6:00 PM" />
+            <TextBox placeholder="Friday" value="9:00 AM - 6:00 PM" />
+            <TextBox placeholder="Saturday" value="10:00 AM - 4:00 PM" />
+            <TextBox placeholder="Sunday" value="Closed" />
+          </Grid>
+        </Section>
 
-              <TextBox
-                placeholder="Website"
-                value={businessData.website}
-                onChange={(e) => setBusinessData(prev => ({ ...prev, website: e.target.value }))}
-              />
+        {/* Staff Members */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Staff Members</SectionTitle>
+            <EditButton>
+              {React.createElement(FiEdit2 as any, { size: 14 })} Manage
+            </EditButton>
+          </SectionHeader>
 
-              <TextBox
-                placeholder="Address"
-                value={businessData.address}
-                onChange={(e) => setBusinessData(prev => ({ ...prev, address: e.target.value }))}
-              />
+          <StaffGrid>
+            <StaffCard>
+              <StaffAvatar src={placeholderImage} alt="Staff" />
+              <StaffName>Sarah Khalifa</StaffName>
+              <StaffRole>Hair Stylist</StaffRole>
+            </StaffCard>
+            <StaffCard>
+              <StaffAvatar src={placeholderImage} alt="Staff" />
+              <StaffName>Michael Chen</StaffName>
+              <StaffRole>Color Specialist</StaffRole>
+            </StaffCard>
+            <StaffCard>
+              <StaffAvatar src={placeholderImage} alt="Staff" />
+              <StaffName>Emily Johnson</StaffName>
+              <StaffRole>Nail Technician</StaffRole>
+            </StaffCard>
+            <StaffCard>
+              <StaffAvatar src={placeholderImage} alt="Staff" />
+              <StaffName>Jessica Lee</StaffName>
+              <StaffRole>Receptionist</StaffRole>
+            </StaffCard>
+          </StaffGrid>
+        </Section>
 
-              <Grid>
-                <TextBox
-                  placeholder="City"
-                  value={businessData.city}
-                  onChange={(e) => setBusinessData(prev => ({ ...prev, city: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="State"
-                  value={businessData.state}
-                  onChange={(e) => setBusinessData(prev => ({ ...prev, state: e.target.value }))}
-                />
-              </Grid>
+        {/* Social Media */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Social Media & Website</SectionTitle>
+            <EditButton>
+              {React.createElement(FiEdit2 as any, { size: 14 })} Edit
+            </EditButton>
+          </SectionHeader>
 
-              <TextBox
-                placeholder="ZIP Code"
-                value={businessData.zipCode}
-                onChange={(e) => setBusinessData(prev => ({ ...prev, zipCode: e.target.value }))}
-              />
-
-              <Grid>
-                <TextBox
-                  placeholder="Opening Hours"
-                  value={businessData.openingHours}
-                  onChange={(e) => setBusinessData(prev => ({ ...prev, openingHours: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Closing Hours"
-                  value={businessData.closingHours}
-                  onChange={(e) => setBusinessData(prev => ({ ...prev, closingHours: e.target.value }))}
-                />
-              </Grid>
-
-              <Button variant="primary" type="submit">
-                Save Changes
-              </Button>
-            </Form>
-          </Section>
-        )}
-
-        {activeTab === 'staff' && (
-          <Section>
-            <SectionTitle>
-              Staff Members
-              <Button onClick={() => setShowStaffModal(true)}>
-                Add Staff Member
-              </Button>
-            </SectionTitle>
-            
-            <StaffGrid>
-              {staff.map(member => (
-                <StaffCard
-                  key={member.id}
-                  {...member}
-                />
-              ))}
-            </StaffGrid>
-          </Section>
-        )}
-
-        {showStaffModal && (
-          <Modal>
-            <ModalContent>
-              <SectionTitle>Add Staff Member</SectionTitle>
-              <Form onSubmit={handleAddStaff}>
-                <TextBox
-                  placeholder="Name"
-                  value={newStaffData.name}
-                  onChange={(e) => setNewStaffData(prev => ({ ...prev, name: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Role"
-                  value={newStaffData.role}
-                  onChange={(e) => setNewStaffData(prev => ({ ...prev, role: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Image URL"
-                  value={newStaffData.image}
-                  onChange={(e) => setNewStaffData(prev => ({ ...prev, image: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Specialties (comma-separated)"
-                  value={newStaffData.specialties}
-                  onChange={(e) => setNewStaffData(prev => ({ ...prev, specialties: e.target.value }))}
-                />
-                <TextBox
-                  placeholder="Rating"
-                  type="number"
-                  value={newStaffData.rating}
-                  onChange={(e) => setNewStaffData(prev => ({ ...prev, rating: e.target.value }))}
-                />
-                <Button variant="primary" type="submit">
-                  Add Staff Member
-                </Button>
-              </Form>
-            </ModalContent>
-          </Modal>
-        )}
-      </Content>
-    </Container>
+          <SocialGrid>
+            <TextBox placeholder="Instagram" value="@glamourbeauty" />
+            <TextBox placeholder="Facebook" value="facebook.com/glamour" />
+            <TextBox placeholder="Website" value="www.glamourbeauty.com" />
+            <TextBox placeholder="Other Link" value="linktr.ee/glamour" />
+          </SocialGrid>
+        </Section>
+      </Wrapper>
+    </PageContainer>
   );
 };
 

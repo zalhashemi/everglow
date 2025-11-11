@@ -55,7 +55,7 @@ const BookingsPage: React.FC = () => {
               fontSize: "14px",
             }}
           >
-            {React.createElement(FiMapPin, {
+            {React.createElement(FiMapPin as any, {
               size: 16,
               style: { marginRight: "4px" },
             })}
@@ -76,7 +76,7 @@ const BookingsPage: React.FC = () => {
               fontSize: "14px",
             }}
           >
-            {React.createElement(AiFillStar, {
+            {React.createElement(AiFillStar as any, {
               color: "#FFD03F",
               size: 16,
               style: { marginRight: "4px" },
