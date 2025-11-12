@@ -1,153 +1,49 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from 'styled-components';
-import { theme } from './styles/theme';
 
-// // Auth Pages
-// import Login from './pages/auth/Login';
-// import Signup from './pages/auth/Signup';  // Update import name
-// import BusinessDetailsRegistration from './pages/auth/BusinessDetailsRegistration';
+// 🔐 Auth Pages
+import Login from './pages/auth/Login';
+import Signup from './pages/auth/Signup';
+import BusinessDetailsRegistration from './pages/auth/BusinessDetailsRegistration';
 
-// // Customer Pages
-// import LandingPage from './pages/customer/LandingPage';
-// import Homepage from './pages/customer/Homepage';
-// import BusinessPage from './pages/customer/BusinessPage';
-// import BookingsPage from './pages/customer/BookingsPage';
-// import CustomerProfile from './pages/customer/Profile';
+// 👥 Customer Pages
+import LandingPage from './pages/customer/LandingPage';
+import Homepage from './pages/customer/Homepage';
+import BusinessPage from './pages/customer/BusinessPage';
+import BookingsPage from './pages/customer/BookingsPage';
+import CustomerProfile from './pages/customer/Profile';
 
-// // Business Pages
-// import BusinessDashboard from './pages/business/Dashboard';
-// import BusinessServices from './pages/business/Services';
-// import BusinessBookings from './pages/business/Bookings';
-// import BusinessProfile from './pages/business/Profile';
-
-// const App: React.FC = () => {
-//   return (
-//     <ThemeProvider theme={theme}>
-//       <Router>
-//         <Routes>
-//           {/* Public Routes */}
-//           <Route path="/" element={<LandingPage />} />
-//           <Route path="/login" element={<Login />} />
-//           <Route path="/signup" element={<Signup />} />  // Update route path
-//           <Route path="/register/business-details" element={<BusinessDetailsRegistration />} />
-
-//           {/* Customer Routes */}
-//           <Route path="/home" element={<Homepage />} />
-//           <Route path="/business/:id" element={<BusinessPage />} />
-//           <Route path="/bookings" element={<BookingsPage />} />
-//           <Route path="/profile" element={<CustomerProfile />} />
-
-//           {/* Business Routes */}
-//           <Route path="/business/dashboard" element={<BusinessDashboard />} />
-//           <Route path="/business/services" element={<BusinessServices />} />
-//           <Route path="/business/bookings" element={<BusinessBookings />} />
-//           <Route path="/business/profile" element={<BusinessProfile />} />
-//         </Routes>
-//       </Router>
-//     </ThemeProvider>
-//   );
-// };
-
-// export default App;
-
-//import React from "react";
-//import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-// 👇 Customer pages only
-
-// Customer pages
-
-// Customer pages
-// import HomePage from './pages/customer/Homepage';
-// import BookingsPage from './pages/customer/BookingsPage';
-// import Profile from './pages/customer/Profile';
-// import BusinessPage from './pages/customer/BusinessPage';
-
-// // Business pages
-// import Dashboard from './pages/business/Dashboard';
-// import Services from './pages/business/Services';
-// import BusinessBookings from './pages/business/Bookings';
-// import BusinessProfile from './pages/business/Profile';
-
-// const App: React.FC = () => {
-//   console.log("✅ App mounted");
-
-//   return (
-//     <Router>
-//       <Routes>
-//         {/* CUSTOMER ROUTES */}
-//         <Route path="/" element={<HomePage />} />
-//         <Route path="/bookings" element={<BookingsPage />} />
-//         <Route path="/profile" element={<Profile />} />
-//         <Route path="/business/:salonId" element={<BusinessPage />} />
-
-
-//         {/* BUSINESS ROUTES */}
-//         <Route path="/business" element={<Dashboard />} />
-//         <Route path="/business/services" element={<Services />} />
-//         <Route path="/business/bookings" element={<BusinessBookings />} />
-//         <Route path="/business/profile" element={<BusinessProfile />} />
-//       </Routes>
-//     </Router>
-//   );
-// };
-
-// export default App;
-
-
-
-
-
-// import React from "react";
-// import { ThemeProvider } from "styled-components";
-// import { theme } from "./styles/theme";
-// //import ProfilePage from "./pages/business/Dashboard"; // ✅ make sure this path is correct
-// //import Dashboard from "./pages/business/Dashboard";
-// import BusinessProfile from "./pages/business/Profile";
-
-// const App: React.FC = () => {
-//   return (
-//     <ThemeProvider theme={theme}>
-//       <div
-//         style={{
-//           minHeight: "100vh",
-//           backgroundColor: theme.colors.background,
-//           padding: "40px 0",
-//           display: "flex",
-//           justifyContent: "center",
-//         }}
-//       >
-//         <BusinessProfile />
-//       </div>
-//     </ThemeProvider>
-//   );
-// };
-
-// export default App;
-
-// ✅ Business Pages Only
-import Dashboard from "./pages/business/Dashboard";
-import Services from "./pages/business/Services";
-import BusinessBookings from "./pages/business/Bookings";
-import BusinessProfile from "./pages/business/Profile";
+// 💼 Business Pages
+import BusinessDashboard from './pages/business/Dashboard';
+import BusinessServices from './pages/business/Services';
+import BusinessBookings from './pages/business/Bookings';
+import BusinessProfile from './pages/business/Profile';
 
 const App: React.FC = () => {
-  console.log("🚀 Running Business Pages");
+  console.log("🌐 Everglow App Mounted");
 
   return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <Routes>
-          {/* BUSINESS ROUTES */}
-          <Route path="/" element={<Dashboard />} /> {/* Default route */}
-          <Route path="/business" element={<Dashboard />} />
-          <Route path="/business/services" element={<Services />} />
-          <Route path="/business/bookings" element={<BusinessBookings />} />
-          <Route path="/business/profile" element={<BusinessProfile />} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <Routes>
+        {/* ===== PUBLIC & AUTH ROUTES ===== */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/register/business-details" element={<BusinessDetailsRegistration />} />
+
+        {/* ===== CUSTOMER ROUTES ===== */}
+        <Route path="/home" element={<Homepage />} />
+        <Route path="/business/:id" element={<BusinessPage />} />
+        <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/profile" element={<CustomerProfile />} />
+
+        {/* ===== BUSINESS ROUTES ===== */}
+        <Route path="/business/dashboard" element={<BusinessDashboard />} />
+        <Route path="/business/services" element={<BusinessServices />} />
+        <Route path="/business/bookings" element={<BusinessBookings />} />
+        <Route path="/business/profile" element={<BusinessProfile />} />
+      </Routes>
+    </Router>
   );
 };
 

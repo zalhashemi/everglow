@@ -138,6 +138,7 @@ const ArrowIcon = ({ direction }: { direction: "left" | "right" }) => (
 
 // ===== Component =====
 const HomePage: React.FC = () => {
+  console.log("🏠 Customer Homepage Loaded");
   const navigate = useNavigate();
 
   const salons = [

@@ -93,7 +93,7 @@ const Signup: React.FC = () => {
       alert("Passwords do not match.");
       return;
     }
-    navigate("/homepage");
+    navigate("/home");
   };
 
   const handleBusinessSignup = () => {

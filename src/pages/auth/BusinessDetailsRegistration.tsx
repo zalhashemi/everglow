@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom"; 
 import TextBox from "../../components/common/TextBox";
 // ---------- Styled Components ----------
 const PageContainer = styled.div`
@@ -89,6 +90,7 @@ const StaffContainer = styled.div`
   gap: ${(p) => p.theme.spacing.md};
 `;
 
+
 const StaffRow = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto;
@@ -131,6 +133,7 @@ const RemoveButton = styled.button`
 
 // ---------- Main Component ----------
 const BusinessRegistration: React.FC = () => {
+  const navigate = useNavigate();
   const [staffList, setStaffList] = useState([
     { name: "", role: "", email: "", phone: "" },
   ]);
@@ -141,6 +144,13 @@ const BusinessRegistration: React.FC = () => {
     setStaffList(updated);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Submitted staff:", staffList);
+    alert("Business registered successfully!");
+    navigate("/business/dashboard"); // ✅ redirect to dashboard
+  };
+
   const addStaffMember = () => {
     setStaffList([...staffList, { name: "", role: "", email: "", phone: "" }]);
   };
@@ -148,12 +158,6 @@ const BusinessRegistration: React.FC = () => {
   const removeStaffMember = (index: number) => {
     const updated = staffList.filter((_, i) => i !== index);
     setStaffList(updated);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Submitted staff:", staffList);
-    alert("Business registered successfully!");
   };
 
   return (
