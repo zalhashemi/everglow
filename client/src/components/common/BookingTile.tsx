@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import Button from "../common/Button";
-import SecondaryButton from "../common/SecondaryButton";
+import Button from "./Button";
+import SecondaryButton from "./SecondaryButton";
 import errorImage from "../../images/errorLoading.png";
 
 interface BookingTileProps {
