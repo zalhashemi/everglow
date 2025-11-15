@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
@@ -15,6 +15,108 @@ const PageWrapper = styled.div`
   align-items: center;
 `;
 
+/* ---- Offer Popup ---- */
+const PopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+`;
+
+const PopupCard = styled.div`
+  width: 420px;
+  background: #fff;
+  padding: 24px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
+const PopupTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b1c36;
+`;
+
+const Input = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+`;
+
+const SaveButton = styled.button`
+  padding: 12px 0;
+  background: #0b1c36;
+  color: white;
+  border: none;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+`;
+
+interface OfferPopupProps {
+  onClose: () => void;
+}
+
+const OfferPopup: React.FC<OfferPopupProps> = ({ onClose }) => {
+  const [name, setName] = useState("");
+  const [discount, setDiscount] = useState("");
+  const [services, setServices] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
+  const handleSave = () => {
+    const newOffer = {
+      name,
+      discount: Number(discount),
+      services,
+      startDate: start,
+      endDate: end,
+      banner: "/default-image.png",
+    };
+
+    console.log("Saving Offer:", newOffer);
+    onClose();
+  };
+
+  return (
+    <PopupOverlay onClick={onClose}>
+      <PopupCard onClick={(e) => e.stopPropagation()}>
+        <PopupTitle>Create New Offer</PopupTitle>
+
+        <Input placeholder="Offer Name" value={name} onChange={(e) => setName(e.target.value)} />
+
+        <Input placeholder="Services Applied On" value={services} onChange={(e) => setServices(e.target.value)} />
+
+        <Input
+          placeholder="Discount %"
+          type="number"
+          min="1"
+          max="100"
+          value={discount}
+          onChange={(e) => setDiscount(e.target.value)}
+        />
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+          <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+        </div>
+
+        <SaveButton onClick={handleSave}>Save Offer</SaveButton>
+      </PopupCard>
+    </PopupOverlay>
+  );
+};
+
+/* ---- Dashboard Layout ---- */
 const ContentWrapper = styled.div`
   width: 90%;
   max-width: 1400px;
@@ -70,7 +172,7 @@ const NewBookingButton = styled.button`
   }
 `;
 
-/* ---- Dashboard Grids ---- */
+/* ---- Top Stats ---- */
 const StatsRow = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -104,6 +206,7 @@ const StatSubText = styled.div`
   color: #999;
 `;
 
+/* ---- Section Grid ---- */
 const SectionGrid = styled.div`
   display: grid;
   grid-template-columns: 1.2fr 1fr;
@@ -154,6 +257,7 @@ const AppointmentRow = styled.div<{ status: "CONFIRMED" | "CANCELLED" }>`
   }
 `;
 
+/* ---- Popular Services ---- */
 const ProgressBarWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -224,6 +328,7 @@ const RatingRow = styled.div`
 /* ---- Component ---- */
 const BusinessDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [showOfferPopup, setShowOfferPopup] = useState(false);
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -233,30 +338,10 @@ const BusinessDashboard: React.FC = () => {
   });
 
   const appointments = [
-    {
-      time: "09:00 AM",
-      name: "Sarah Johnson",
-      service: "Haircut • 60 min",
-      status: "CONFIRMED",
-    },
-    {
-      time: "10:30 AM",
-      name: "Mike Chen",
-      service: "Hair Coloring • 120 min",
-      status: "CONFIRMED",
-    },
-    {
-      time: "01:00 PM",
-      name: "Emily Davis",
-      service: "Manicure • 45 min",
-      status: "CANCELLED",
-    },
-    {
-      time: "03:00 PM",
-      name: "James Wilson",
-      service: "Massage • 90 min",
-      status: "CONFIRMED",
-    },
+    { time: "09:00 AM", name: "Sarah Johnson", service: "Haircut • 60 min", status: "CONFIRMED" },
+    { time: "10:30 AM", name: "Mike Chen", service: "Hair Coloring • 120 min", status: "CONFIRMED" },
+    { time: "01:00 PM", name: "Emily Davis", service: "Manicure • 45 min", status: "CANCELLED" },
+    { time: "03:00 PM", name: "James Wilson", service: "Massage • 90 min", status: "CONFIRMED" },
   ];
 
   const popularServices = [
@@ -268,128 +353,139 @@ const BusinessDashboard: React.FC = () => {
   ];
 
   return (
-    <PageWrapper>
-      <TabBar type="business" />
+    <>
+      <PageWrapper>
+        <TabBar type="business" />
 
-      <ContentWrapper>
-        {/* Header */}
-        <HeaderRow>
-          <WelcomeText>Welcome Back!</WelcomeText>
-          <DateAndButton>
-  <DateBox>
-  {IconFix(FiCalendar, { size: 18 })}
-  {today}
-</DateBox>
-  <NewBookingButton onClick={() => navigate("/business/bookings")}>
-    + New Booking
-  </NewBookingButton>
-</DateAndButton>
+        <ContentWrapper>
+          {/* Header */}
+          <HeaderRow>
+            <WelcomeText>Welcome Back!</WelcomeText>
 
-        </HeaderRow>
+            <DateAndButton>
+              <DateBox>
+                {IconFix(FiCalendar, { size: 18 })}
+                {today}
+              </DateBox>
 
-        {/* Top Stats */}
-        <StatsRow>
-          <StatCard>
-            <StatTitle>TODAY'S BOOKINGS</StatTitle>
-            <StatValue>18</StatValue>
-            <StatSubText>3 pending confirmation</StatSubText>
-          </StatCard>
-          <StatCard>
-            <StatTitle>NEW CLIENTS</StatTitle>
-            <StatValue>5</StatValue>
-            <StatSubText>+2 from last week</StatSubText>
-          </StatCard>
-          <StatCard>
-            <StatTitle>COMPLETION RATE</StatTitle>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-  {IconFix(AiOutlineCheckSquare, { color: "#3FAE57", size: 20 })}
-  <StatValue>94%</StatValue>
-</div>
+              <NewBookingButton onClick={() => navigate("/business/bookings")}>
+                + New Booking
+              </NewBookingButton>
 
-            <StatSubText>+3% this month</StatSubText>
-          </StatCard>
-        </StatsRow>
+              <NewBookingButton onClick={() => setShowOfferPopup(true)}>
+                + Add Offer
+              </NewBookingButton>
+            </DateAndButton>
+          </HeaderRow>
 
-        {/* Appointments + Popular Services */}
-        <SectionGrid>
-          <Card>
-            <SectionTitle>Upcoming Appointments</SectionTitle>
-            {appointments.map((appt) => (
-              <AppointmentContainer key={appt.time}>
-                <AppointmentRow status={appt.status as any}>
-                  <div>
-                    <strong>{appt.time}</strong> — {appt.name}
-                    <div
-                      style={{ fontSize: "13px", color: "#7a7a7a" }}
-                    >
-                      {appt.service}
+          {/* Top Stats */}
+          <StatsRow>
+            <StatCard>
+              <StatTitle>TODAY'S BOOKINGS</StatTitle>
+              <StatValue>18</StatValue>
+              <StatSubText>3 pending confirmation</StatSubText>
+            </StatCard>
+
+            <StatCard>
+              <StatTitle>NEW CLIENTS</StatTitle>
+              <StatValue>5</StatValue>
+              <StatSubText>+2 from last week</StatSubText>
+            </StatCard>
+
+            <StatCard>
+              <StatTitle>COMPLETION RATE</StatTitle>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                {IconFix(AiOutlineCheckSquare, { color: "#3FAE57", size: 20 })}
+                <StatValue>94%</StatValue>
+              </div>
+              <StatSubText>+3% this month</StatSubText>
+            </StatCard>
+          </StatsRow>
+
+          {/* Appointments + Popular Services */}
+          <SectionGrid>
+            <Card>
+              <SectionTitle>Upcoming Appointments</SectionTitle>
+              {appointments.map((appt) => (
+                <AppointmentContainer key={appt.time}>
+                  <AppointmentRow status={appt.status as any}>
+                    <div>
+                      <strong>{appt.time}</strong> — {appt.name}
+                      <div style={{ fontSize: "13px", color: "#7a7a7a" }}>
+                        {appt.service}
+                      </div>
                     </div>
-                  </div>
-                  <span className="status">{appt.status}</span>
-                </AppointmentRow>
-              </AppointmentContainer>
-            ))}
-            <div
-              style={{
-                textAlign: "center",
-                marginTop: "12px",
-                fontSize: "14px",
-                color: "#27374d",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-              onClick={() => navigate("/business/bookings")}
-            >
-              View All Appointments →
-            </div>
-          </Card>
+                    <span className="status">{appt.status}</span>
+                  </AppointmentRow>
+                </AppointmentContainer>
+              ))}
+              <div
+                style={{
+                  textAlign: "center",
+                  marginTop: "12px",
+                  fontSize: "14px",
+                  color: "#27374d",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+                onClick={() => navigate("/business/bookings")}
+              >
+                View All Appointments →
+              </div>
+            </Card>
 
+            <Card>
+              <SectionTitle>Popular Services</SectionTitle>
+              {popularServices.map((service) => (
+                <ProgressBarWrapper key={service.name}>
+                  <ProgressRow>
+                    <span>{service.name}</span>
+                    <span style={{ color: "#7a7a7a" }}>
+                      {service.bookings} bookings
+                    </span>
+                  </ProgressRow>
+                  <ProgressBar percent={(service.bookings / 45) * 100} />
+                </ProgressBarWrapper>
+              ))}
+            </Card>
+          </SectionGrid>
+
+          {/* Quick Stats */}
           <Card>
-            <SectionTitle>Popular Services</SectionTitle>
-            {popularServices.map((service) => (
-              <ProgressBarWrapper key={service.name}>
-                <ProgressRow>
-                  <span>{service.name}</span>
-                  <span style={{ color: "#7a7a7a" }}>
-                    {service.bookings} bookings
-                  </span>
-                </ProgressRow>
-                <ProgressBar
-                  percent={(service.bookings / 45) * 100}
-                />
-              </ProgressBarWrapper>
-            ))}
+            <SectionTitle>Quick Stats</SectionTitle>
+            <QuickStatsGrid>
+              <QuickStatItem>
+                <QuickStatLabel>WEEKLY REVENUE</QuickStatLabel>
+                <QuickStatValue>$8,045</QuickStatValue>
+              </QuickStatItem>
+
+              <QuickStatItem>
+                <QuickStatLabel>AVG. RATING</QuickStatLabel>
+                <RatingRow>
+                  {IconFix(AiFillStar, { color: "#FFD03F", size: 18 })}
+                  <QuickStatValue>4.8</QuickStatValue>
+                </RatingRow>
+              </QuickStatItem>
+
+              <QuickStatItem>
+                <QuickStatLabel>TOTAL CLIENTS</QuickStatLabel>
+                <QuickStatValue>342</QuickStatValue>
+              </QuickStatItem>
+
+              <QuickStatItem>
+                <QuickStatLabel>STAFF MEMBERS</QuickStatLabel>
+                <QuickStatValue>8</QuickStatValue>
+              </QuickStatItem>
+            </QuickStatsGrid>
           </Card>
-        </SectionGrid>
+        </ContentWrapper>
+      </PageWrapper>
 
-        {/* Quick Stats */}
-        <Card>
-          <SectionTitle>Quick Stats</SectionTitle>
-          <QuickStatsGrid>
-            <QuickStatItem>
-              <QuickStatLabel>WEEKLY REVENUE</QuickStatLabel>
-              <QuickStatValue>$8,045</QuickStatValue>
-            </QuickStatItem>
-            <QuickStatItem>
-              <QuickStatLabel>AVG. RATING</QuickStatLabel>
-              <RatingRow>
-  {IconFix(AiFillStar, { color: "#FFD03F", size: 18 })}
-  <QuickStatValue>4.8</QuickStatValue>
-</RatingRow>
-
-            </QuickStatItem>
-            <QuickStatItem>
-              <QuickStatLabel>TOTAL CLIENTS</QuickStatLabel>
-              <QuickStatValue>342</QuickStatValue>
-            </QuickStatItem>
-            <QuickStatItem>
-              <QuickStatLabel>STAFF MEMBERS</QuickStatLabel>
-              <QuickStatValue>8</QuickStatValue>
-            </QuickStatItem>
-          </QuickStatsGrid>
-        </Card>
-      </ContentWrapper>
-    </PageWrapper>
+      {/* ---- OFFER POPUP ---- */}
+      {showOfferPopup && (
+        <OfferPopup onClose={() => setShowOfferPopup(false)} />
+      )}
+    </>
   );
 };
 
