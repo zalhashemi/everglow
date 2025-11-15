@@ -1,19 +1,21 @@
 const Service = require("../models/Service");
 const Business = require("../models/Business");
 
-// CREATE SERVICE
+// CREATE SERVICE (business)
 const createService = async (req, res) => {
   try {
-    const { name, durationMinutes, priceBHD, description } = req.body;
+    const { name, durationMinutes, priceBHD, category, description } = req.body;
 
-    if (!name || !durationMinutes || !priceBHD)
-      return res.status(400).json({ message: "Missing fields" });
+    if (!name || !durationMinutes || !priceBHD) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
     const service = await Service.create({
       business: req.business._id,
       name,
       durationMinutes,
       priceBHD,
+      category,
       description
     });
 
@@ -27,35 +29,55 @@ const createService = async (req, res) => {
   }
 };
 
-// GET ALL SERVICES FOR BUSINESS
+// GET MY SERVICES (business)
 const getMyServices = async (req, res) => {
-  const services = await Service.find({ business: req.business._id });
-  res.json(services);
+  try {
+    const services = await Service.find({ business: req.business._id });
+    res.json(services);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// UPDATE
+// UPDATE SERVICE
 const updateService = async (req, res) => {
-  const service = await Service.findOneAndUpdate(
-    { _id: req.params.id, business: req.business._id },
-    req.body,
-    { new: true }
-  );
+  try {
+    const service = await Service.findOneAndUpdate(
+      { _id: req.params.id, business: req.business._id },
+      req.body,
+      { new: true }
+    );
 
-  if (!service) return res.status(404).json({ message: "Service not found" });
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
 
-  res.json({ message: "Updated", service });
+    res.json({ message: "Service updated", service });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// DELETE
+// DELETE SERVICE
 const deleteService = async (req, res) => {
-  const service = await Service.findOneAndDelete({
-    _id: req.params.id,
-    business: req.business._id
-  });
+  try {
+    const service = await Service.findOneAndDelete({
+      _id: req.params.id,
+      business: req.business._id
+    });
 
-  if (!service) return res.status(404).json({ message: "Not found" });
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
 
-  res.json({ message: "Deleted" });
+    await Business.findByIdAndUpdate(req.business._id, {
+      $pull: { services: service._id }
+    });
+
+    res.json({ message: "Service deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 module.exports = {

@@ -6,12 +6,10 @@ const {
   getMyBusinessProfile,
   updateMyBusinessProfile
 } = require("../controllers/businessController");
-
 const { protectBusiness } = require("../middleware/authMiddleware");
 
 router.post("/register", registerBusiness);
 router.post("/login", loginBusiness);
-
 router.get("/me", protectBusiness, getMyBusinessProfile);
 router.put("/me", protectBusiness, updateMyBusinessProfile);
 

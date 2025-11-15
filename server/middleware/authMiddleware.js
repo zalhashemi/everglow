@@ -4,7 +4,6 @@ const Business = require("../models/Business");
 const protectBusiness = async (req, res, next) => {
   try {
     const header = req.headers.authorization;
-
     if (!header || !header.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token provided" });
     }
@@ -19,7 +18,7 @@ const protectBusiness = async (req, res, next) => {
 
     req.business = business;
     next();
-  } catch (error) {
+  } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

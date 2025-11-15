@@ -4,9 +4,8 @@ const Customer = require("../models/Customer");
 const protectCustomer = async (req, res, next) => {
   try {
     const header = req.headers.authorization;
-
     if (!header || !header.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No customer token provided" });
+      return res.status(401).json({ message: "No token provided" });
     }
 
     const token = header.split(" ")[1];
@@ -19,8 +18,8 @@ const protectCustomer = async (req, res, next) => {
 
     req.customer = customer;
     next();
-  } catch (error) {
-    return res.status(401).json({ message: "Token invalid or expired" });
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
