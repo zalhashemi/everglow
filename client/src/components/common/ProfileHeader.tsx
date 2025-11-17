@@ -31,14 +31,14 @@ const Container = styled.div`
 
 const HeaderBanner = styled.div`
   height: 140px;
-  background-color: #4A5074;
+  background-color: #4a5074;
   width: 100%;
 `;
 
 const Content = styled.div`
   padding: 24px 32px;
   display: flex;
-  justify-content: space-between; // Add space between profile and stats
+  justify-content: space-between;
   position: relative;
 `;
 
@@ -82,7 +82,7 @@ const Name = styled.div`
 const StatsRow = styled.div`
   display: flex;
   gap: 60px;
-  padding-top: 8px; // Align with name
+  padding-top: 8px;
 `;
 
 const StatBlock = styled.div`
@@ -118,7 +118,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <HeaderBanner
         style={
           coverImage
-            ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover' }
+            ? { backgroundImage: `url(${coverImage})`, backgroundSize: "cover" }
             : undefined
         }
       />
@@ -128,6 +128,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <AvatarWrapper>
             <ProfileImage src={image || ellieProfile} alt="Profile" />
           </AvatarWrapper>
+
           <InfoColumn>
             <Name>{name}</Name>
           </InfoColumn>

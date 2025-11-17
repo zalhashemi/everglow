@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import TabBar from "../../components/common/TabBar";
 import ProfileHeader from "../../components/common/ProfileHeader";
 import LoyaltyTile from "../../components/common/LoyaltyTile";
 import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
+import Popup from "../../components/common/Popup";   // 🔥 Use popup
 
 /* ---- Styled Wrappers ---- */
 const PageWrapper = styled.div`
-  background-color: ${({ theme }) => theme.colors.background}; /* ✅ Theme background */
+  background-color: ${({ theme }) => theme.colors.background};
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -16,12 +17,12 @@ const PageWrapper = styled.div`
 `;
 
 const ContentWrapper = styled.div`
-  width: 90%;
-  max-width: 1200px;
+  width: 1300px;
+  max-width: 1300px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 60px 0; /* ✅ top + bottom padding */
+  padding: 60px 0;
 `;
 
 const Card = styled.div`
@@ -51,77 +52,120 @@ const LoyaltyList = styled.div`
   gap: 16px;
 `;
 
-/* ---- Component ---- */
-const ProfilePage: React.FC = () => {
-  const [isEditing, setIsEditing] = React.useState(false);
+/* 🔥 LOGOUT BUTTON STYLES */
+const LogoutButton = styled.button`
+  background: #7a0000;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 18px;
+  width: 200px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end; /* bottom-right */
+  margin-top: 10px;
+  transition: 0.2s ease;
 
-  // 🧍 Mock user data
-  const user = {
-    name: "Enid Sinclair",
-    bookings: 32,
-    visited: 9,
-    loyaltyPrograms: 3,
-    salonName: "Glamour Beauty Salon",
-    email: "contact@glamoursalon.com",
-    phone: "+1 (555) 123-4567",
-    loyalty: [
-      {
-        id: 1,
-        name: "Hair Avenue",
-        location: "Lakewood, California",
-        rating: 4.7,
-        reviews: 312,
-        offer: "FREE BLOWDRY",
-        filledCircles: 2,
-        totalCircles: 5,
-        distance: "2 wk",
+  &:hover {
+    background: #a30000;
+  }
+`;
+
+const ProfilePage: React.FC = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [customer, setCustomer] = useState<any>(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false); // 🔥 popup state
+
+  /* ---------------- Load User Data ---------------- */
+  useEffect(() => {
+    const stored = localStorage.getItem("customer");
+    if (stored) {
+      const data = JSON.parse(stored);
+      setCustomer(data);
+      setFirstName(data.firstName);
+      setLastName(data.lastName);
+      setEmail(data.email);
+    }
+
+    const token = localStorage.getItem("customerToken");
+    if (token) {
+      fetch("http://localhost:5000/api/customers/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setCustomer(data);
+          setFirstName(data.firstName);
+          setLastName(data.lastName);
+          setEmail(data.email);
+          localStorage.setItem("customer", JSON.stringify(data));
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  if (!customer) return <div style={{ padding: 40 }}>Loading...</div>;
+
+  /* ---------------- Save Edited Profile ---------------- */
+  const handleSave = async () => {
+    const token = localStorage.getItem("customerToken");
+    if (!token) return;
+
+    const updates = { firstName, lastName, email };
+
+    const res = await fetch("http://localhost:5000/api/customers/me", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      {
-        id: 2,
-        name: "Hair Avenue",
-        location: "Lakewood, California",
-        rating: 4.7,
-        reviews: 312,
-        offer: "25% OFF HAIR TREATMENT",
-        filledCircles: 3,
-        totalCircles: 5,
-        distance: "3 wk",
-      },
-      {
-        id: 3,
-        name: "Hair Avenue",
-        location: "Lakewood, California",
-        rating: 4.7,
-        reviews: 312,
-        offer: "ONE NAIL SERVICE FREE",
-        filledCircles: 4,
-        totalCircles: 5,
-        distance: "4 wk",
-      },
-    ],
+      body: JSON.stringify(updates),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setCustomer(data.customer);
+      localStorage.setItem("customer", JSON.stringify(data.customer));
+      setIsEditing(false);
+    } else {
+      alert(data.message || "Failed to update profile");
+    }
+  };
+
+  /* ---------------- Logout Logic ---------------- */
+  const handleLogout = () => {
+    localStorage.removeItem("customer");
+    localStorage.removeItem("customerToken");
+    window.location.href = "/login";
   };
 
   return (
     <PageWrapper>
-      {/* ✅ Add the customer tab bar */}
       <TabBar type="customer" />
 
       <ContentWrapper>
         {/* ---------- Profile Header ---------- */}
         <ProfileHeader
           type="customer"
-          name={user.name}
-          stat1={user.bookings}
-          stat2={user.visited}
-          stat3={user.loyaltyPrograms}
+          name={`${firstName} ${lastName}`}
+          stat1={0}
+          stat2={0}
+          stat3={0}
         />
 
-        {/* ---------- Personal Information ---------- */}
+        {/* ---------- Personal Info ---------- */}
         <Card>
           <HeaderRow>
             <SectionTitle>Personal Information</SectionTitle>
             <Button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
               style={{
                 padding: "8px 16px",
                 fontSize: "14px",
@@ -133,7 +177,6 @@ const ProfilePage: React.FC = () => {
             </Button>
           </HeaderRow>
 
-          {/* Input fields */}
           <div
             style={{
               display: "grid",
@@ -142,23 +185,25 @@ const ProfilePage: React.FC = () => {
             }}
           >
             <TextBox
-              label="Name"
-              value={user.salonName}
+              label="First Name"
+              value={firstName}
               readOnly={!isEditing}
-              onChange={() => {}}
+              onChange={(e: any) => setFirstName(e.target.value)}
             />
+
             <TextBox
-              label="Phone"
-              value={user.phone}
+              label="Last Name"
+              value={lastName}
               readOnly={!isEditing}
-              onChange={() => {}}
+              onChange={(e: any) => setLastName(e.target.value)}
             />
+
             <div style={{ gridColumn: "1 / span 2" }}>
               <TextBox
                 label="Email"
-                value={user.email}
+                value={email}
                 readOnly={!isEditing}
-                onChange={() => {}}
+                onChange={(e: any) => setEmail(e.target.value)}
                 style={{ width: "100%" }}
               />
             </div>
@@ -169,21 +214,26 @@ const ProfilePage: React.FC = () => {
         <Card>
           <SectionTitle>My Loyalty Programs</SectionTitle>
           <LoyaltyList>
-            {user.loyalty.map((item) => (
-              <LoyaltyTile
-                key={item.id}
-                name={item.name}
-                location={item.location}
-                rating={item.rating}
-                reviews={item.reviews}
-                offer={item.offer}
-                filledCircles={item.filledCircles}
-                totalCircles={item.totalCircles}
-                distance={item.distance}
-              />
-            ))}
+            <div style={{ color: "#999" }}>No loyalty programs yet</div>
           </LoyaltyList>
         </Card>
+
+        {/* ---------- Logout Button ---------- */}
+        <LogoutButton onClick={() => setShowLogoutPopup(true)}>
+          Log Out
+        </LogoutButton>
+
+        {/* ---------- Popup Component ---------- */}
+        {showLogoutPopup && (
+          <Popup
+            title="Log Out?"
+            description="Are you sure you want to log out of your account?"
+            primaryLabel="Log Out"
+            secondaryLabel="Cancel"
+            onPrimary={handleLogout}
+            onSecondary={() => setShowLogoutPopup(false)}
+          />
+        )}
       </ContentWrapper>
     </PageWrapper>
   );

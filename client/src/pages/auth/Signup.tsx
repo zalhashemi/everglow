@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import Button from '../../components/common/Button';
-import SecondaryButton from '../../components/common/SecondaryButton';
-import TextBox from '../../components/common/TextBox';
+import Button from "../../components/common/Button";
+import SecondaryButton from "../../components/common/SecondaryButton";
+import TextBox from "../../components/common/TextBox";
 
 const PageWrapper = styled.div`
   width: 100vw;
   min-height: 100vh;
-  background: #F2DCDC;
+  background: #f2dcdc;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -23,7 +23,7 @@ const FormContainer = styled.div`
 `;
 
 const Title = styled.h2`
-  color: #6B868F;
+  color: #6b868f;
   font-family: "Inter", sans-serif;
   font-size: 36px;
   font-weight: 600;
@@ -52,12 +52,12 @@ const TermsRow = styled.div`
 const BottomText = styled.div`
   margin-top: 24px;
   padding-top: 12px;
-  border-top: 1px solid rgba(0,0,0,0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   font-size: 14px;
   color: #333;
 
   span {
-    color: #6B868F;
+    color: #6b868f;
     cursor: pointer;
     font-weight: 500;
     &:hover {
@@ -74,6 +74,12 @@ const FullWidth = styled.div`
   width: 1270px;
 `;
 
+const ErrorText = styled.div`
+  color: #b00020;
+  font-size: 14px;
+  margin-bottom: 4px;
+`;
+
 const Signup: React.FC = () => {
   const navigate = useNavigate();
 
@@ -84,19 +90,70 @@ const Signup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  const handleCustomerSignup = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCustomerSignup = async () => {
+    setError(null);
+
     if (!acceptedTerms) {
-      alert("You must agree to the terms & conditions.");
+      setError("You must agree to the terms & conditions.");
+      return;
+    }
+    if (!firstName || !lastName || !email || !password) {
+      setError("Please fill in all required fields.");
       return;
     }
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
-    navigate("/home");
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/customers/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // backend sends { message: "..." }
+        setError(data.message || "Failed to sign up. Please try again.");
+        return;
+      }
+
+      // Save token (so you can use it for authenticated requests later)
+      if (data.token) {
+        localStorage.setItem("customerToken", data.token);
+      }
+
+      // Optionally store customer info
+      if (data.customer) {
+        localStorage.setItem("customer", JSON.stringify(data.customer));
+      }
+
+      // Go to home after successful signup
+      navigate("/home");
+    } catch (err) {
+      setError("Something went wrong. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBusinessSignup = () => {
+    // still just moves to business details flow for now
     if (!acceptedTerms) {
       alert("You must agree to the terms & conditions.");
       return;
@@ -112,6 +169,8 @@ const Signup: React.FC = () => {
     <PageWrapper>
       <FormContainer>
         <Title>Sign Up</Title>
+
+        {error && <ErrorText>{error}</ErrorText>}
 
         <Row>
           <HalfWidth>
@@ -171,8 +230,8 @@ const Signup: React.FC = () => {
           Agree to terms & conditions
         </TermsRow>
 
-        <Button fullWidth onClick={handleCustomerSignup}>
-          I am a Customer
+        <Button fullWidth onClick={handleCustomerSignup} disabled={loading}>
+          {loading ? "Signing you up..." : "I am a Customer"}
         </Button>
 
         <Button

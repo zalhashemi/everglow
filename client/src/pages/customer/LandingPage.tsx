@@ -1,9 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+
 const everglowLogo = "/images/everglowLogo.png";
-import ProfileHeader from "../../components/common/ProfileHeader";
-import SalonCard from "../../components/common/SalonCard";
 
 const Container = styled.div`
   display: flex;

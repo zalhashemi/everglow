@@ -1,5 +1,5 @@
 const Business = require("../models/Business");
-const bcrypt = require("bcrypt");
+const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const generateToken = (id) =>
@@ -34,7 +34,7 @@ const registerBusiness = async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcryptjs.hash(password, 10);
 
     const business = await Business.create({
       ownerFirstName,
@@ -73,7 +73,7 @@ const loginBusiness = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const match = await bcrypt.compare(password, business.passwordHash);
+    const match = await bcryptjs.compare(password, business.passwordHash);
     if (!match) {
       return res.status(400).json({ message: "Invalid email or password" });
     }

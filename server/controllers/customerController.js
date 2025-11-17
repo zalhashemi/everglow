@@ -1,7 +1,7 @@
 const Customer = require("../models/Customer");
 const Booking = require("../models/Booking");
 const Review = require("../models/Review");
-const bcrypt = require("bcrypt");
+const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const generateToken = (id) =>
@@ -9,6 +9,8 @@ const generateToken = (id) =>
 
 // REGISTER CUSTOMER
 const registerCustomer = async (req, res) => {
+  console.log("Request body:", req.body);
+
   try {
     const { firstName, lastName, email, password } = req.body;
 
@@ -21,7 +23,7 @@ const registerCustomer = async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcryptjs.hash(password, 10);
 
     const customer = await Customer.create({
       firstName,
@@ -50,7 +52,7 @@ const loginCustomer = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const match = await bcrypt.compare(password, customer.passwordHash);
+    const match = await bcryptjs.compare(password, customer.passwordHash);
     if (!match) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
@@ -69,6 +71,7 @@ const loginCustomer = async (req, res) => {
 const getMyCustomerProfile = async (req, res) => {
   res.json(req.customer);
 };
+
 
 // UPDATE MY PROFILE
 const updateMyCustomerProfile = async (req, res) => {

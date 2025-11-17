@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import styled from "styled-components";// your main button
+import styled from "styled-components";
 
 const PageWrapper = styled.div`
   width: 100vw;
   height: 100vh;
-  background: #f2dcdc; /* pink background like your mockup */
+  background: #f2dcdc;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -28,13 +28,6 @@ const Label = styled.label`
   font-size: 14px;
   font-family: "Inter", sans-serif;
   font-weight: 500;
-`;
-
-const Row = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  margin-top: -8px;
 `;
 
 const RememberSection = styled.div`
@@ -82,7 +75,7 @@ const Button = styled.button<{ fullWidth?: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: ${props => (props.fullWidth ? "100%" : "auto")};
+  width: ${(p) => (p.fullWidth ? "100%" : "auto")};
 
   &:hover {
     opacity: 0.95;
@@ -94,18 +87,74 @@ const Button = styled.button<{ fullWidth?: boolean }>`
   }
 `;
 
+const ErrorText = styled.div`
+  color: #B00020;
+  font-size: 14px;
+  margin-top: -4px;
+`;
+
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    setError(null);
+
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("http://localhost:5000/api/customers/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Invalid email or password.");
+        return;
+      }
+
+      // Save authentication details
+      if (data.token) localStorage.setItem("customerToken", data.token);
+      if (data.customer)
+        localStorage.setItem("customer", JSON.stringify(data.customer));
+
+      // Redirect user
+      window.location.href = "/home";
+
+    } catch (err) {
+      setError("Something went wrong. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PageWrapper>
       <FormContainer>
         <Title>Log In</Title>
 
+        {error && <ErrorText>{error}</ErrorText>}
+
         <Label>Email Address</Label>
         <input
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "16px" }}
+          style={{
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            fontSize: "16px"
+          }}
           placeholder="Placeholder"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -115,11 +164,17 @@ const LoginPage: React.FC = () => {
         <Label>Password</Label>
         <input
           type="password"
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "16px" }}
+          style={{
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            fontSize: "16px"
+          }}
           placeholder="Placeholder"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
         <span style={{ fontSize: "12px", color: "#666" }}>
           It must be a combination of minimum 8 letters, numbers, and symbols.
         </span>
@@ -131,10 +186,12 @@ const LoginPage: React.FC = () => {
           <SmallLink>Forgot Password?</SmallLink>
         </RememberSection>
 
-        <Button fullWidth>Log In</Button>
+        <Button fullWidth disabled={loading} onClick={handleLogin}>
+          {loading ? "Logging in..." : "Log In"}
+        </Button>
 
         <BottomText>
-          No account yet? <span>Sign Up</span>
+          No account yet? <span onClick={() => (window.location.href = "/signup")}>Sign Up</span>
         </BottomText>
       </FormContainer>
     </PageWrapper>
