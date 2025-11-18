@@ -1,13 +1,29 @@
-require("dotenv").config();
+require("dotenv").config(); 
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
 connectDB();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// DEBUG ROUTE → Shows what's inside the uploads folder
+app.get("/debug/uploads", (req, res) => {
+  const dir = path.join(__dirname, "uploads");
+  try {
+    const files = fs.readdirSync(dir);
+    res.json({ uploadsDir: dir, files });
+  } catch (err) {
+    res.status(500).json({ error: err.message, dir });
+  }
+});
 
 // Routes
 app.use("/api/business", require("./routes/businessRoutes"));

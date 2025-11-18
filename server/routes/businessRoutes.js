@@ -1,16 +1,25 @@
+// server/routes/businessRoutes.js
 const express = require("express");
 const router = express.Router();
+
+
+const upload = require("../middleware/upload"); // ✅ this exists now
+
 const {
   registerBusiness,
   loginBusiness,
   getMyBusinessProfile,
-  updateMyBusinessProfile
+  updateMyBusinessProfile,
 } = require("../controllers/businessController");
-const { protectBusiness } = require("../middleware/authMiddleware");
 
-router.post("/register", registerBusiness);
+router.post(
+  "/register",
+  upload.single("image"), // ✅ multer handles multipart + image
+  registerBusiness
+);
+
 router.post("/login", loginBusiness);
-router.get("/me", protectBusiness, getMyBusinessProfile);
-router.put("/me", protectBusiness, updateMyBusinessProfile);
+router.get("/me", getMyBusinessProfile);
+router.put("/me", updateMyBusinessProfile);
 
 module.exports = router;
