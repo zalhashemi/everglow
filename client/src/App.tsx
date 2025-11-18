@@ -1,6 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+
+
+
 // 🔐 Auth Pages
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
@@ -25,6 +28,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+    
         {/* ===== PUBLIC & AUTH ROUTES ===== */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
@@ -36,6 +40,7 @@ const App: React.FC = () => {
         <Route path="/business/:id" element={<BusinessPage />} />
         <Route path="/bookings" element={<BookingsPage />} />
         <Route path="/profile" element={<CustomerProfile />} />
+
 
         {/* ===== BUSINESS ROUTES ===== */}
         <Route path="/business/dashboard" element={<BusinessDashboard />} />
