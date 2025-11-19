@@ -8,7 +8,9 @@ interface ServiceTileProps {
   description?: string;
   onClick?: () => void;
   selected?: boolean;
-  icon?: React.ReactNode; // 👈 optional custom icon prop
+
+  // NEW: multiple icons (edit + delete)
+  actions?: React.ReactNode;
 }
 
 const ServiceTile: React.FC<ServiceTileProps> = ({
@@ -18,11 +20,10 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
   description,
   onClick,
   selected = false,
-  icon, // 👈 use this
+  actions,
 }) => {
   return (
     <div
-      onClick={onClick}
       style={{
         display: "flex",
         justifyContent: "space-between",
@@ -30,11 +31,9 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
         backgroundColor: selected ? "#f5f5f5" : "#ffffff",
         borderBottom: "1px solid #ddd",
         padding: "16px 12px",
-        cursor: "pointer",
-        transition: "background-color 0.2s ease",
       }}
     >
-      {/* Left section */}
+      {/* LEFT SECTION */}
       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
         <h4
           style={{
@@ -75,34 +74,16 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
         )}
       </div>
 
-      {/* Dynamic Button */}
-      <button
+      {/* RIGHT SIDE → ACTION ICONS */}
+      <div
         style={{
-          background: "none",
-          border: "1.5px solid #bbb",
-          color: "#333",
-          borderRadius: "50%",
-          padding: "4px",
-          cursor: "pointer",
           display: "flex",
+          gap: "10px",
           alignItems: "center",
-          justifyContent: "center",
-          transition: "all 0.2s ease-in-out",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.borderColor = "#76949F";
-          e.currentTarget.style.color = "#76949F";
-          e.currentTarget.style.transform = "scale(1.05)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.borderColor = "#bbb";
-          e.currentTarget.style.color = "#333";
-          e.currentTarget.style.transform = "scale(1)";
         }}
       >
-        {/* 👇 Default to Plus if no icon prop passed */}
-        {icon || <Plus size={16} />}
-      </button>
+        {actions /* edit + delete icons passed from parent */}
+      </div>
     </div>
   );
 };

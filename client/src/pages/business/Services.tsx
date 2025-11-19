@@ -7,7 +7,9 @@ import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
 import errorImage from "../../images/errorLoading.png";
 import oliviaSalon from "../../images/oliviaSalon.jpg";
-import api from "../../utils/api"; // was incorrect path: '../../api'
+import api from "../../utils/api";
+import { FiTrash2 } from "react-icons/fi";
+
 
 // --- Types that match your backend ---
 interface Service {
@@ -81,15 +83,12 @@ const BusinessServices: React.FC = () => {
         setError(null);
 
         // 1) Try to get business profile from backend
-        //    (requires /api/business/me to be protected with protectBusiness)
         try {
           const res = await api.get<BusinessHeader>("/business/me");
           const b = res.data;
           setBusiness(b);
 
-          // imageUrl is like "/uploads/filename.jpg"
           if (b.imageUrl) {
-            // If your frontend runs on 3000 and backend on 5000:
             const fullUrl = `http://localhost:5000${b.imageUrl}`;
             setImgSrc(fullUrl);
           } else {
@@ -115,7 +114,6 @@ const BusinessServices: React.FC = () => {
               setImgSrc(oliviaSalon);
             }
           } else {
-            // last resort: keep dummy info
             setBusiness({
               businessName: "My Business",
               city: "",
@@ -130,8 +128,6 @@ const BusinessServices: React.FC = () => {
         // 2) Get services for this business
         const svcRes = await api.get<Service[]>("/services");
         setServices(svcRes.data);
-
-        // ✅ clear any old error if load succeeded
         setError(null);
       } catch (err: any) {
         console.error(err);
@@ -213,10 +209,8 @@ const BusinessServices: React.FC = () => {
         setServices((prev) => [...prev, created]);
       }
 
-      // ✅ clear any old error after a successful save
       setError(null);
 
-      // Refresh categories if a new category was added
       if (payload.category && !categories.includes(payload.category)) {
         setActiveTab("All");
       }
@@ -231,6 +225,26 @@ const BusinessServices: React.FC = () => {
     }
   };
 
+  // ------------ DELETE HANDLER ------------
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this service?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/services/${id}`);
+      setServices((prev) => prev.filter((s) => s._id !== id));
+      setError(null);
+    } catch (err: any) {
+      console.error(err);
+      alert(
+        err?.response?.data?.message ||
+          "Failed to delete service. Please try again."
+      );
+    }
+  };
+
   // ------------ RENDER ------------
   const headerName = business?.businessName || "Glamour Beauty Salon";
   const headerLocation = business
@@ -240,6 +254,7 @@ const BusinessServices: React.FC = () => {
     business?.description ||
     "We offer professional hair, nail, and beauty services using premium products.";
 
+  
   return (
     <div
       style={{
@@ -293,7 +308,7 @@ const BusinessServices: React.FC = () => {
             {headerLocation || "Location not set"}
           </div>
 
-          {/* Hours – you can swap this later for real operatingHours from DB */}
+          {/* Hours – placeholder */}
           <div
             style={{
               color: "#7A7A7A",
@@ -304,7 +319,7 @@ const BusinessServices: React.FC = () => {
             Opening hours not set
           </div>
 
-          {/* Rating – static for now */}
+          {/* Rating – static */}
           <div
             style={{
               display: "flex",
@@ -332,7 +347,7 @@ const BusinessServices: React.FC = () => {
             style={{
               display: "flex",
               gap: "20px",
-              borderBottom: '1px solid #e5e5e5',
+              borderBottom: "1px solid #e5e5e5",
               marginTop: "20px",
             }}
           >
@@ -362,7 +377,6 @@ const BusinessServices: React.FC = () => {
           <div style={{ marginTop: "20px" }}>
             {loading && <p>Loading services...</p>}
 
-            {/* ✅ only show error when there are no services */}
             {error && !services.length && (
               <p style={{ color: "red", fontSize: "14px" }}>{error}</p>
             )}
@@ -382,14 +396,35 @@ const BusinessServices: React.FC = () => {
                   marginBottom: "12px",
                 }}
               >
-                <ServiceTile
-                  name={service.name}
-                  price={service.priceBHD}
-                  duration={`${service.durationMinutes} min`}
-                  description={service.description}
-                  icon={<FiEdit2 size={16} />} // pencil icon
-                  onClick={() => openEditModal(service)}
-                />
+   <ServiceTile
+  name={service.name}
+  price={service.priceBHD}
+  duration={`${service.durationMinutes} min`}
+  description={service.description}
+  actions={
+    <>
+      <FiEdit2
+        size={18}
+        style={{ cursor: "pointer" }}
+        onClick={() => openEditModal(service)}
+      />
+
+      {/* DELETE ICON */}
+     <FiTrash2
+  size={18}
+  color="#b00020"
+  style={{ cursor: "pointer" }}
+  onClick={() => handleDelete(service._id)}
+/>
+
+    </>
+  }
+/>
+
+
+
+                {/* Delete button under each service */}
+                
               </div>
             ))}
 
