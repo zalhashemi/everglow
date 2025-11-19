@@ -7,10 +7,10 @@ interface SalonCardProps {
   id: string;
   image: string;
   name: string;
-  distance: string;
+  distance?: string;
   location: string;
-  rating: number;
-  reviews: number;
+  rating?: number;
+  reviews?: number;
   onClick: () => void;
 }
 
@@ -30,7 +30,7 @@ const SalonCard: React.FC<SalonCardProps> = ({
     <div
       onClick={onClick}
       style={{
-        width: "310px", // ✅ Larger so 4 fit across 1340px width (with gaps)
+        width: "310px",
         height: "250px",
         backgroundColor: "#fff",
         borderRadius: "14px",
@@ -67,7 +67,8 @@ const SalonCard: React.FC<SalonCardProps> = ({
 
       {/* Details */}
       <div style={{ padding: "10px 14px" }}>
-        {/* Name + Distance */}
+
+        {/* Name (ONLY this is shown visibly) */}
         <div
           style={{
             display: "flex",
@@ -77,10 +78,16 @@ const SalonCard: React.FC<SalonCardProps> = ({
           }}
         >
           <span>{name}</span>
-          <span style={{ color: "#7A7A7A", fontSize: "13px" }}>{distance}</span>
+
+          {/* --- COMMENTED OUT DISTANCE --- */}
+          {/* 
+          <span style={{ color: "#7A7A7A", fontSize: "13px" }}>
+            {distance}
+          </span>
+          */}
         </div>
 
-        {/* Location */}
+        {/* Location (visible) */}
         <div
           style={{
             display: "flex",
@@ -88,12 +95,12 @@ const SalonCard: React.FC<SalonCardProps> = ({
             marginTop: "5px",
             color: "#7A7A7A",
             fontSize: "13px",
-            whiteSpace: "nowrap", // ✅ one line only
-            overflow: "hidden", // ✅ truncate
-            textOverflow: "ellipsis", // ✅ adds "..."
-            maxWidth: "100%", // ensures ellipsis fits correctly
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "100%",
           }}
-          title={location} // shows full location on hover
+          title={location}
         >
           <FiMapPin size={14} style={{ marginRight: "4px", flexShrink: 0 }} />
           <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -101,7 +108,8 @@ const SalonCard: React.FC<SalonCardProps> = ({
           </span>
         </div>
 
-        {/* Rating */}
+        {/* --- COMMENTED OUT RATING/REVIEWS --- */}
+        {/*
         <div
           style={{
             display: "flex",
@@ -121,6 +129,7 @@ const SalonCard: React.FC<SalonCardProps> = ({
             ({reviews})
           </span>
         </div>
+        */}
       </div>
     </div>
   );

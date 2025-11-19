@@ -3,10 +3,11 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import SalonCard from "../../components/common/SalonCard";
 import TabBar from "../../components/common/TabBar";
-import oliviaSalon from "../../images/oliviaSalon.jpg";
 import promotionHeader from "../../images/promotionHeader.png";
 
-// ===== Styled Components =====
+/* ============================================================
+   Styled Components
+============================================================ */
 const PageWrapper = styled.div`
   background-color: #f2dcdc;
   min-height: 100vh;
@@ -17,8 +18,8 @@ const PageWrapper = styled.div`
 
 const ContentWrapper = styled.div`
   width: 100%;
-  max-width: 1600px; /* just to prevent it from going too wide on big screens */
-  padding: 20px 3%; /* ✅ 15% horizontal padding */
+  max-width: 1600px;
+  padding: 20px 3%;
   box-sizing: border-box;
 `;
 
@@ -26,12 +27,28 @@ const WelcomeText = styled.h1`
   font-family: "Inter", sans-serif;
   font-size: 48px;
   font-weight: 700;
-  color: #4A5074;
+  color: #4a5074;
   margin: 40px 0 30px;
 `;
 
+/* ===== Offers Carousel ===== */
+const OfferCarouselWrapper = styled.div`
+  width: 100%;
+  max-width: 1600px;
+  overflow: hidden;
+  margin-bottom: 40px;
+  position: relative;
+`;
+
+const OfferTrack = styled.div`
+  display: flex;
+  width: 100%;
+  height: 220px;
+  transition: transform 0.5s ease;
+`;
+
 const PromoBanner = styled.div`
-  width: 100%; /* full width of ContentWrapper */
+  width: 100%;
   height: 220px;
   border-radius: 12px;
   background-size: cover;
@@ -40,7 +57,6 @@ const PromoBanner = styled.div`
   overflow: hidden;
   flex-shrink: 0;
 `;
-
 
 const BannerImage = styled.img`
   width: 100%;
@@ -74,16 +90,6 @@ const OfferServices = styled.div`
   font-weight: 400;
 `;
 
-const SalonNameText = styled.div`
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  font-size: 22px;
-  font-weight: 800;
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-`;
-
 const BookNowButton = styled.button`
   position: absolute;
   bottom: 20px;
@@ -102,6 +108,24 @@ const BookNowButton = styled.button`
   }
 `;
 
+const DotsWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+`;
+
+const Dot = styled.button<{ active: boolean }>`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background-color: ${(p) => (p.active ? "#0b1c36" : "#d3d3d3")};
+  cursor: pointer;
+`;
+
+/* ===== Salon Category Styling ===== */
 const CategoryHeader = styled.div`
   background-color: #fff;
   display: inline-block;
@@ -114,7 +138,7 @@ const CategoryHeader = styled.div`
 const SectionTitle = styled.h2`
   font-size: 22px;
   font-weight: 700;
-  color: #4A5074;
+  color: #4a5074;
   margin: 0;
 `;
 
@@ -149,6 +173,7 @@ const ScrollButton = styled.div<{ side: "left" | "right" }>`
   ${(p) => (p.side === "left" ? "left: -22px;" : "right: -22px;")}
   z-index: 5;
   transition: 0.2s ease;
+
   &:hover {
     transform: scale(1.05);
     background-color: #f8f8f8;
@@ -172,260 +197,143 @@ const ArrowIcon = ({ direction }: { direction: "left" | "right" }) => (
   </svg>
 );
 
-/* ===== Offers Carousel Styles ===== */
-const OfferCarouselWrapper = styled.div`
-  width: 100%;
-  max-width: 1600px; /* SAME AS CONTENT WRAPPER */
-  margin: 0 auto;
-  overflow: hidden;
-  margin-bottom: 40px;
-  position: relative;
-`;
+/* ============================================================
+   Component
+============================================================ */
 
+const CATEGORY_NAMES = ["Trending Now", "Near You", "For Her", "For Him"];
 
-const OfferTrack = styled.div`
-  display: flex;
-  width: 100%; /* only 100% of parent */
-  height: 220px;
-  transition: transform 0.5s ease;
-`;
-
-
-const DotsWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-`;
-
-const Dot = styled.button<{ active: boolean }>`
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: none;
-  background-color: ${(p) => (p.active ? "#0b1c36" : "#d3d3d3")};
-  cursor: pointer;
-`;
-
-// ===== Component =====
 const HomePage: React.FC = () => {
-  console.log("🏠 Customer Homepage Loaded");
   const navigate = useNavigate();
 
-  const salons = [
-    {
-      id: "hair-avenue",
-      image: oliviaSalon,
-      name: "Hair Avenue",
-      distance: "2.3 km",
-      location: "No 03, Kadalana Road, Kadalana, Moratuwa",
-      rating: 4.7,
-      reviews: 312,
-      hours: "9AM - 10PM, Mon - Sun",
-      description:
-        "Hair Avenue provides expert haircuts, styling, along with services like facials, cleanups, skincare and makeup to keep you looking your best.",
-      services: [
-        { id: 1, name: "Hair Cut", price: "22 BD", duration: "30 Mins" },
-        { id: 2, name: "Hair Wash", price: "6 BD", duration: "30 Mins" },
-        { id: 3, name: "Beard Trim", price: "5 BD", duration: "20 Mins" },
-      ],
-      categories: ["Hair Cut", "Hair Styling", "Hair Treatments", "Combo", "Nails"],
-    },
-    {
-      id: "salon-avenue",
-      image: oliviaSalon,
-      name: "Salon Avenue",
-      distance: "2.3 km",
-      location: "No 03, Mashtan Kadalana, Moratuwa",
-      rating: 4.7,
-      reviews: 312,
-      hours: "9AM - 10PM, Mon - Sun",
-      description:
-        "Hair Avenue provides expert haircuts, styling, along with services like facials, cleanups, skincare and makeup to keep you looking your best.",
-      services: [
-        { id: 1, name: "Hair Cut", price: "67 BD", duration: "30 Mins" },
-        { id: 2, name: "Hair Wash", price: "6 BD", duration: "30 Mins" },
-        { id: 3, name: "Beard Trim", price: "5 BD", duration: "20 Mins" },
-      ],
-      categories: ["Hair Cut", "Hair Styling", "Hair Treatments", "Combo", "Nails"],
-    },
-    {
-      id: "blend-salon",
-      image: oliviaSalon,
-      name: "Blend Salon",
-      distance: "1.5 km",
-      location: "45 Queen’s Street, Colombo",
-      rating: 4.8,
-      reviews: 280,
-      hours: "10AM - 9PM, Mon - Sat",
-      description:
-        "Blend Salon specializes in creative coloring, cuts, and luxury treatments.",
-      services: [
-        { id: 1, name: "Full Color", price: "30 BD", duration: "45 Mins" },
-        { id: 2, name: "Balayage", price: "40 BD", duration: "90 Mins" },
-        { id: 3, name: "Blow Dry", price: "10 BD", duration: "25 Mins" },
-      ],
-      categories: ["Coloring", "Highlights", "Styling", "Spa"],
-    },
-    {
-      id: "fresh-salon",
-      image: oliviaSalon,
-      name: "Fresh Salon",
-      distance: "2.0 km",
-      location: "Palm Avenue, Colombo",
-      rating: 4.6,
-      reviews: 198,
-      hours: "9AM - 9PM, Mon - Sun",
-      description:
-        "Fresh Salon offers modern hair and nail care services using eco-friendly products and techniques.",
-      services: [
-        { id: 1, name: "Nail Polish", price: "8 BD", duration: "25 Mins" },
-        { id: 2, name: "Hair Spa", price: "25 BD", duration: "60 Mins" },
-      ],
-      categories: ["Nails", "Hair Care", "Spa", "Massage"],
-    },
-    {
-      id: "signature-salon",
-      image: oliviaSalon,
-      name: "Signature Salon",
-      distance: "2.0 km",
-      location: "Palm Avenue, Colombo",
-      rating: 4.6,
-      reviews: 198,
-      hours: "9AM - 9PM, Mon - Sun",
-      description:
-        "Signature Salon offers modern hair and nail care services using eco-friendly products and techniques.",
-      services: [
-        { id: 1, name: "Nail Polish", price: "8 BD", duration: "25 Mins" },
-        { id: 2, name: "Hair Spa", price: "25 BD", duration: "60 Mins" },
-      ],
-      categories: ["Nails", "Hair Care", "Spa", "Massage"],
-    },
-    {
-      id: "man-salon",
-      image: oliviaSalon,
-      name: "Man Salon",
-      distance: "1.8 km",
-      location: "King’s Road, Colombo",
-      rating: 4.9,
-      reviews: 342,
-      hours: "10AM - 8PM, Tue - Sun",
-      description:
-        "Man Salon is a premium grooming spot for men, offering haircuts, shaves, and relaxing treatments.",
-      services: [
-        { id: 1, name: "Haircut + Shave", price: "15 BD", duration: "45 Mins" },
-        { id: 2, name: "Hot Towel Shave", price: "8 BD", duration: "25 Mins" },
-        { id: 3, name: "Facial Treatment", price: "18 BD", duration: "50 Mins" },
-      ],
-      categories: ["Men’s Grooming", "Haircuts", "Beard Care", "Spa"],
-    },
-  ];
+  const [salons, setSalons] = useState<any[]>([]);
+  const [loadingSalons, setLoadingSalons] = useState(true);
 
-  // ===== OFFERS (3 offers) =====
+  // For horizontal scrolling per category
+  const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [scrollPositions, setScrollPositions] = useState<number[]>(
+    () => Array(CATEGORY_NAMES.length).fill(0)
+  );
+
+  const CARDS_PER_PAGE = 5;
+  const CARD_WIDTH = 310 + 18; // SalonCard width + gap (approx)
+
+  useEffect(() => {
+    const fetchSalons = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/public/businesses");
+        const data = await res.json();
+        setSalons(data);
+      } catch (err) {
+        console.error("Error fetching salons:", err);
+      } finally {
+        setLoadingSalons(false);
+      }
+    };
+
+    fetchSalons();
+  }, []);
+
   const offers = [
     {
       id: 1,
-      salonId: "hair-avenue",
       title: "Glow-Up Hair Package",
       discountText: "20% OFF",
       servicesText: "Haircut • Blowdry • Treatment",
+      image: promotionHeader,
     },
     {
       id: 2,
-      salonId: "salon-avenue",
       title: "Weekend Pamper Deal",
       discountText: "15% OFF",
       servicesText: "Facial • Manicure • Pedicure",
+      image: promotionHeader,
     },
     {
       id: 3,
-      salonId: "man-salon",
       title: "Grooming Essentials",
       discountText: "25% OFF",
       servicesText: "Haircut + Shave • Facial",
+      image: promotionHeader,
     },
   ];
-
-  const offersWithImages = offers.map((offer) => {
-    const salon = salons.find((s) => s.id === offer.salonId);
-    return {
-      ...offer,
-      image: salon?.image || promotionHeader, // fallback
-    };
-  });
 
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
 
   useEffect(() => {
-    if (offersWithImages.length === 0) return;
+    if (offers.length === 0) return;
 
     const interval = setInterval(() => {
-      setActiveOfferIndex((prev) => (prev + 1) % offersWithImages.length);
-    }, 10000); // 10 seconds
+      setActiveOfferIndex((prev) => (prev + 1) % offers.length);
+    }, 10000);
 
     return () => clearInterval(interval);
-  }, [offersWithImages.length]);
-
-  const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [scrollPositions, setScrollPositions] = useState<number[]>([]);
-
-  const CARDS_PER_PAGE = 5;
-  const CARD_WIDTH = 255 + 18;
+  }, [offers.length]);
 
   const handleScroll = (index: number, direction: "left" | "right") => {
     const container = scrollRefs.current[index];
     if (!container) return;
 
-    const delta = direction === "right" ? CARD_WIDTH * CARDS_PER_PAGE : -CARD_WIDTH * CARDS_PER_PAGE;
+    const delta =
+      direction === "right"
+        ? CARDS_PER_PAGE * CARD_WIDTH
+        : -(CARDS_PER_PAGE * CARD_WIDTH);
+
     container.scrollBy({ left: delta, behavior: "smooth" });
 
     setScrollPositions((prev) => {
       const updated = [...prev];
-      const newPos = (updated[index] || 0) + (direction === "right" ? 1 : -1);
-      updated[index] = Math.max(0, newPos);
+      const currentPage = updated[index] ?? 0;
+      const nextPage =
+        direction === "right" ? currentPage + 1 : Math.max(0, currentPage - 1);
+      updated[index] = nextPage;
       return updated;
     });
   };
+
+  if (loadingSalons) {
+    return (
+      <PageWrapper>
+        <TabBar type="customer" />
+        <ContentWrapper>
+          <WelcomeText>Loading salons…</WelcomeText>
+        </ContentWrapper>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
       <TabBar type="customer" />
 
       <ContentWrapper>
-        <WelcomeText>Welcome Back, Enid!</WelcomeText>
+        <WelcomeText>Welcome Back!</WelcomeText>
 
-        {/* ===== OFFERS CAROUSEL (one banner at a time) ===== */}
+        {/* ===== OFFERS CAROUSEL ===== */}
         <OfferCarouselWrapper>
           <OfferTrack
             style={{
               transform: `translateX(-${activeOfferIndex * 100}%)`,
             }}
           >
-            {offersWithImages.map((offer) => (
+            {offers.map((offer) => (
               <PromoBanner key={offer.id}>
-  <BannerImage src={offer.image} alt={offer.title} />
+                <BannerImage src={offer.image} alt={offer.title} />
 
-  <OfferTextContainer>
-    <OfferTitle>{offer.title}</OfferTitle>
-    <OfferDiscount>{offer.discountText}</OfferDiscount>
-    <OfferServices>{offer.servicesText}</OfferServices>
-  </OfferTextContainer>
+                <OfferTextContainer>
+                  <OfferTitle>{offer.title}</OfferTitle>
+                  <OfferDiscount>{offer.discountText}</OfferDiscount>
+                  <OfferServices>{offer.servicesText}</OfferServices>
+                </OfferTextContainer>
 
-  <SalonNameText>
-    {salons.find((s) => s.id === offer.salonId)?.name}
-  </SalonNameText>
-
-  <BookNowButton>Book Now</BookNowButton>
-</PromoBanner>
-
+                <BookNowButton>Book Now</BookNowButton>
+              </PromoBanner>
             ))}
-        
           </OfferTrack>
         </OfferCarouselWrapper>
 
         <DotsWrapper>
-          {offersWithImages.map((offer, index) => (
+          {offers.map((offer, index) => (
             <Dot
               key={offer.id}
               active={index === activeOfferIndex}
@@ -434,45 +342,61 @@ const HomePage: React.FC = () => {
           ))}
         </DotsWrapper>
 
-        {["Trending Now", "Near You", "For Her", "For Him"].map((category, index) => {
-          const start = (scrollPositions[index] || 0) * CARDS_PER_PAGE;
+        {/* ===== SALON CATEGORIES ===== */}
+        {CATEGORY_NAMES.map((category, index) => {
+          const pageIndex = scrollPositions[index] ?? 0;
+          const start = pageIndex * CARDS_PER_PAGE;
           const visibleSalons = salons.slice(start, start + CARDS_PER_PAGE);
           const hasMore = start + CARDS_PER_PAGE < salons.length;
           const canScrollBack = start > 0;
 
           return (
             <div key={category}>
-              {/* ✅ Only the title has white background */}
               <CategoryHeader>
                 <SectionTitle>{category}</SectionTitle>
               </CategoryHeader>
 
-              {/* ✅ Cards and arrows remain below */}
               <ScrollWrapper>
                 {canScrollBack && (
-                  <ScrollButton side="left" onClick={() => handleScroll(index, "left")}>
+                  <ScrollButton
+                    side="left"
+                    onClick={() => handleScroll(index, "left")}
+                  >
                     <ArrowIcon direction="left" />
                   </ScrollButton>
                 )}
 
-                <HorizontalScroll ref={(el) => { scrollRefs.current[index] = el; }}>
-                  {visibleSalons.map((salon) => (
+                <HorizontalScroll
+                  ref={(el) => {
+                    scrollRefs.current[index] = el;
+                  }}
+                >
+                  {visibleSalons.map((salon: any) => (
                     <SalonCard
-                      key={`${category}-${salon.id}`}
-                      id={salon.id}
-                      image={salon.image}
-                      name={salon.name}
-                      distance={salon.distance}
-                      location={salon.location}
-                      rating={salon.rating}
-                      reviews={salon.reviews}
-                      onClick={() => navigate(`/business/${salon.id}`, { state: salon })}
+                      key={`${category}-${salon._id}`}
+                      id={salon._id}
+                      image={
+                        salon.imageUrl
+                          ? `http://localhost:5000${salon.imageUrl}`
+                          : ""
+                      }
+                      name={salon.businessName}
+                      distance="—"
+                      location={`${salon.address}, ${salon.city}`}
+                      rating={0}
+                      reviews={0}
+                      onClick={() =>
+                        navigate(`/business/${salon._id}`, { state: salon })
+                      }
                     />
                   ))}
                 </HorizontalScroll>
 
                 {hasMore && (
-                  <ScrollButton side="right" onClick={() => handleScroll(index, "right")}>
+                  <ScrollButton
+                    side="right"
+                    onClick={() => handleScroll(index, "right")}
+                  >
                     <ArrowIcon direction="right" />
                   </ScrollButton>
                 )}
