@@ -1,49 +1,69 @@
 const mongoose = require("mongoose");
 
-const staffSchema = new mongoose.Schema({
-  fullName: { type: String },          // ⬅ remove required: true
-  role: { type: String },
-  email: { type: String },
-  phone: { type: String },
-});
-
-const businessSchema = new mongoose.Schema({
-  ownerFirstName: { type: String },    // ⬅ remove required: true
-  ownerLastName: { type: String },     // ⬅ remove required: true
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String },      // ⬅ remove required: true
-  phone: { type: String },
-
-  businessName: { type: String, required: true },
-  businessType: { type: String, required: true },
-  address: { type: String, required: true },
-  city: { type: String, required: true },
-  description: { type: String },
-
-  operatingHours: {
-    monday: String,
-    tuesday: String,
-    wednesday: String,
-    thursday: String,
-    friday: String,
-    saturday: String,
-    sunday: String,
+const staffSchema = new mongoose.Schema(
+  {
+    fullName: { type: String, default: "" },
+    role: { type: String, default: "" },
+    email: { type: String, default: "" },
+    phone: { type: String, default: "" },
   },
+  { _id: false }
+);
 
-  staff: [staffSchema],
-
-  socialLinks: {
-    instagram: String,
-    facebook: String,
-    website: String,
-    other: String,
+const socialLinksSchema = new mongoose.Schema(
+  {
+    instagram: { type: String, default: "" },
+    facebook: { type: String, default: "" },
+    website: { type: String, default: "" },
+    other: { type: String, default: "" },
   },
+  { _id: false }
+);
 
-  services: [{ type: mongoose.Schema.Types.ObjectId, ref: "Service" }],
-  imageUrl: {
+const operatingHoursSchema = new mongoose.Schema(
+  {
+    monday: { type: String, default: "" },
+    tuesday: { type: String, default: "" },
+    wednesday: { type: String, default: "" },
+    thursday: { type: String, default: "" },
+    friday: { type: String, default: "" },
+    saturday: { type: String, default: "" },
+    sunday: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const businessSchema = new mongoose.Schema(
+  {
+    // Old auth-style flow fields
+    ownerFirstName: { type: String },
+    ownerLastName: { type: String },
+    passwordHash: { type: String },
+
+    // Common fields
+    email: { type: String, required: true, unique: true },
+    phone: { type: String },
+
+    businessName: { type: String, required: true },
+    businessType: { type: String, required: true },
+
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+
+    description: { type: String, default: "" },
+
+    operatingHours: { type: operatingHoursSchema, default: () => ({}) },
+
+    staff: { type: [staffSchema], default: [] },
+
+    socialLinks: { type: socialLinksSchema, default: () => ({}) },
+
+    imageUrl: {
       type: String,
-      default: null,
+      default: null, // e.g. "/uploads/filename.jpg"
     },
+
+    // ❌ services array removed – services live in their own collection
   },
   { timestamps: true }
 );
