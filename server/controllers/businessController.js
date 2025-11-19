@@ -1,3 +1,4 @@
+// server/controllers/businessController.js
 const Business = require("../models/Business");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -10,39 +11,8 @@ const generateToken = (id) =>
  *
  * Supports TWO kinds of payload:
  *
- * 1) OLD STYLE (auth + owner):
- *    {
- *      ownerFirstName,
- *      ownerLastName,
- *      email,
- *      password,
- *      phone,
- *      businessName,
- *      businessType,
- *      address,
- *      city,
- *      description,
- *      operatingHours,
- *      staff,
- *      socialLinks
- *    }
- *
- * 2) NEW WIZARD STYLE (your new registration page, often multipart/form-data):
- *    {
- *      businessInfo: JSON.stringify({
- *        name,
- *        type,
- *        email,
- *        phone,
- *        address,
- *        city,
- *        about,
- *      }),
- *      operatingHours: JSON.stringify({ ... }),
- *      socialLinks: JSON.stringify({ ... }),
- *      staff: JSON.stringify([ ... ]),
- *      image: <file>
- *    }
+ * 1) OLD STYLE (auth + owner)
+ * 2) NEW WIZARD STYLE (your multi-step registration with image)
  */
 const registerBusiness = async (req, res) => {
   try {
@@ -50,8 +20,7 @@ const registerBusiness = async (req, res) => {
     console.log("Raw req.body:", req.body);
     console.log("Has file?", !!req.file);
 
-    // ---------- 1. Handle wizard-style JSON strings (if present) ----------
-    // These may come either as objects (old flow) or strings (wizard FormData)
+    // ---------- 1. Helper to parse possible JSON strings ----------
     const parseMaybeJson = (value, fallback) => {
       if (!value) return fallback;
       if (typeof value === "string") {
@@ -62,7 +31,7 @@ const registerBusiness = async (req, res) => {
           return fallback;
         }
       }
-      return value; // already an object/array
+      return value;
     };
 
     const businessInfo = parseMaybeJson(req.body?.businessInfo, {});
@@ -79,7 +48,7 @@ const registerBusiness = async (req, res) => {
       console.log("✅ Image uploaded:", imageUrl);
     }
 
-    // ---------- 3. If this is the NEW wizard flow ----------
+    // ---------- 3. NEW WIZARD FLOW ----------
     if (isWizardPayload) {
       console.log("🧙 Using NEW wizard payload");
 
@@ -93,7 +62,7 @@ const registerBusiness = async (req, res) => {
         about,
       } = businessInfo;
 
-      // Map staff to your schema shape
+      // Map staff into your schema
       const mappedStaff = (wizardStaffRaw || [])
         .filter(
           (member) =>
@@ -122,7 +91,7 @@ const registerBusiness = async (req, res) => {
       }
 
       const business = await Business.create({
-        // no owner / auth in wizard flow for now
+        // no owner/password for wizard flow
         email,
         phone,
         businessName: name,
@@ -133,7 +102,7 @@ const registerBusiness = async (req, res) => {
         operatingHours: wizardOperatingHours,
         staff: mappedStaff,
         socialLinks: wizardSocialLinks,
-        imageUrl, // ✅ save cover image
+        imageUrl, // ✅ cover image
         services: [],
       });
 
@@ -143,13 +112,15 @@ const registerBusiness = async (req, res) => {
         email: business.email,
       });
 
+      // ✅ IMPORTANT: RETURN TOKEN HERE TOO
       return res.status(201).json({
         message: "Business registered successfully",
+        token: generateToken(business._id),
         business,
       });
     }
 
-    // ---------- 4. OLD FLOW (no businessInfo present) ----------
+    // ---------- 4. OLD AUTH-STYLE FLOW ----------
     console.log("📦 Using OLD auth-style payload");
 
     let {
@@ -166,14 +137,12 @@ const registerBusiness = async (req, res) => {
       operatingHours,
       staff,
       socialLinks,
-    } = req.body || {}; // req.body should be JSON in old flow
+    } = req.body || {};
 
-    // Basic required fields
     if (!email || !businessName || !businessType || !address || !city) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Old flow requires owner + password
     if (!ownerFirstName || !ownerLastName || !password) {
       return res
         .status(400)
@@ -185,10 +154,7 @@ const registerBusiness = async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    // Hash password
     const passwordHash = await bcryptjs.hash(password, 10);
-
-    // Map old staff if needed (assume it's already in correct shape or empty)
     const finalStaff = Array.isArray(staff) ? staff : [];
 
     const business = await Business.create({
@@ -205,7 +171,7 @@ const registerBusiness = async (req, res) => {
       operatingHours,
       staff: finalStaff,
       socialLinks,
-      imageUrl, // if you ever add image to old flow
+      imageUrl,
       services: [],
     });
 
@@ -226,7 +192,7 @@ const registerBusiness = async (req, res) => {
   }
 };
 
-// LOGIN BUSINESS
+// LOGIN
 const loginBusiness = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -273,9 +239,7 @@ const updateMyBusinessProfile = async (req, res) => {
     const updated = await Business.findByIdAndUpdate(
       req.business._id,
       updates,
-      {
-        new: true,
-      }
+      { new: true }
     ).populate("services");
 
     res.json({ message: "Business updated", business: updated });

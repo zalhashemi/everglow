@@ -1,9 +1,11 @@
 // server/routes/businessRoutes.js
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/upload");
 
-// Controllers
+// correct paths (we are inside /routes)
+const upload = require("../middleware/upload");
+const { protectBusiness } = require("../middleware/authMiddleware");
+
 const {
   registerBusiness,
   loginBusiness,
@@ -11,17 +13,12 @@ const {
   updateMyBusinessProfile,
 } = require("../controllers/businessController");
 
-// Model
 const Business = require("../models/Business");
 
 /* ===============================
    REGISTER BUSINESS (with image)
 ================================= */
-router.post(
-  "/register",
-  upload.single("image"),
-  registerBusiness
-);
+router.post("/register", upload.single("image"), registerBusiness);
 
 /* ===============================
    LOGIN BUSINESS
@@ -29,18 +26,17 @@ router.post(
 router.post("/login", loginBusiness);
 
 /* ===============================
-   GET BUSINESS PROFILE
+   GET BUSINESS PROFILE (protected)
 ================================= */
-router.get("/me", getMyBusinessProfile);
+router.get("/me", protectBusiness, getMyBusinessProfile);
 
 /* ===============================
-   UPDATE BUSINESS PROFILE
+   UPDATE BUSINESS PROFILE (protected)
 ================================= */
-router.put("/me", updateMyBusinessProfile);
+router.put("/me", protectBusiness, updateMyBusinessProfile);
 
 /* ===============================
-   NEW: GET ALL BUSINESSES
-   (This is needed for Customer HomePage)
+   GET ALL BUSINESSES (debug / admin)
 ================================= */
 router.get("/", async (req, res) => {
   try {
