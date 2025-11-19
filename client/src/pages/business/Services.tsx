@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import TabBar from "../../components/common/TabBar";
 import { AiFillStar } from "react-icons/ai";
 import { FiMapPin, FiEdit2 } from "react-icons/fi";
@@ -7,83 +7,238 @@ import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
 import errorImage from "../../images/errorLoading.png";
 import oliviaSalon from "../../images/oliviaSalon.jpg";
+import api from "../../utils/api"; // was incorrect path: '../../api'
+
+// --- Types that match your backend ---
+interface Service {
+  _id: string;
+  name: string;
+  durationMinutes: number;
+  priceBHD: number;
+  category?: string;
+  description?: string;
+}
+
+interface BusinessHeader {
+  businessName: string;
+  city: string;
+  address: string;
+  description?: string;
+  imageUrl?: string | null;
+}
+
+// For the modal form
+interface ServiceFormData {
+  name: string;
+  durationMinutes: string; // keep as string in form, convert to number on submit
+  priceBHD: string;
+  category: string;
+  description: string;
+}
 
 const BusinessServices: React.FC = () => {
-  const salon = {
-    name: "Glamour Beauty Salon",
-    image: oliviaSalon,
-    location: "Seef, Bahrain",
-    hours: "9AM - 10PM, Mon - Sun",
-    rating: 4.8,
-    reviews: 312,
-    description:
-      "We offer professional hair, nail, and beauty services using premium products.",
-    categories: ["Hair", "Coloring", "Styling", "Nails", "Spa"],
-  };
+  // ------------ BUSINESS HEADER ------------
+  const [business, setBusiness] = useState<BusinessHeader | null>(null);
+  const [imgSrc, setImgSrc] = useState<string>(oliviaSalon);
 
-  const [activeTab, setActiveTab] = useState(salon.categories[0]);
-  const [imgSrc, setImgSrc] = useState(salon.image || errorImage);
+  // ------------ SERVICES ------------
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ------------ UI STATE ------------
+  const [activeTab, setActiveTab] = useState<string>("All");
   const [showModal, setShowModal] = useState(false);
-  const [selectedService, setSelectedService] = useState<any>(null);
-  const [services, setServices] = useState([
-    {
-      id: "1",
-      name: "Haircut",
-      duration: "45 min",
-      price: "22 BD",
-      description: "Professional haircut service including wash and style",
-    },
-    {
-      id: "2",
-      name: "Hair Coloring",
-      duration: "2 hrs",
-      price: "30 BD",
-      description: "Full hair coloring service with premium products",
-    },
-  ]);
-  const [formData, setFormData] = useState({
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+
+  const [formData, setFormData] = useState<ServiceFormData>({
     name: "",
-    duration: "",
-    price: "",
+    durationMinutes: "",
+    priceBHD: "",
+    category: "",
     description: "",
   });
 
-  const handleAddService = () => {
-    setSelectedService(null);
-    setFormData({ name: "", duration: "", price: "", description: "" });
-    setShowModal(true);
-  };
+  // --- Derive categories from services ---
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    services.forEach((s) => {
+      if (s.category) set.add(s.category);
+    });
+    return ["All", ...Array.from(set)];
+  }, [services]);
 
-  const handleEditService = (service: any) => {
-    setSelectedService(service);
+  const filteredServices = useMemo(() => {
+    if (activeTab === "All") return services;
+    return services.filter((s) => s.category === activeTab);
+  }, [services, activeTab]);
+
+  // ------------ LOAD BUSINESS + SERVICES ------------
+  useEffect(() => {
+    const fetchEverything = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 1) Try to get business profile from backend
+        //    (requires /api/business/me to be protected with protectBusiness)
+        try {
+          const res = await api.get<BusinessHeader>("/business/me");
+          const b = res.data;
+          setBusiness(b);
+
+          // imageUrl is like "/uploads/filename.jpg"
+          if (b.imageUrl) {
+            // If your frontend runs on 3000 and backend on 5000:
+            const fullUrl = `http://localhost:5000${b.imageUrl}`;
+            setImgSrc(fullUrl);
+          } else {
+            setImgSrc(oliviaSalon);
+          }
+        } catch (e) {
+          // fallback: maybe you stored business info in localStorage after registration
+          const stored = localStorage.getItem("business");
+          if (stored) {
+            const b = JSON.parse(stored);
+            setBusiness({
+              businessName: b.businessName || "My Business",
+              city: b.city || "",
+              address: b.address || "",
+              description: b.description || "",
+              imageUrl: b.imageUrl,
+            });
+
+            if (b.imageUrl) {
+              const fullUrl = `http://localhost:5000${b.imageUrl}`;
+              setImgSrc(fullUrl);
+            } else {
+              setImgSrc(oliviaSalon);
+            }
+          } else {
+            // last resort: keep dummy info
+            setBusiness({
+              businessName: "My Business",
+              city: "",
+              address: "",
+              description: "",
+              imageUrl: undefined,
+            });
+            setImgSrc(oliviaSalon);
+          }
+        }
+
+        // 2) Get services for this business
+        const svcRes = await api.get<Service[]>("/services");
+        setServices(svcRes.data);
+
+        // ✅ clear any old error if load succeeded
+        setError(null);
+      } catch (err: any) {
+        console.error(err);
+        setError(
+          err?.response?.data?.message ||
+            "Failed to load services. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEverything();
+  }, []);
+
+  // ------------ MODAL HANDLERS ------------
+  const openAddModal = () => {
+    setSelectedService(null);
     setFormData({
-      name: service.name,
-      duration: service.duration,
-      price: service.price,
-      description: service.description,
+      name: "",
+      durationMinutes: "",
+      priceBHD: "",
+      category: "",
+      description: "",
     });
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedService) {
-      setServices(
-        services.map((s) =>
-          s.id === selectedService.id ? { ...s, ...formData } : s
-        )
-      );
-    } else {
-      setServices([
-        ...services,
-        {
-          id: (services.length + 1).toString(),
-          ...formData,
-        },
-      ]);
-    }
-    setShowModal(false);
+  const openEditModal = (service: Service) => {
+    setSelectedService(service);
+    setFormData({
+      name: service.name,
+      durationMinutes: service.durationMinutes.toString(),
+      priceBHD: service.priceBHD.toString(),
+      category: service.category || "",
+      description: service.description || "",
+    });
+    setShowModal(true);
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const durationMinutesNum = Number(formData.durationMinutes);
+    const priceBHDNum = Number(formData.priceBHD);
+
+    if (!formData.name || !durationMinutesNum || !priceBHDNum) {
+      alert("Please fill at least name, duration and price.");
+      return;
+    }
+
+    const payload = {
+      name: formData.name.trim(),
+      durationMinutes: durationMinutesNum,
+      priceBHD: priceBHDNum,
+      category: formData.category.trim() || undefined,
+      description: formData.description.trim() || undefined,
+    };
+
+    try {
+      if (selectedService) {
+        // UPDATE
+        const res = await api.put<{ message: string; service: Service }>(
+          `/services/${selectedService._id}`,
+          payload
+        );
+        const updated = res.data.service;
+
+        setServices((prev) =>
+          prev.map((s) => (s._id === updated._id ? updated : s))
+        );
+      } else {
+        // CREATE
+        const res = await api.post<{ message: string; service: Service }>(
+          "/services",
+          payload
+        );
+        const created = res.data.service;
+        setServices((prev) => [...prev, created]);
+      }
+
+      // ✅ clear any old error after a successful save
+      setError(null);
+
+      // Refresh categories if a new category was added
+      if (payload.category && !categories.includes(payload.category)) {
+        setActiveTab("All");
+      }
+
+      setShowModal(false);
+    } catch (err: any) {
+      console.error(err);
+      alert(
+        err?.response?.data?.message ||
+          "Failed to save service. Please try again."
+      );
+    }
+  };
+
+  // ------------ RENDER ------------
+  const headerName = business?.businessName || "Glamour Beauty Salon";
+  const headerLocation = business
+    ? `${business.city || ""}`.trim()
+    : "Seef, Bahrain";
+  const headerDescription =
+    business?.description ||
+    "We offer professional hair, nail, and beauty services using premium products.";
 
   return (
     <div
@@ -108,8 +263,8 @@ const BusinessServices: React.FC = () => {
       >
         {/* Salon Header */}
         <img
-          src={imgSrc}
-          alt={salon.name}
+          src={imgSrc || errorImage}
+          alt={headerName}
           onError={() => setImgSrc(errorImage)}
           style={{
             width: "100%",
@@ -119,7 +274,7 @@ const BusinessServices: React.FC = () => {
         />
 
         <div style={{ padding: "24px" }}>
-          <h2 style={{ fontSize: "24px", fontWeight: 700 }}>{salon.name}</h2>
+          <h2 style={{ fontSize: "24px", fontWeight: 700 }}>{headerName}</h2>
 
           {/* Location */}
           <div
@@ -135,10 +290,10 @@ const BusinessServices: React.FC = () => {
               size: 16,
               style: { marginRight: "4px" },
             })}
-            {salon.location}
+            {headerLocation || "Location not set"}
           </div>
 
-          {/* Hours */}
+          {/* Hours – you can swap this later for real operatingHours from DB */}
           <div
             style={{
               color: "#7A7A7A",
@@ -146,10 +301,10 @@ const BusinessServices: React.FC = () => {
               marginTop: "4px",
             }}
           >
-            {salon.hours}
+            Opening hours not set
           </div>
 
-          {/* Rating */}
+          {/* Rating – static for now */}
           <div
             style={{
               display: "flex",
@@ -163,15 +318,13 @@ const BusinessServices: React.FC = () => {
               size: 16,
               style: { marginRight: "4px" },
             })}
-            <span>{salon.rating}</span>
-            <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>
-              ({salon.reviews})
-            </span>
+            <span>4.8</span>
+            <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>(312)</span>
           </div>
 
           {/* Description */}
           <p style={{ marginTop: "12px", color: "#555", fontSize: "14px" }}>
-            {salon.description}
+            {headerDescription}
           </p>
 
           {/* Tabs */}
@@ -179,11 +332,11 @@ const BusinessServices: React.FC = () => {
             style={{
               display: "flex",
               gap: "20px",
-              borderBottom: "1px solid #e5e5e5",
+              borderBottom: '1px solid #e5e5e5',
               marginTop: "20px",
             }}
           >
-            {salon.categories.map((tab: string) => (
+            {categories.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -207,25 +360,40 @@ const BusinessServices: React.FC = () => {
 
           {/* Services List */}
           <div style={{ marginTop: "20px" }}>
-            {services.map((service) => (
+            {loading && <p>Loading services...</p>}
+
+            {/* ✅ only show error when there are no services */}
+            {error && !services.length && (
+              <p style={{ color: "red", fontSize: "14px" }}>{error}</p>
+            )}
+
+            {!loading && !filteredServices.length && !error && (
+              <p style={{ fontSize: "14px", color: "#777" }}>
+                No services yet. Click &quot;Add New Service&quot; to create
+                one.
+              </p>
+            )}
+
+            {filteredServices.map((service) => (
               <div
-                key={service.id}
+                key={service._id}
                 style={{
                   position: "relative",
                   marginBottom: "12px",
                 }}
               >
                 <ServiceTile
-                  name="Haircut"
-                  price={22}
-                  duration="45 min"
-                  icon={<FiEdit2 size={16} />} 
-                  onClick={() => handleEditService(service)}
+                  name={service.name}
+                  price={service.priceBHD}
+                  duration={`${service.durationMinutes} min`}
+                  description={service.description}
+                  icon={<FiEdit2 size={16} />} // pencil icon
+                  onClick={() => openEditModal(service)}
                 />
               </div>
             ))}
 
-            {/* ✅ Add New Service Button (fits container width) */}
+            {/* Add New Service Button */}
             <div
               style={{
                 textAlign: "center",
@@ -233,7 +401,7 @@ const BusinessServices: React.FC = () => {
               }}
             >
               <Button
-                onClick={handleAddService}
+                onClick={openAddModal}
                 style={{
                   width: "100%",
                   maxWidth: "850px",
@@ -250,7 +418,7 @@ const BusinessServices: React.FC = () => {
         </div>
       </div>
 
-      {/* ✅ Modal for Edit/Add */}
+      {/* Modal for Add/Edit */}
       {showModal && (
         <div
           style={{
@@ -297,28 +465,38 @@ const BusinessServices: React.FC = () => {
               <TextBox
                 placeholder="Service Name"
                 value={formData.name}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((p) => ({ ...p, name: e.target.value }))
                 }
               />
               <TextBox
-                placeholder="Duration (e.g., 45 min)"
-                value={formData.duration}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, duration: e.target.value }))
+                placeholder="Duration (minutes, e.g. 45)"
+                value={formData.durationMinutes}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData((p) => ({
+                    ...p,
+                    durationMinutes: e.target.value,
+                  }))
                 }
               />
               <TextBox
-                placeholder="Price"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, price: e.target.value }))
+                placeholder="Price (BHD)"
+                value={formData.priceBHD}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData((p) => ({ ...p, priceBHD: e.target.value }))
+                }
+              />
+              <TextBox
+                placeholder="Category (e.g. Hair, Nails)"
+                value={formData.category}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData((p) => ({ ...p, category: e.target.value }))
                 }
               />
               <TextBox
                 placeholder="Description"
                 value={formData.description}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((p) => ({ ...p, description: e.target.value }))
                 }
               />
@@ -339,7 +517,6 @@ const BusinessServices: React.FC = () => {
                   Cancel
                 </Button>
 
-                {/* ✅ Pencil icon inside button */}
                 <Button type="submit">
                   <FiEdit2
                     size={16}

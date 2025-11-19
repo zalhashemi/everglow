@@ -212,88 +212,99 @@ const BusinessRegistration: React.FC = () => {
     { name: "", role: "", email: "", phone: "" },
   ]);
 
-  // ✅ image file for cover photo
+  // image file for cover photo
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleStaffChange = (index: number, field: string, value: string) => {
-    const updated = [...staffList];
-    (updated[index] as any)[field] = value;
-    setStaffList(updated);
+    setStaffList((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const addStaffMember = () => {
-    setStaffList([...staffList, { name: "", role: "", email: "", phone: "" }]);
+    setStaffList((prev) => [
+      ...prev,
+      { name: "", role: "", email: "", phone: "" },
+    ]);
   };
 
   const removeStaffMember = (index: number) => {
-    const updated = staffList.filter((_, i) => i !== index);
-    setStaffList(updated);
+    setStaffList((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ✅ handle image change
+  // handle image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
 
-    // only allow submit on last step
-    if (currentStep !== 2) {
-      setCurrentStep(2);
-      return;
+  // only allow submit on last step
+  if (currentStep !== 2) {
+    setCurrentStep(2);
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("businessInfo", JSON.stringify(businessInfo));
+    formData.append("operatingHours", JSON.stringify(operatingHours));
+    formData.append("socialLinks", JSON.stringify(socialLinks));
+    formData.append("staff", JSON.stringify(staffList));
+
+    if (imageFile) {
+      formData.append("image", imageFile);
     }
 
-    setIsSubmitting(true);
+    console.log("📤 Sending FormData with image:", {
+      businessInfo,
+      operatingHours,
+      socialLinks,
+      staffList,
+      imageFileName: imageFile?.name,
+    });
 
-    try {
-      // ✅ use FormData instead of JSON
-      const formData = new FormData();
-      formData.append("businessInfo", JSON.stringify(businessInfo));
-      formData.append("operatingHours", JSON.stringify(operatingHours));
-      formData.append("socialLinks", JSON.stringify(socialLinks));
-      formData.append("staff", JSON.stringify(staffList));
+    const res = await fetch("http://localhost:5000/api/business/register", {
+      method: "POST",
+      body: formData,
+    });
 
-      if (imageFile) {
-        // "image" MUST match upload.single("image") on backend
-        formData.append("image", imageFile);
-      }
+    const data = await res.json();
+    console.log("📥 Response data:", data);
 
-      console.log("📤 Sending FormData with image:", {
-        businessInfo,
-        operatingHours,
-        socialLinks,
-        staffList,
-        imageFileName: imageFile?.name,
-      });
-
-      const res = await fetch("http://localhost:5000/api/business/register", {
-        method: "POST",
-        body: formData, // ❗ no manual Content-Type, browser sets it
-      });
-
-      const data = await res.json();
-      console.log("📥 Response data:", data);
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to register business");
-      }
-
-      alert("Business registered successfully!");
-      navigate("/business/dashboard");
-    } catch (err: any) {
-      console.error("Error registering business:", err);
-      setError(err.message || "Something went wrong");
-    } finally {
-      setIsSubmitting(false);
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to register business");
     }
-  };
+
+    // ✅ NEW: save token so protected routes work
+    if (data.token) {
+      localStorage.setItem("businessToken", data.token);
+      localStorage.setItem("businessInfo", JSON.stringify(data.business));
+    }
+
+    alert("Business registered successfully!");
+    navigate("/business/dashboard");
+  } catch (err: any) {
+    console.error("Error registering business:", err);
+    setError(err.message || "Something went wrong");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+
 
   return (
     <PageContainer>
@@ -375,7 +386,7 @@ const BusinessRegistration: React.FC = () => {
                   />
                 </TwoColumnGrid>
                 <TextArea
-                  placeholder="About your business..."
+                  placeholder="About your business."
                   value={businessInfo.about}
                   onChange={(e) =>
                     setBusinessInfo((prev) => ({
@@ -510,7 +521,7 @@ const BusinessRegistration: React.FC = () => {
                 </TwoColumnGrid>
               </Section>
 
-              {/* ✅ Cover Image Upload */}
+              {/* Cover Image Upload */}
               <Section>
                 <SectionHeader>Cover Image</SectionHeader>
                 <p
