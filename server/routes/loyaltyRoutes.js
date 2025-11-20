@@ -1,15 +1,12 @@
+// server/routes/loyaltyRoutes.js
 const express = require("express");
 const router = express.Router();
 const {
-  getAllMyLoyalty,
-  getMyLoyaltyForBusiness,
-  redeemLoyaltyReward
+  getBusinessLoyalty,
+  updateBusinessLoyalty,
 } = require("../controllers/loyaltyController");
-const { protectCustomer } = require("../middleware/customerAuthMiddleware");
 
-// Customer routes
-router.get("/", protectCustomer, getAllMyLoyalty);
-router.get("/business/:businessId", protectCustomer, getMyLoyaltyForBusiness);
-router.post("/redeem/:businessId", protectCustomer, redeemLoyaltyReward);
+router.get("/:businessId", getBusinessLoyalty);
+router.put("/:businessId", updateBusinessLoyalty);
 
 module.exports = router;

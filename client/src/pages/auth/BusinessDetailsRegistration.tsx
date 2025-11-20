@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import L from "../../leafletSetup";
+import type { LeafletMouseEvent } from "leaflet";
+
 import TextBox from "../../components/common/TextBox";
 
-// ---------- Styled Components ----------
 const PageContainer = styled.div`
   background: ${(p) => p.theme.colors.background};
   min-height: 100vh;
@@ -100,10 +102,10 @@ const SubmitButton = styled.button`
 const StaffContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${(p) => p.theme.spacing.md};
+  gap: ${(p) => p.theme.spacing.lg};
 `;
 
-const StaffRow = styled.div`
+const StaffHeaderRow = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto;
   gap: ${(p) => p.theme.spacing.sm};
@@ -170,17 +172,212 @@ const ErrorText = styled.p`
   font-size: ${(p) => p.theme.typography.fontSizes.small};
 `;
 
-// ---------- Main Component ----------
+const MapBlock = styled.div`
+  width: 100%;
+  height: 280px;
+  border-radius: ${(p) => p.theme.borderRadius.medium};
+  overflow: hidden;
+  margin-top: ${(p) => p.theme.spacing.sm};
+`;
+
+const LocationInfo = styled.div`
+  margin-top: ${(p) => p.theme.spacing.sm};
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  color: #555;
+`;
+
+/* --------- Operating Hours --------- */
+
+const HoursGrid = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${(p) => p.theme.spacing.sm};
+`;
+
+const DayRow = styled.div`
+  display: grid;
+  grid-template-columns: 110px repeat(2, minmax(0, 1fr)) auto;
+  gap: ${(p) => p.theme.spacing.sm};
+  align-items: center;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+`;
+
+const DayLabel = styled.span`
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  font-weight: 600;
+  color: ${(p) => p.theme.colors.gray.dark};
+`;
+
+const TimeSelect = styled.select`
+  width: 100%;
+  padding: ${(p) => p.theme.spacing.sm};
+  border-radius: ${(p) => p.theme.borderRadius.small};
+  border: 1px solid ${(p) => p.theme.colors.gray.medium};
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  background: ${(p) => p.theme.colors.white};
+
+  &:focus {
+    outline: none;
+    border-color: ${(p) => p.theme.colors.primary};
+  }
+
+  &:disabled {
+    background: ${(p) => p.theme.colors.gray.light};
+    cursor: not-allowed;
+  }
+`;
+
+const ClosedToggle = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: ${(p) => p.theme.spacing.xs};
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  color: ${(p) => p.theme.colors.gray.dark};
+  cursor: pointer;
+
+  input {
+    cursor: pointer;
+  }
+
+  @media (max-width: 600px) {
+    margin-top: ${(p) => p.theme.spacing.xs};
+  }
+`;
+
+/* --------- Pretty file input --------- */
+
+const FileInputWrapper = styled.div`
+  margin-top: ${(p) => p.theme.spacing.sm};
+`;
+
+const FileInputLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${(p) => `${p.theme.spacing.sm} ${p.theme.spacing.lg}`};
+  border-radius: ${(p) => p.theme.borderRadius.large};
+  background: ${(p) => p.theme.colors.primary};
+  color: ${(p) => p.theme.colors.white};
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  &:hover {
+    background: ${(p) => p.theme.colors.secondary};
+  }
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+/* ------------------------------------- */
+
+const DEFAULT_CENTER = {
+  lat: 26.2285,
+  lng: 50.586,
+  zoom: 11,
+};
+
+type DayKey =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+type DayHours = {
+  open: string;
+  close: string;
+  closed: boolean;
+};
+
+const DAY_KEYS: DayKey[] = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+const DAY_LABELS: Record<DayKey, string> = {
+  monday: "Monday",
+  tuesday: "Tuesday",
+  wednesday: "Wednesday",
+  thursday: "Thursday",
+  friday: "Friday",
+  saturday: "Saturday",
+  sunday: "Sunday",
+};
+
+const TIME_OPTIONS = [
+  "07:00",
+  "07:30",
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+  "18:00",
+  "18:30",
+  "19:00",
+  "19:30",
+  "20:00",
+  "20:30",
+  "21:00",
+  "21:30",
+  "22:00",
+];
+
+const createEmptySchedule = (): Record<DayKey, DayHours> => ({
+  monday: { open: "", close: "", closed: false },
+  tuesday: { open: "", close: "", closed: false },
+  wednesday: { open: "", close: "", closed: false },
+  thursday: { open: "", close: "", closed: false },
+  friday: { open: "", close: "", closed: false },
+  saturday: { open: "", close: "", closed: false },
+  sunday: { open: "", close: "", closed: false },
+});
+
+type StaffMember = {
+  name: string;
+  role: string;
+  schedule: Record<DayKey, DayHours>;
+};
+
 const BusinessRegistration: React.FC = () => {
   const navigate = useNavigate();
-
-  // which step we’re on: 1 = business/services, 2 = staff (people)
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
-  // business info state
   const [businessInfo, setBusinessInfo] = useState({
     name: "",
-    type: "",
+    // kept for backend validation but hidden in UI
+    type: "Salon",
     email: "",
     phone: "",
     address: "",
@@ -188,37 +385,71 @@ const BusinessRegistration: React.FC = () => {
     about: "",
   });
 
-  // operating hours state
-  const [operatingHours, setOperatingHours] = useState({
-    monday: "",
-    tuesday: "",
-    wednesday: "",
-    thursday: "",
-    friday: "",
-    saturday: "",
-    sunday: "",
-  });
+  const [hoursSelection, setHoursSelection] = useState<
+    Record<DayKey, DayHours>
+  >(createEmptySchedule());
 
-  // social links state
   const [socialLinks, setSocialLinks] = useState({
     instagram: "",
-    facebook: "",
-    website: "",
     other: "",
   });
 
-  // staff state
-  const [staffList, setStaffList] = useState([
-    { name: "", role: "", email: "", phone: "" },
+  const [staffList, setStaffList] = useState<StaffMember[]>([
+    { name: "", role: "", schedule: createEmptySchedule() },
   ]);
 
-  // image file for cover photo
   const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const [manualLocation, setManualLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStaffChange = (index: number, field: string, value: string) => {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+
+  useEffect(() => {
+    if (mapContainerRef.current && !mapRef.current) {
+      const map = L.map(mapContainerRef.current).setView(
+        [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng],
+        DEFAULT_CENTER.zoom
+      );
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
+
+      map.on("click", (e: LeafletMouseEvent) => {
+        const { lat, lng } = e.latlng;
+        setManualLocation({ lat, lng });
+
+        if (markerRef.current) {
+          markerRef.current.remove();
+        }
+
+        markerRef.current = L.marker([lat, lng]).addTo(map);
+      });
+
+      mapRef.current = map;
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleStaffFieldChange = (
+    index: number,
+    field: keyof StaffMember,
+    value: any
+  ) => {
     setStaffList((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
@@ -226,10 +457,26 @@ const BusinessRegistration: React.FC = () => {
     });
   };
 
+  const updateStaffDayHours = (
+    staffIndex: number,
+    day: DayKey,
+    changes: Partial<DayHours>
+  ) => {
+    setStaffList((prev) => {
+      const updated = [...prev];
+      const staff = { ...updated[staffIndex] };
+      const schedule = { ...staff.schedule };
+      schedule[day] = { ...schedule[day], ...changes };
+      staff.schedule = schedule;
+      updated[staffIndex] = staff;
+      return updated;
+    });
+  };
+
   const addStaffMember = () => {
     setStaffList((prev) => [
       ...prev,
-      { name: "", role: "", email: "", phone: "" },
+      { name: "", role: "", schedule: createEmptySchedule() },
     ]);
   };
 
@@ -237,74 +484,91 @@ const BusinessRegistration: React.FC = () => {
     setStaffList((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // handle image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
     }
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError(null);
-
-  // only allow submit on last step
-  if (currentStep !== 2) {
-    setCurrentStep(2);
-    return;
-  }
-
-  setIsSubmitting(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("businessInfo", JSON.stringify(businessInfo));
-    formData.append("operatingHours", JSON.stringify(operatingHours));
-    formData.append("socialLinks", JSON.stringify(socialLinks));
-    formData.append("staff", JSON.stringify(staffList));
-
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
-
-    console.log("📤 Sending FormData with image:", {
-      businessInfo,
-      operatingHours,
-      socialLinks,
-      staffList,
-      imageFileName: imageFile?.name,
+  const updateDayHours = (day: DayKey, changes: Partial<DayHours>) => {
+    setHoursSelection((prev) => {
+      const updatedDay: DayHours = { ...prev[day], ...changes };
+      return { ...prev, [day]: updatedDay };
     });
+  };
 
-    const res = await fetch("http://localhost:5000/api/business/register", {
-      method: "POST",
-      body: formData,
-    });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
 
-    const data = await res.json();
-    console.log("📥 Response data:", data);
-
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to register business");
+    if (currentStep !== 2) {
+      setCurrentStep(2);
+      return;
     }
 
-    // ✅ NEW: save token so protected routes work
-    if (data.token) {
-      localStorage.setItem("businessToken", data.token);
-      localStorage.setItem("businessInfo", JSON.stringify(data.business));
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+
+      const payloadBusinessInfo: any = {
+        ...businessInfo,
+      };
+
+      if (manualLocation) {
+        payloadBusinessInfo.locationLat = manualLocation.lat;
+        payloadBusinessInfo.locationLng = manualLocation.lng;
+      }
+
+      const operatingHoursPayload: Record<string, string> = {};
+      DAY_KEYS.forEach((dayKey) => {
+        const d = hoursSelection[dayKey];
+        if (d.closed) {
+          operatingHoursPayload[dayKey] = "Closed";
+        } else if (d.open && d.close) {
+          operatingHoursPayload[dayKey] = `${d.open} - ${d.close}`;
+        } else {
+          operatingHoursPayload[dayKey] = "";
+        }
+      });
+
+      formData.append("businessInfo", JSON.stringify(payloadBusinessInfo));
+      formData.append(
+        "operatingHours",
+        JSON.stringify(operatingHoursPayload)
+      );
+      formData.append("socialLinks", JSON.stringify(socialLinks));
+      formData.append("staff", JSON.stringify(staffList));
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      const res = await fetch("http://localhost:5000/api/business/register", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to register business");
+      }
+
+      if (data.token) {
+        localStorage.setItem("businessToken", data.token);
+        localStorage.setItem("businessInfo", JSON.stringify(data.business));
+      }
+
+      alert("Business registered successfully!");
+      navigate("/business/dashboard");
+    } catch (err: any) {
+      console.error("Error registering business:", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    alert("Business registered successfully!");
-    navigate("/business/dashboard");
-  } catch (err: any) {
-    console.error("Error registering business:", err);
-    setError(err.message || "Something went wrong");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-
-
+  };
 
   return (
     <PageContainer>
@@ -313,14 +577,12 @@ const BusinessRegistration: React.FC = () => {
         <Subtitle>Manage your salon information and settings.</Subtitle>
         <StepIndicator>
           Step {currentStep} of 2 ·{" "}
-          {currentStep === 1 ? "Business & Services" : "Staff Members"}
+          {currentStep === 1 ? "Business & Details" : "Staff Members"}
         </StepIndicator>
 
         <form onSubmit={handleSubmit} encType="multipart/form-data">
-          {/* ---- STEP 1: Business Info + Hours + Socials ---- */}
           {currentStep === 1 && (
             <>
-              {/* Business Info */}
               <Section>
                 <SectionHeader>Business Information</SectionHeader>
                 <TwoColumnGrid>
@@ -331,16 +593,6 @@ const BusinessRegistration: React.FC = () => {
                       setBusinessInfo((prev) => ({
                         ...prev,
                         name: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Business Type"
-                    value={businessInfo.type}
-                    onChange={(e: any) =>
-                      setBusinessInfo((prev) => ({
-                        ...prev,
-                        type: e.target.value,
                       }))
                     }
                   />
@@ -397,84 +649,92 @@ const BusinessRegistration: React.FC = () => {
                 />
               </Section>
 
-              {/* Operating Hours */}
               <Section>
-                <SectionHeader>Operating Hours</SectionHeader>
-                <TwoColumnGrid>
-                  <TextBox
-                    placeholder="Monday: 9:00 AM - 6:00 PM"
-                    value={operatingHours.monday}
-                    onChange={(e: any) =>
-                      setOperatingHours((prev) => ({
-                        ...prev,
-                        monday: e.target.value,
-                      }))
-                    }
+                <SectionHeader>Choose Location on Map</SectionHeader>
+                <p
+                  style={{
+                    marginBottom: "8px",
+                    fontSize: "0.9rem",
+                    color: "#666",
+                  }}
+                >
+                  Click on the map to set where your salon is located. This is
+                  what customers will see on the search page.
+                </p>
+
+                <MapBlock>
+                  <div
+                    ref={mapContainerRef}
+                    style={{ width: "100%", height: "100%" }}
                   />
-                  <TextBox
-                    placeholder="Tuesday: 9:00 AM - 6:00 PM"
-                    value={operatingHours.tuesday}
-                    onChange={(e: any) =>
-                      setOperatingHours((prev) => ({
-                        ...prev,
-                        tuesday: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Wednesday: 9:00 AM - 6:00 PM"
-                    value={operatingHours.wednesday}
-                    onChange={(e: any) =>
-                      setOperatingHours((prev) => ({
-                        ...prev,
-                        wednesday: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Thursday: 9:00 AM - 6:00 PM"
-                    value={operatingHours.thursday}
-                    onChange={(e: any) =>
-                      setOperatingHours((prev) => ({
-                        ...prev,
-                        thursday: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Friday: 9:00 AM - 6:00 PM"
-                    value={operatingHours.friday}
-                    onChange={(e: any) =>
-                      setOperatingHours((prev) => ({
-                        ...prev,
-                        friday: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Saturday: 10:00 AM - 4:00 PM"
-                    value={operatingHours.saturday}
-                    onChange={(e: any) =>
-                      setOperatingHours((prev) => ({
-                        ...prev,
-                        saturday: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Sunday: Closed"
-                    value={operatingHours.sunday}
-                    onChange={(e: any) =>
-                      setOperatingHours((prev) => ({
-                        ...prev,
-                        sunday: e.target.value,
-                      }))
-                    }
-                  />
-                </TwoColumnGrid>
+                </MapBlock>
+
+                <LocationInfo>
+                  {manualLocation ? (
+                    <>
+                      Selected: {manualLocation.lat.toFixed(5)},{" "}
+                      {manualLocation.lng.toFixed(5)}
+                    </>
+                  ) : (
+                    <>No location selected yet. Click on the map to drop a pin.</>
+                  )}
+                </LocationInfo>
               </Section>
 
-              {/* Social Media */}
+              <Section>
+                <SectionHeader>Operating Hours</SectionHeader>
+                <HoursGrid>
+                  {DAY_KEYS.map((dayKey) => {
+                    const day = hoursSelection[dayKey];
+                    return (
+                      <DayRow key={dayKey}>
+                        <DayLabel>{DAY_LABELS[dayKey]}</DayLabel>
+                        <TimeSelect
+                          value={day.open}
+                          onChange={(e) =>
+                            updateDayHours(dayKey, { open: e.target.value })
+                          }
+                          disabled={day.closed}
+                        >
+                          <option value="">From</option>
+                          {TIME_OPTIONS.map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </TimeSelect>
+                        <TimeSelect
+                          value={day.close}
+                          onChange={(e) =>
+                            updateDayHours(dayKey, { close: e.target.value })
+                          }
+                          disabled={day.closed}
+                        >
+                          <option value="">To</option>
+                          {TIME_OPTIONS.map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </TimeSelect>
+                        <ClosedToggle>
+                          <input
+                            type="checkbox"
+                            checked={day.closed}
+                            onChange={(e) =>
+                              updateDayHours(dayKey, {
+                                closed: e.target.checked,
+                              })
+                            }
+                          />
+                          Closed
+                        </ClosedToggle>
+                      </DayRow>
+                    );
+                  })}
+                </HoursGrid>
+              </Section>
+
               <Section>
                 <SectionHeader>Social Media & Website</SectionHeader>
                 <TwoColumnGrid>
@@ -485,26 +745,6 @@ const BusinessRegistration: React.FC = () => {
                       setSocialLinks((prev) => ({
                         ...prev,
                         instagram: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Facebook"
-                    value={socialLinks.facebook}
-                    onChange={(e: any) =>
-                      setSocialLinks((prev) => ({
-                        ...prev,
-                        facebook: e.target.value,
-                      }))
-                    }
-                  />
-                  <TextBox
-                    placeholder="Website"
-                    value={socialLinks.website}
-                    onChange={(e: any) =>
-                      setSocialLinks((prev) => ({
-                        ...prev,
-                        website: e.target.value,
                       }))
                     }
                   />
@@ -521,7 +761,6 @@ const BusinessRegistration: React.FC = () => {
                 </TwoColumnGrid>
               </Section>
 
-              {/* Cover Image Upload */}
               <Section>
                 <SectionHeader>Cover Image</SectionHeader>
                 <p
@@ -533,22 +772,28 @@ const BusinessRegistration: React.FC = () => {
                 >
                   This image will be displayed on your salon card for users.
                 </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
-                {imageFile && (
-                  <p
-                    style={{
-                      marginTop: "8px",
-                      fontSize: "0.85rem",
-                      color: "#555",
-                    }}
-                  >
-                    Selected: {imageFile.name}
-                  </p>
-                )}
+
+                <FileInputWrapper>
+                  <FileInputLabel>
+                    Choose Cover Image
+                    <HiddenFileInput
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </FileInputLabel>
+                  {imageFile && (
+                    <p
+                      style={{
+                        marginTop: "8px",
+                        fontSize: "0.85rem",
+                        color: "#555",
+                      }}
+                    >
+                      Selected: {imageFile.name}
+                    </p>
+                  )}
+                </FileInputWrapper>
               </Section>
 
               <NextButton type="button" onClick={() => setCurrentStep(2)}>
@@ -557,52 +802,113 @@ const BusinessRegistration: React.FC = () => {
             </>
           )}
 
-          {/* ---- STEP 2: Staff ---- */}
           {currentStep === 2 && (
             <>
               <Section>
                 <SectionHeader>Staff Members</SectionHeader>
                 <StaffContainer>
                   {staffList.map((staff, index) => (
-                    <StaffRow key={index}>
-                      <TextBox
-                        placeholder="Name"
-                        value={staff.name}
-                        onChange={(e: any) =>
-                          handleStaffChange(index, "name", e.target.value)
-                        }
-                      />
-                      <TextBox
-                        placeholder="Role / Title"
-                        value={staff.role}
-                        onChange={(e: any) =>
-                          handleStaffChange(index, "role", e.target.value)
-                        }
-                      />
-                      <TextBox
-                        placeholder="Email"
-                        value={staff.email}
-                        onChange={(e: any) =>
-                          handleStaffChange(index, "email", e.target.value)
-                        }
-                      />
-                      <TextBox
-                        placeholder="Phone"
-                        value={staff.phone}
-                        onChange={(e: any) =>
-                          handleStaffChange(index, "phone", e.target.value)
-                        }
-                      />
-                      {staffList.length > 1 && (
-                        <RemoveButton
-                          type="button"
-                          onClick={() => removeStaffMember(index)}
-                        >
-                          ✕
-                        </RemoveButton>
-                      )}
-                    </StaffRow>
+                    <div key={index}>
+                      <StaffHeaderRow>
+                        <TextBox
+                          placeholder="Name"
+                          value={staff.name}
+                          onChange={(e: any) =>
+                            handleStaffFieldChange(
+                              index,
+                              "name",
+                              e.target.value
+                            )
+                          }
+                        />
+                        <TextBox
+                          placeholder="Role / Title"
+                          value={staff.role}
+                          onChange={(e: any) =>
+                            handleStaffFieldChange(
+                              index,
+                              "role",
+                              e.target.value
+                            )
+                          }
+                        />
+                        {staffList.length > 1 && (
+                          <RemoveButton
+                            type="button"
+                            onClick={() => removeStaffMember(index)}
+                          >
+                            ✕
+                          </RemoveButton>
+                        )}
+                      </StaffHeaderRow>
+
+                      <div
+                        style={{
+                          marginTop: "12px",
+                          fontSize: "0.85rem",
+                          color: "#666",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Work schedule
+                      </div>
+                      <HoursGrid>
+                        {DAY_KEYS.map((dayKey) => {
+                          const day = staff.schedule[dayKey];
+                          return (
+                            <DayRow key={dayKey}>
+                              <DayLabel>{DAY_LABELS[dayKey]}</DayLabel>
+                              <TimeSelect
+                                value={day.open}
+                                onChange={(e) =>
+                                  updateStaffDayHours(index, dayKey, {
+                                    open: e.target.value,
+                                  })
+                                }
+                                disabled={day.closed}
+                              >
+                                <option value="">From</option>
+                                {TIME_OPTIONS.map((time) => (
+                                  <option key={time} value={time}>
+                                    {time}
+                                  </option>
+                                ))}
+                              </TimeSelect>
+                              <TimeSelect
+                                value={day.close}
+                                onChange={(e) =>
+                                  updateStaffDayHours(index, dayKey, {
+                                    close: e.target.value,
+                                  })
+                                }
+                                disabled={day.closed}
+                              >
+                                <option value="">To</option>
+                                {TIME_OPTIONS.map((time) => (
+                                  <option key={time} value={time}>
+                                    {time}
+                                  </option>
+                                ))}
+                              </TimeSelect>
+                              <ClosedToggle>
+                                <input
+                                  type="checkbox"
+                                  checked={day.closed}
+                                  onChange={(e) =>
+                                    updateStaffDayHours(index, dayKey, {
+                                      closed: e.target.checked,
+                                    })
+                                  }
+                                />
+                                Off
+                              </ClosedToggle>
+                            </DayRow>
+                          );
+                        })}
+                      </HoursGrid>
+                    </div>
                   ))}
+
                   <AddButton type="button" onClick={addStaffMember}>
                     + Add Staff Member
                   </AddButton>

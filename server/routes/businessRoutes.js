@@ -1,8 +1,6 @@
-// server/routes/businessRoutes.js
 const express = require("express");
 const router = express.Router();
 
-// correct paths (we are inside /routes)
 const upload = require("../middleware/upload");
 const { protectBusiness } = require("../middleware/authMiddleware");
 
@@ -11,33 +9,68 @@ const {
   loginBusiness,
   getMyBusinessProfile,
   updateMyBusinessProfile,
+  getNearbyBusinesses,
+  updateBusinessProfileImage,
 } = require("../controllers/businessController");
 
-const Business = require("../models/Business");
+const {
+  createOffer,
+  getMyOffers,
+  updateOffer,
+  deleteOffer,
+} = require("../controllers/offerController");
 
-/* ===============================
-   REGISTER BUSINESS (with image)
-================================= */
+const Business = require("../models/Business");
+const Service = require("../models/Service");
+
+// REGISTER BUSINESS (with image)
 router.post("/register", upload.single("image"), registerBusiness);
 
-/* ===============================
-   LOGIN BUSINESS
-================================= */
+// LOGIN BUSINESS
 router.post("/login", loginBusiness);
 
-/* ===============================
-   GET BUSINESS PROFILE (protected)
-================================= */
+// GET NEARBY BUSINESSES (public)
+router.get("/near", getNearbyBusinesses);
+
+// GET BUSINESS PROFILE (protected)
 router.get("/me", protectBusiness, getMyBusinessProfile);
 
-/* ===============================
-   UPDATE BUSINESS PROFILE (protected)
-================================= */
+// UPDATE BUSINESS PROFILE (protected)
 router.put("/me", protectBusiness, updateMyBusinessProfile);
 
-/* ===============================
-   GET ALL BUSINESSES (debug / admin)
-================================= */
+// UPDATE ONLY PROFILE IMAGE
+router.post(
+  "/profile-image",
+  protectBusiness,
+  upload.single("image"),
+  updateBusinessProfileImage
+);
+
+/**
+ * SERVICES FOR LOGGED-IN BUSINESS
+ * Used by dashboard "Add Offer" popup to show list of services to attach.
+ */
+router.get("/me/services", protectBusiness, async (req, res) => {
+  try {
+    const services = await Service.find({ business: req.business._id }).sort({
+      createdAt: 1,
+    });
+    res.json(services);
+  } catch (err) {
+    console.error("Error fetching services for business:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/**
+ * OFFER ROUTES (BUSINESS-ONLY)
+ */
+router.post("/offers", protectBusiness, createOffer);
+router.get("/offers", protectBusiness, getMyOffers);
+router.put("/offers/:id", protectBusiness, updateOffer);
+router.delete("/offers/:id", protectBusiness, deleteOffer);
+
+// OPTIONAL: get all businesses (debug/admin)
 router.get("/", async (req, res) => {
   try {
     const businesses = await Business.find({});

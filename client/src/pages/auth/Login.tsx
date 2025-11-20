@@ -41,7 +41,9 @@ const RememberSection = styled.div`
 const SmallLink = styled.span`
   color: #6b868f;
   cursor: pointer;
-  &:hover { text-decoration: underline; }
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const BottomText = styled.div`
@@ -53,7 +55,9 @@ const BottomText = styled.div`
   span {
     color: #6b868f;
     cursor: pointer;
-    &:hover { text-decoration: underline; }
+    &:hover {
+      text-decoration: underline;
+    }
   }
 `;
 
@@ -88,12 +92,37 @@ const Button = styled.button<{ fullWidth?: boolean }>`
 `;
 
 const ErrorText = styled.div`
-  color: #B00020;
+  color: #b00020;
   font-size: 14px;
   margin-top: -4px;
 `;
 
+const RoleToggle = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+`;
+
+const RoleButton = styled.button<{ active?: boolean }>`
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid ${(p) => (p.active ? "#6b868f" : "#ccc")};
+  background: ${(p) => (p.active ? "#6b868f" : "transparent")};
+  color: ${(p) => (p.active ? "#fff" : "#333")};
+  cursor: pointer;
+  font-size: 13px;
+  font-family: "Inter", sans-serif;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+type LoginMode = "customer" | "business";
+
 const LoginPage: React.FC = () => {
+  const [mode, setMode] = useState<LoginMode>("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -110,12 +139,17 @@ const LoginPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:5000/api/customers/login", {
+      const endpoint =
+        mode === "customer"
+          ? "http://localhost:5000/api/customers/login"
+          : "http://localhost:5000/api/business/login";
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -125,15 +159,27 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      // Save authentication details
-      if (data.token) localStorage.setItem("customerToken", data.token);
-      if (data.customer)
-        localStorage.setItem("customer", JSON.stringify(data.customer));
+      if (mode === "customer") {
+        // Save customer auth
+        if (data.token) localStorage.setItem("customerToken", data.token);
+        if (data.customer) {
+          localStorage.setItem("customer", JSON.stringify(data.customer));
+        }
 
-      // Redirect user
-      window.location.href = "/home";
+        window.location.href = "/home";
+      } else {
+        // BUSINESS LOGIN
+        if (data.token) localStorage.setItem("businessToken", data.token);
+        if (data.business) {
+          localStorage.setItem("businessInfo", JSON.stringify(data.business));
+          // ✅ this is what loyalty & dashboard should use
+          localStorage.setItem("businessId", data.business._id);
+        }
 
+        window.location.href = "/business";
+      }
     } catch (err) {
+      console.error(err);
       setError("Something went wrong. Please try again later.");
     } finally {
       setLoading(false);
@@ -145,6 +191,25 @@ const LoginPage: React.FC = () => {
       <FormContainer>
         <Title>Log In</Title>
 
+        {/* toggle between customer / business */}
+        <RoleToggle>
+          <span>Login as:</span>
+          <RoleButton
+            type="button"
+            active={mode === "customer"}
+            onClick={() => setMode("customer")}
+          >
+            Customer
+          </RoleButton>
+          <RoleButton
+            type="button"
+            active={mode === "business"}
+            onClick={() => setMode("business")}
+          >
+            Business
+          </RoleButton>
+        </RoleToggle>
+
         {error && <ErrorText>{error}</ErrorText>}
 
         <Label>Email Address</Label>
@@ -153,7 +218,7 @@ const LoginPage: React.FC = () => {
             padding: "10px",
             borderRadius: "6px",
             border: "1px solid #ccc",
-            fontSize: "16px"
+            fontSize: "16px",
           }}
           placeholder="Placeholder"
           value={email}
@@ -168,7 +233,7 @@ const LoginPage: React.FC = () => {
             padding: "10px",
             borderRadius: "6px",
             border: "1px solid #ccc",
-            fontSize: "16px"
+            fontSize: "16px",
           }}
           placeholder="Placeholder"
           value={password}
@@ -187,11 +252,25 @@ const LoginPage: React.FC = () => {
         </RememberSection>
 
         <Button fullWidth disabled={loading} onClick={handleLogin}>
-          {loading ? "Logging in..." : "Log In"}
+          {loading
+            ? mode === "customer"
+              ? "Logging in..."
+              : "Logging in as business..."
+            : mode === "customer"
+            ? "Log In"
+            : "Log In as Business"}
         </Button>
 
         <BottomText>
-          No account yet? <span onClick={() => (window.location.href = "/signup")}>Sign Up</span>
+          No account yet?{" "}
+          <span
+            onClick={() =>
+              (window.location.href =
+                mode === "customer" ? "/signup" : "/business/register")
+            }
+          >
+            {mode === "customer" ? "Sign Up" : "Register your business"}
+          </span>
         </BottomText>
       </FormContainer>
     </PageWrapper>

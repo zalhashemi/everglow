@@ -1,5 +1,10 @@
 {
   "dependencies": {
-    "multer": "^2.0.2"
+    "axios": "^1.13.2",
+    "leaflet": "^1.9.4",
+    "mapbox-gl": "^3.16.0",
+    "multer": "^2.0.2",
+    "react-leaflet": "^5.0.0",
+    "react-map-gl": "^8.1.0"
   }
 }

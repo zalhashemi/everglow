@@ -7,7 +7,9 @@ const Offer = require("../models/Offer");
 const getAllBusinesses = async (req, res) => {
   try {
     const businesses = await Business.find({})
-      .select("businessName businessType city description imageUrl"); // ✅ include image
+      .select(
+        "businessName businessType city address description imageUrl imageUrl location"
+      ); // ✅ include image
 
     res.json(businesses);
   } catch (err) {
@@ -20,7 +22,7 @@ const getAllBusinesses = async (req, res) => {
 const getBusinessDetails = async (req, res) => {
   try {
     const business = await Business.findById(req.params.id).select(
-      "businessName businessType address city description operatingHours socialLinks staff imageUrl"
+      "businessName businessType address city description operatingHours socialLinks staff imageUrl location imageUrl"
     ); // ✅ added imageUrl
     if (!business) {
       return res.status(404).json({ message: "Business not found" });

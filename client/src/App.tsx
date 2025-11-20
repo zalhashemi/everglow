@@ -17,12 +17,14 @@ import BookingReceiptPage from "./pages/customer/BookingReceiptPage";
 // ⭐ Booking Flow
 import SelectDatePage from './pages/customer/SelectDatePage';
 import BookingSummaryPage from './pages/customer/BookingSummaryPage';
+import SearchMapPage from './pages/customer/searchMapPage'; // 🌍 NEW
 
 // 💼 Business Pages
 import BusinessDashboard from './pages/business/Dashboard';
 import BusinessServices from './pages/business/Services';
 import BusinessBookings from './pages/business/Bookings';
 import BusinessProfile from './pages/business/Profile';
+import LoyaltyPage from './pages/business/LoyaltyPage';
 
 const App: React.FC = () => {
   console.log("🌐 Everglow App Mounted");
@@ -30,12 +32,12 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-
         {/* ===== PUBLIC & AUTH ROUTES ===== */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/register/business-details" element={<BusinessDetailsRegistration />} />
+        <Route path="/business/loyalty" element={<LoyaltyPage />} />
 
         {/* ===== CUSTOMER ROUTES ===== */}
         <Route path="/home" element={<Homepage />} />
@@ -49,6 +51,7 @@ const App: React.FC = () => {
         {/* Customer account pages */}
         <Route path="/bookings" element={<BookingsPage />} />
         <Route path="/profile" element={<CustomerProfile />} />
+        <Route path="/search" element={<SearchMapPage />} /> {/* 🌍 Map/Search */}
 
         {/* ===== BUSINESS ROUTES ===== */}
         {/* IMPORTANT: Starts with /dashboard, not /business */}

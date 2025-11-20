@@ -5,6 +5,7 @@ import './index.css';
 import App from './App';
 import { theme } from './styles/theme';
 import reportWebVitals from './reportWebVitals';
+import 'leaflet/dist/leaflet.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
