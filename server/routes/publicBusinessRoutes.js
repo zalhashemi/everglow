@@ -1,17 +1,18 @@
 // server/routes/publicBusinessRoutes.js
 const express = require("express");
 const router = express.Router();
-const Business = require("../models/Business");
+
+const {
+  getAllBusinesses,
+  getBusinessDetails,
+} = require("../controllers/publicBusinessController");
 
 // PUBLIC → GET ALL BUSINESSES (used by Customer Homepage)
-router.get("/", async (req, res) => {
-  try {
-    const businesses = await Business.find().select("-passwordHash");
-    res.json(businesses);
-  } catch (err) {
-    console.error("Error in GET /api/public/businesses:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+// GET /api/public/businesses
+router.get("/", getAllBusinesses);
+
+// PUBLIC → GET SINGLE BUSINESS + SERVICES + OFFERS
+// GET /api/public/businesses/:id
+router.get("/:id", getBusinessDetails);
 
 module.exports = router;

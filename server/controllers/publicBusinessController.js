@@ -1,3 +1,4 @@
+// server/controllers/publicBusinessController.js
 const Business = require("../models/Business");
 const Service = require("../models/Service");
 const Offer = require("../models/Offer");
@@ -6,10 +7,11 @@ const Offer = require("../models/Offer");
 const getAllBusinesses = async (req, res) => {
   try {
     const businesses = await Business.find({})
-      .select("businessName businessType city description");
+      .select("businessName businessType city description imageUrl"); // ✅ include image
 
     res.json(businesses);
   } catch (err) {
+    console.error("Error in getAllBusinesses:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -18,26 +20,32 @@ const getAllBusinesses = async (req, res) => {
 const getBusinessDetails = async (req, res) => {
   try {
     const business = await Business.findById(req.params.id).select(
-      "businessName businessType address city description operatingHours socialLinks staff"
-    );
-
+      "businessName businessType address city description operatingHours socialLinks staff imageUrl"
+    ); // ✅ added imageUrl
     if (!business) {
       return res.status(404).json({ message: "Business not found" });
     }
 
-    const services = await Service.find({ business: business._id });
+    // Only active services for this business
+    const services = await Service.find({
+      business: business._id,
+      isActive: true,
+    });
+
+    // Active offers (assuming Offer model exists)
     const offers = await Offer.find({
       business: business._id,
-      validTo: { $gte: new Date() }
+      validTo: { $gte: new Date() },
     });
 
     res.json({ business, services, offers });
   } catch (err) {
+    console.error("Error in getBusinessDetails:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 module.exports = {
   getAllBusinesses,
-  getBusinessDetails
+  getBusinessDetails,
 };

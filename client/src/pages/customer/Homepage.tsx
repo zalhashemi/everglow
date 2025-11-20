@@ -216,8 +216,11 @@ const HomePage: React.FC = () => {
   );
 
   const CARDS_PER_PAGE = 5;
-  const CARD_WIDTH = 310 + 18; // SalonCard width + gap (approx)
+  const CARD_WIDTH = 310 + 18; // Card width + gap
 
+  /* ============================================================
+     Fetch salons from backend
+  ============================================================ */
   useEffect(() => {
     const fetchSalons = async () => {
       try {
@@ -234,6 +237,9 @@ const HomePage: React.FC = () => {
     fetchSalons();
   }, []);
 
+  /* ============================================================
+     Dummy Offers (Carousel)
+  ============================================================ */
   const offers = [
     {
       id: 1,
@@ -262,14 +268,15 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     if (offers.length === 0) return;
-
     const interval = setInterval(() => {
       setActiveOfferIndex((prev) => (prev + 1) % offers.length);
     }, 10000);
-
     return () => clearInterval(interval);
   }, [offers.length]);
 
+  /* ============================================================
+     Horizontal Scroll Logic
+  ============================================================ */
   const handleScroll = (index: number, direction: "left" | "right") => {
     const container = scrollRefs.current[index];
     if (!container) return;
@@ -291,6 +298,9 @@ const HomePage: React.FC = () => {
     });
   };
 
+  /* ============================================================
+     Loading Screen
+  ============================================================ */
   if (loadingSalons) {
     return (
       <PageWrapper>
@@ -302,6 +312,9 @@ const HomePage: React.FC = () => {
     );
   }
 
+  /* ============================================================
+     Page UI
+  ============================================================ */
   return (
     <PageWrapper>
       <TabBar type="customer" />
@@ -385,9 +398,7 @@ const HomePage: React.FC = () => {
                       location={`${salon.address}, ${salon.city}`}
                       rating={0}
                       reviews={0}
-                      onClick={() =>
-                        navigate(`/business/${salon._id}`, { state: salon })
-                      }
+                      onClick={() => navigate(`/business/${salon._id}`)} // ✅ FIXED
                     />
                   ))}
                 </HorizontalScroll>

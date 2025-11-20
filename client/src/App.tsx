@@ -1,9 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-
-
-
 // 🔐 Auth Pages
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
@@ -15,6 +12,11 @@ import Homepage from './pages/customer/Homepage';
 import BusinessPage from './pages/customer/BusinessPage';
 import BookingsPage from './pages/customer/BookingsPage';
 import CustomerProfile from './pages/customer/Profile';
+import BookingReceiptPage from "./pages/customer/BookingReceiptPage";
+
+// ⭐ Booking Flow
+import SelectDatePage from './pages/customer/SelectDatePage';
+import BookingSummaryPage from './pages/customer/BookingSummaryPage';
 
 // 💼 Business Pages
 import BusinessDashboard from './pages/business/Dashboard';
@@ -28,7 +30,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-    
+
         {/* ===== PUBLIC & AUTH ROUTES ===== */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
@@ -38,15 +40,23 @@ const App: React.FC = () => {
         {/* ===== CUSTOMER ROUTES ===== */}
         <Route path="/home" element={<Homepage />} />
         <Route path="/business/:id" element={<BusinessPage />} />
+
+        {/* ----- Booking Flow ----- */}
+        <Route path="/book/select-date" element={<SelectDatePage />} />
+        <Route path="/book/summary" element={<BookingSummaryPage />} />
+        <Route path="/book/receipt/:id" element={<BookingReceiptPage />} />
+
+        {/* Customer account pages */}
         <Route path="/bookings" element={<BookingsPage />} />
         <Route path="/profile" element={<CustomerProfile />} />
 
-
         {/* ===== BUSINESS ROUTES ===== */}
-        <Route path="/business/dashboard" element={<BusinessDashboard />} />
-        <Route path="/business/services" element={<BusinessServices />} />
-        <Route path="/business/bookings" element={<BusinessBookings />} />
-        <Route path="/business/profile" element={<BusinessProfile />} />
+        {/* IMPORTANT: Starts with /dashboard, not /business */}
+        <Route path="/dashboard" element={<BusinessDashboard />} />
+        <Route path="/dashboard/services" element={<BusinessServices />} />
+        <Route path="/dashboard/bookings" element={<BusinessBookings />} />
+        <Route path="/dashboard/profile" element={<BusinessProfile />} />
+
       </Routes>
     </Router>
   );
