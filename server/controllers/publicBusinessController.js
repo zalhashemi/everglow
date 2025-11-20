@@ -6,7 +6,9 @@ const Offer = require("../models/Offer");
 const getAllBusinesses = async (req, res) => {
   try {
     const businesses = await Business.find({})
-      .select("businessName businessType city description");
+      .select(
+        "businessName businessType city address description imageUrl location"
+      );
 
     res.json(businesses);
   } catch (err) {
@@ -18,7 +20,7 @@ const getAllBusinesses = async (req, res) => {
 const getBusinessDetails = async (req, res) => {
   try {
     const business = await Business.findById(req.params.id).select(
-      "businessName businessType address city description operatingHours socialLinks staff"
+      "businessName businessType address city description operatingHours socialLinks staff imageUrl location"
     );
 
     if (!business) {
@@ -28,7 +30,7 @@ const getBusinessDetails = async (req, res) => {
     const services = await Service.find({ business: business._id });
     const offers = await Offer.find({
       business: business._id,
-      validTo: { $gte: new Date() }
+      validTo: { $gte: new Date() },
     });
 
     res.json({ business, services, offers });
@@ -39,5 +41,5 @@ const getBusinessDetails = async (req, res) => {
 
 module.exports = {
   getAllBusinesses,
-  getBusinessDetails
+  getBusinessDetails,
 };

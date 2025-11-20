@@ -1,9 +1,9 @@
-// server/routes/publicBusinessRoutes.js
 const express = require("express");
 const router = express.Router();
 const Business = require("../models/Business");
+const { getPublicOffersForBusiness } = require("../controllers/offerController");
 
-// PUBLIC → GET ALL BUSINESSES (used by Customer Homepage)
+// PUBLIC → GET ALL BUSINESSES
 router.get("/", async (req, res) => {
   try {
     const businesses = await Business.find().select("-passwordHash");
@@ -13,5 +13,8 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// PUBLIC → GET ACTIVE OFFERS FOR A SPECIFIC BUSINESS
+router.get("/:businessId/offers", getPublicOffersForBusiness);
 
 module.exports = router;

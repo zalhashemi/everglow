@@ -1,4 +1,4 @@
-require("dotenv").config(); 
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
@@ -33,6 +33,11 @@ app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/offers", require("./routes/offerRoutes"));
 app.use("/api/loyalty", require("./routes/loyaltyRoutes"));
+
+
+
+// ❌ REMOVE this, it crashes if routes/loyaltyRoutes.js doesn't exist
+// app.use("/api/loyalty", require("./routes/loyaltyRoutes"));
 
 // PUBLIC ROUTE USED BY HOMEPAGE
 app.use("/api/public/businesses", require("./routes/publicBusinessRoutes"));
