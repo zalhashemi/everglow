@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
@@ -6,7 +6,6 @@ import logo from "../../images/everglowLogo.png";
 
 export type TabType = "customer" | "business";
 
-// ---- Styles ----
 const Bar = styled.div`
   display: flex;
   align-items: center;
@@ -78,51 +77,85 @@ const TabButton = styled.button<{ active?: boolean }>`
   }
 `;
 
-// ---- Component ----
 interface TabBarProps {
-  type: TabType; // "customer" | "business"
+  type: TabType;
+  initialSearchValue?: string;
+  onSearchSubmit?: (value: string) => void;
 }
 
-const TabBar: React.FC<TabBarProps> = ({ type }) => {
+const TabBar: React.FC<TabBarProps> = ({
+  type,
+  initialSearchValue = "",
+  onSearchSubmit,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [searchValue, setSearchValue] = useState(initialSearchValue);
+
   const customerTabs = [
-    { id: "home", label: "Home", path: "/" },
+    { id: "home", label: "Home", path: "/home" },
+    { id: "search", label: "Search", path: "/search" },
     { id: "bookings", label: "My Bookings", path: "/bookings" },
     { id: "profile", label: "My Profile", path: "/profile" },
   ];
 
   const businessTabs = [
-    { id: "dashboard", label: "Home", path: "/business" },
+    { id: "dashboard", label: "Home", path: "/business/dashboard" },
     { id: "services", label: "Services", path: "/business/services" },
     { id: "bookings", label: "Bookings", path: "/business/bookings" },
+    { id: "loyalty", label: "Loyalty", path: "/business/loyalty" },
     { id: "profile", label: "Profile", path: "/business/profile" },
   ];
 
   const tabs = type === "customer" ? customerTabs : businessTabs;
   const activePath = location.pathname;
 
+  const handleSearchKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      const trimmed = searchValue.trim();
+      if (!trimmed) return;
+
+      if (onSearchSubmit) {
+        onSearchSubmit(trimmed);
+      } else {
+        navigate(`/search?query=${encodeURIComponent(trimmed)}`);
+      }
+    }
+  };
+
+  const handleSearchFocus = () => {
+    if (type === "customer" && location.pathname !== "/search") {
+      navigate("/search");
+    }
+  };
+
   return (
     <Bar>
-      {/* Left Section — Logo and optional Search */}
       <LeftSection>
         <Logo
           src={logo}
           alt="Everglow Logo"
-          onClick={() => navigate(type === "customer" ? "/" : "/business")}
+          onClick={() => navigate(type === "customer" ? "/home" : "/business/dashboard")}
         />
 
-        {/* ✅ Show search bar only for customer view */}
         {type === "customer" && (
           <SearchBox>
             <FiSearch size={18} />
-            <input type="text" placeholder="Enter Salon/Barber or City Name" />
+            <input
+              type="text"
+              placeholder="Enter Salon/Barber or City Name"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={handleSearchFocus} // 👈 open map immediately
+            />
           </SearchBox>
         )}
       </LeftSection>
 
-      {/* Right Section — Tabs */}
       <RightSection>
         {tabs.map((tab) => (
           <TabButton
