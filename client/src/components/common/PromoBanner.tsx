@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import errorLoading from "../../images/errorLoading.png";
 
 const Wrapper = styled.div`
   width: 100%;
@@ -8,6 +9,7 @@ const Wrapper = styled.div`
   position: relative;
   overflow: hidden;
   margin-bottom: 40px;
+  flex-shrink: 0;
 `;
 
 const Image = styled.img`
@@ -31,15 +33,9 @@ const OfferTitle = styled.h3`
   margin: 0 0 4px 0;
 `;
 
-const OfferDiscount = styled.div`
+const SalonName = styled.div`
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 4px;
-`;
-
-const OfferServices = styled.div`
-  font-size: 14px;
-  font-weight: 400;
 `;
 
 const BookNowButton = styled.button`
@@ -54,30 +50,36 @@ const BookNowButton = styled.button`
   border-radius: 8px;
   border: none;
   cursor: pointer;
+  transition: 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
 `;
 
 interface PromoBannerProps {
   image: string;
   title: string;
-  discountText: string;
-  servicesText: string;
+  salonName: string;
+  onBookNow: () => void;
 }
 
 export default function PromoBanner({
   image,
   title,
-  discountText,
-  servicesText,
+  salonName,
+  onBookNow,
 }: PromoBannerProps) {
   return (
     <Wrapper>
-      <Image src={image} alt={title} />
+      <Image src={image || errorLoading} alt={title} />
+
       <OfferTextContainer>
         <OfferTitle>{title}</OfferTitle>
-        <OfferDiscount>{discountText}</OfferDiscount>
-        <OfferServices>{servicesText}</OfferServices>
+        <SalonName>{salonName}</SalonName>
       </OfferTextContainer>
-      <BookNowButton>Book Now</BookNowButton>
+
+      <BookNowButton onClick={onBookNow}>Book Now</BookNowButton>
     </Wrapper>
   );
 }

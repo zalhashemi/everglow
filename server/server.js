@@ -33,6 +33,8 @@ app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/offers", require("./routes/offerRoutes"));
 app.use("/api/loyalty", require("./routes/loyaltyRoutes"));
+app.use("/api/public/offers", require("./routes/publicOffersRoutes"));
+
 
 
 

@@ -5,22 +5,57 @@ const api = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 
-// Automatically attach right token depending on which user is logged in
+// Automatically attach correct token based on active route
 api.interceptors.request.use(
   (config) => {
-    let token = null;
+    const path = window.location.pathname;
 
-    // Priority: Customer token for customer pages
-    const customerToken = localStorage.getItem("customerToken");
-    if (customerToken) token = customerToken;
-
-    // Business token only for business dashboard
     const businessToken = localStorage.getItem("businessToken");
-    if (!token && businessToken) token = businessToken;
+    const customerToken = localStorage.getItem("customerToken");
 
-    if (token) {
+    // ==============================
+    // 1️⃣ BUSINESS DASHBOARD ROUTES
+    // ==============================
+    if (path.startsWith("/business")) {
+      if (businessToken) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${businessToken}`;
+      }
+      return config;
+    }
+
+    // ==============================
+    // 2️⃣ CUSTOMER BOOKING ROUTES
+    // ==============================
+    const customerBookingPaths = [
+      "/book",
+      "/booking",
+      "/select-date",
+      "/summary",
+      "/review",
+    ];
+
+    const isCustomerBookingRoute =
+      customerBookingPaths.some((p) => path.startsWith(p)) ||
+      path.includes("available-slots");
+
+    if (isCustomerBookingRoute) {
+      if (customerToken) {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${customerToken}`;
+      }
+      return config;
+    }
+
+    // ==============================
+    // 3️⃣ DEFAULT PRIORITY: CUSTOMER FIRST
+    // ==============================
+    if (customerToken) {
       config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${customerToken}`;
+    } else if (businessToken) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${businessToken}`;
     }
 
     return config;

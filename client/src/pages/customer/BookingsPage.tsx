@@ -1,4 +1,3 @@
-// src/pages/customer/BookingsPage.tsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +5,10 @@ import TabBar from "../../components/common/TabBar";
 import BookingTile from "../../components/common/BookingTile";
 import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
-import Popup from "../../components/common/Popup"; // ⬅️ adjust path/props if needed
+import Popup from "../../components/common/Popup";
+import RatingPopup from "../../components/common/RatingPopup";
+
+/* ---------- Styled Components ---------- */
 
 const PageWrapper = styled.div`
   background-color: #f2dcdc;
@@ -43,6 +45,8 @@ const TilesContainer = styled.div`
   flex-direction: column;
   gap: 25px;
 `;
+
+/* ---------- Types ---------- */
 
 type ServiceDto = {
   _id: string;
@@ -84,6 +88,19 @@ type BookingListItem = {
   status: "upcoming" | "past" | "cancelled";
 };
 
+type MyReviewDto = {
+  _id: string;
+  rating: number;
+  comment?: string;
+  business: {
+    _id: string;
+    businessName: string;
+    city: string;
+  };
+};
+
+/* ---------- Component ---------- */
+
 const BookingsPage: React.FC = () => {
   const navigate = useNavigate();
 
@@ -96,7 +113,20 @@ const BookingsPage: React.FC = () => {
     null
   );
 
-  // ---- Load bookings for logged-in customer ----
+  // ⭐ My reviews (keyed by businessId)
+  const [myReviews, setMyReviews] = useState<Record<string, MyReviewDto>>({});
+
+  // ⭐ Rating popup states
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(
+    null
+  );
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [initialRating, setInitialRating] = useState<number | null>(null);
+  const [initialComment, setInitialComment] = useState<string>("");
+
+  /* ---------- Load Bookings ---------- */
+
   const loadBookings = async () => {
     try {
       setLoading(true);
@@ -104,7 +134,6 @@ const BookingsPage: React.FC = () => {
       const bookings = res.data || [];
 
       const now = new Date();
-
       const upcomingList: BookingListItem[] = [];
       const pastList: BookingListItem[] = [];
 
@@ -112,13 +141,9 @@ const BookingsPage: React.FC = () => {
         const start = new Date(b.startTime);
 
         let tileStatus: "upcoming" | "past" | "cancelled";
-        if (b.status === "cancelled") {
-          tileStatus = "cancelled";
-        } else if (start > now) {
-          tileStatus = "upcoming";
-        } else {
-          tileStatus = "past";
-        }
+        if (b.status === "cancelled") tileStatus = "cancelled";
+        else if (start > now) tileStatus = "upcoming";
+        else tileStatus = "past";
 
         const businessName = b.business?.businessName || "Salon";
         const location = b.business
@@ -158,27 +183,44 @@ const BookingsPage: React.FC = () => {
           status: tileStatus,
         };
 
-        if (tileStatus === "upcoming") {
-          upcomingList.push(item);
-        } else {
-          pastList.push(item);
-        }
+        if (tileStatus === "upcoming") upcomingList.push(item);
+        else pastList.push(item);
       });
 
       setUpcoming(upcomingList);
       setPast(pastList);
     } catch (err) {
-      console.error("Error loading customer bookings:", err);
+      console.error("Error loading bookings:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  /* ---------- Load My Reviews ---------- */
+
+  const loadMyReviews = async () => {
+    try {
+      const res = await api.get<MyReviewDto[]>("/reviews/me");
+      const list = res.data || [];
+      const map: Record<string, MyReviewDto> = {};
+      list.forEach((r) => {
+        if (r.business && r.business._id) {
+          map[r.business._id] = r;
+        }
+      });
+      setMyReviews(map);
+    } catch (err) {
+      console.error("Error loading my reviews:", err);
+    }
+  };
+
   useEffect(() => {
     loadBookings();
+    loadMyReviews();
   }, []);
 
-  // ---- Cancel booking handlers ----
+  /* ---------- Cancel Booking ---------- */
+
   const handleCancelClick = (id: string) => {
     setBookingIdToCancel(id);
     setShowCancelPopup(true);
@@ -186,13 +228,12 @@ const BookingsPage: React.FC = () => {
 
   const confirmCancel = async () => {
     if (!bookingIdToCancel) return;
+
     try {
-      await api.patch(`/bookings/${bookingIdToCancel}`, {
-        action: "cancel",
-      });
+      await api.patch(`/bookings/${bookingIdToCancel}`, { action: "cancel" });
       setShowCancelPopup(false);
       setBookingIdToCancel(null);
-      await loadBookings(); // refresh UI
+      loadBookings();
     } catch (err: any) {
       console.error("Cancel booking error:", err);
       alert(err?.response?.data?.message || "Failed to cancel booking.");
@@ -204,7 +245,8 @@ const BookingsPage: React.FC = () => {
     setBookingIdToCancel(null);
   };
 
-  // ---- Reschedule booking ----
+  /* ---------- Reschedule ---------- */
+
   const handleRescheduleClick = (booking: BookingListItem) => {
     navigate("/book/select-date", {
       state: {
@@ -219,6 +261,82 @@ const BookingsPage: React.FC = () => {
     });
   };
 
+  /* ---------- Open Rating Popup (new or edit) ---------- */
+
+  const handleRatingClick = (businessId: string) => {
+    setSelectedBusinessId(businessId);
+
+    const existing = myReviews[businessId];
+
+    if (existing) {
+      setEditingReviewId(existing._id);
+      setInitialRating(existing.rating);
+      setInitialComment(existing.comment || "");
+    } else {
+      setEditingReviewId(null);
+      setInitialRating(null);
+      setInitialComment("");
+    }
+
+    setShowRatingPopup(true);
+  };
+
+  /* ---------- Submit Rating (create or update) ---------- */
+
+  const submitReview = async (rating: number, comment: string) => {
+    if (!selectedBusinessId) return;
+
+    try {
+      if (editingReviewId) {
+        // UPDATE existing review
+        await api.put(`/reviews/${editingReviewId}`, {
+          rating,
+          comment,
+        });
+      } else {
+        // CREATE new review
+        await api.post("/reviews", {
+          businessId: selectedBusinessId,
+          rating,
+          comment,
+        });
+      }
+
+      alert("Your review has been saved.");
+      setShowRatingPopup(false);
+      setSelectedBusinessId(null);
+      setEditingReviewId(null);
+      setInitialRating(null);
+      setInitialComment("");
+      loadMyReviews();
+    } catch (err) {
+      console.error("Submit review error:", err);
+      alert("Failed to submit review.");
+    }
+  };
+
+  /* ---------- Delete Review ---------- */
+
+  const deleteReview = async () => {
+    if (!editingReviewId) return;
+
+    try {
+      await api.delete(`/reviews/${editingReviewId}`);
+      alert("Your review has been deleted.");
+      setShowRatingPopup(false);
+      setSelectedBusinessId(null);
+      setEditingReviewId(null);
+      setInitialRating(null);
+      setInitialComment("");
+      loadMyReviews();
+    } catch (err) {
+      console.error("Delete review error:", err);
+      alert("Failed to delete review.");
+    }
+  };
+
+  /* ---------- Loading State ---------- */
+
   if (loading) {
     return (
       <PageWrapper>
@@ -230,16 +348,19 @@ const BookingsPage: React.FC = () => {
     );
   }
 
+  /* ---------- Render ---------- */
+
   return (
     <PageWrapper>
       <TabBar type="customer" />
 
       <ContentWrapper>
-        {/* UPCOMING SECTION */}
+        {/* UPCOMING */}
         <Section>
           <SectionTitle>Upcoming Bookings</SectionTitle>
           <TilesContainer>
             {upcoming.length === 0 && <p>No upcoming bookings.</p>}
+
             {upcoming.map((booking) => (
               <BookingTile
                 key={booking.id}
@@ -249,11 +370,7 @@ const BookingsPage: React.FC = () => {
                 businessName={booking.businessName}
                 location={booking.location}
                 services={booking.services}
-                status={
-                  booking.status === "cancelled"
-                    ? "cancelled"
-                    : "upcoming"
-                }
+                status={booking.status}
                 onCancel={() => handleCancelClick(booking.id)}
                 onReschedule={() => handleRescheduleClick(booking)}
                 onViewReceipt={() => navigate(`/book/receipt/${booking.id}`)}
@@ -262,31 +379,32 @@ const BookingsPage: React.FC = () => {
           </TilesContainer>
         </Section>
 
-     {/* PAST SECTION */}
-<Section>
-  <SectionTitle>Past Bookings</SectionTitle>
-  <TilesContainer>
-    {past.length === 0 && <p>No past bookings.</p>}
-    {past.map((booking) => (
-      <BookingTile
-        key={booking.id}
-        id={booking.id}
-        date={booking.date}
-        image={booking.image}
-        businessName={booking.businessName}
-        location={booking.location}
-        services={booking.services}
-        status={booking.status}
-        onViewReceipt={() => navigate(`/book/receipt/${booking.id}`)}
-        onLeaveRating={() => alert("Ratings soon")}
-      />
-    ))}
-  </TilesContainer>
-</Section>
+        {/* PAST */}
+        <Section>
+          <SectionTitle>Past Bookings</SectionTitle>
+          <TilesContainer>
+            {past.length === 0 && <p>No past bookings.</p>}
 
+            {past.map((booking) => (
+              <BookingTile
+                key={booking.id}
+                id={booking.id}
+                date={booking.date}
+                image={booking.image}
+                businessName={booking.businessName}
+                location={booking.location}
+                services={booking.services}
+                status={booking.status}
+                hasReview={!!myReviews[booking.businessId]} // ⭐ controls label
+                onViewReceipt={() => navigate(`/book/receipt/${booking.id}`)}
+                onLeaveRating={() => handleRatingClick(booking.businessId)}
+              />
+            ))}
+          </TilesContainer>
+        </Section>
       </ContentWrapper>
 
-      {/* Cancel Confirmation Popup */}
+      {/* CANCEL POPUP */}
       {showCancelPopup && (
         <Popup
           title="Cancel Booking"
@@ -295,6 +413,21 @@ const BookingsPage: React.FC = () => {
           secondaryLabel="No, keep it"
           onPrimary={confirmCancel}
           onSecondary={cancelPopupSecondary}
+        />
+      )}
+
+      {/* ⭐ RATING POPUP */}
+      {showRatingPopup && selectedBusinessId && (
+        <RatingPopup
+          businessId={selectedBusinessId}
+          initialRating={initialRating || undefined}
+          initialComment={initialComment}
+          onClose={() => {
+            setShowRatingPopup(false);
+            setEditingReviewId(null);
+          }}
+          onSubmit={submitReview}
+          onDelete={editingReviewId ? deleteReview : undefined}
         />
       )}
     </PageWrapper>

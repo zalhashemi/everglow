@@ -18,6 +18,7 @@ interface BookingTileProps {
   onViewReceipt?: () => void;
   onLeaveRating?: () => void;
   onReschedule?: () => void;
+  hasReview?: boolean; // ⭐ NEW: determines button label
 }
 
 /* ---- STYLED COMPONENTS ---- */
@@ -25,7 +26,7 @@ const Tile = styled.div`
   width: 1600px;
   background-color: #ffffff;
   border-radius: 12px;
-  padding: 28px 32px; /* Slightly more breathing room */
+  padding: 28px 32px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -36,7 +37,7 @@ const Tile = styled.div`
 `;
 
 const DateText = styled.div`
-  font-size: 17px; /* +2 */
+  font-size: 17px;
   font-weight: 800;
   color: #555;
   text-align: left;
@@ -52,7 +53,7 @@ const InfoRow = styled.div`
 `;
 
 const SalonImage = styled.img`
-  width: 96px; /* +16px from 80px */
+  width: 96px;
   height: 96px;
   border-radius: 14px;
   object-fit: cover;
@@ -65,20 +66,20 @@ const Details = styled.div`
 `;
 
 const SalonName = styled.div`
-  font-size: 20px; /* +2 */
+  font-size: 20px;
   font-weight: 700;
   color: #0b1c36;
   text-align: left;
 `;
 
 const LocationText = styled.div`
-  font-size: 17px; /* +2 */
+  font-size: 17px;
   color: #7a7a7a;
   text-align: left;
 `;
 
 const ServiceText = styled.div`
-  font-size: 16px; /* +2 */
+  font-size: 16px;
   color: #9aa0a6;
   text-align: left;
 `;
@@ -116,6 +117,7 @@ const BookingTile: React.FC<BookingTileProps> = ({
   onViewReceipt,
   onLeaveRating,
   onReschedule,
+  hasReview,
 }) => {
   const displayName = salonName || businessName || "Salon";
   const serviceList = Array.isArray(services)
@@ -157,19 +159,19 @@ const BookingTile: React.FC<BookingTileProps> = ({
 
         {isPast && (
           <SecondaryButton width="180px" onClick={onLeaveRating}>
-            Leave a Rating
+            {hasReview ? "Edit Rating" : "Leave a Rating"}
           </SecondaryButton>
         )}
       </InfoRow>
 
-      {/* ✅ Upcoming Booking Buttons (Left-aligned, unchanged size) */}
+      {/* Upcoming Booking Buttons */}
       {status === "upcoming" && (
         <ButtonRow>
           <SecondaryButton width="180px" onClick={onReschedule}>
             Reschedule
           </SecondaryButton>
           <SecondaryButton width="180px" onClick={onCancel}>
-            Cancel 
+            Cancel
           </SecondaryButton>
           <Button width="180px" onClick={onViewReceipt}>
             View Receipt

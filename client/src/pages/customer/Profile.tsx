@@ -5,7 +5,7 @@ import ProfileHeader from "../../components/common/ProfileHeader";
 import LoyaltyTile from "../../components/common/LoyaltyTile";
 import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
-import Popup from "../../components/common/Popup";   // 🔥 Use popup
+import Popup from "../../components/common/Popup";
 
 /* ---- Styled Wrappers ---- */
 const PageWrapper = styled.div`
@@ -63,7 +63,7 @@ const LogoutButton = styled.button`
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  align-self: flex-end; /* bottom-right */
+  align-self: flex-end;
   margin-top: 10px;
   transition: 0.2s ease;
 
@@ -80,9 +80,14 @@ const ProfilePage: React.FC = () => {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
-  const [showLogoutPopup, setShowLogoutPopup] = useState(false); // 🔥 popup state
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
-  /* ---------------- Load User Data ---------------- */
+  // NEW — loyalty programs + stats
+  const [loyaltyPrograms, setLoyaltyPrograms] = useState<any[]>([]);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [visitedSalons, setVisitedSalons] = useState(0);
+
+  /* ---------------- Load User Data + Stats + Loyalty ---------------- */
   useEffect(() => {
     const stored = localStorage.getItem("customer");
     if (stored) {
@@ -94,20 +99,44 @@ const ProfilePage: React.FC = () => {
     }
 
     const token = localStorage.getItem("customerToken");
-    if (token) {
-      fetch("http://localhost:5000/api/customers/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setCustomer(data);
-          setFirstName(data.firstName);
-          setLastName(data.lastName);
-          setEmail(data.email);
-          localStorage.setItem("customer", JSON.stringify(data));
-        })
-        .catch(() => {});
-    }
+    if (!token) return;
+
+    // Fetch profile
+    fetch("http://localhost:5000/api/customers/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCustomer(data);
+        setFirstName(data.firstName);
+        setLastName(data.lastName);
+        setEmail(data.email);
+        localStorage.setItem("customer", JSON.stringify(data));
+      });
+
+    // Fetch bookings to calculate stats
+    fetch("http://localhost:5000/api/bookings/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((bookings) => {
+        setTotalBookings(bookings.length);
+        const uniqueSalonIds = new Set(
+          bookings.map((b: any) => b.business?._id)
+        );
+        setVisitedSalons(uniqueSalonIds.size);
+      });
+
+    // Fetch loyalty programs
+    fetch("http://localhost:5000/api/loyalty/customer/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((entries) => {
+        if (Array.isArray(entries)) {
+          setLoyaltyPrograms(entries);
+        }
+      });
   }, []);
 
   if (!customer) return <div style={{ padding: 40 }}>Loading...</div>;
@@ -148,16 +177,16 @@ const ProfilePage: React.FC = () => {
 
   return (
     <PageWrapper>
-      <TabBar type="customer" />
+      <TabBar type="customer" /> {/* ✔ TOP BAR remains unchanged */}
 
       <ContentWrapper>
-        {/* ---------- Profile Header ---------- */}
+        {/* ---------- Profile Header (stats now real) ---------- */}
         <ProfileHeader
           type="customer"
           name={`${firstName} ${lastName}`}
-          stat1={0}
-          stat2={0}
-          stat3={0}
+          stat1={totalBookings}
+          stat2={visitedSalons}
+          stat3={loyaltyPrograms.length}
         />
 
         {/* ---------- Personal Info ---------- */}
@@ -210,12 +239,27 @@ const ProfilePage: React.FC = () => {
           </div>
         </Card>
 
-        {/* ---------- Loyalty Programs ---------- */}
+        {/* ---------- Loyalty Programs (DB-linked) ---------- */}
         <Card>
           <SectionTitle>My Loyalty Programs</SectionTitle>
           <LoyaltyList>
-            <div style={{ color: "#999" }}>No loyalty programs yet</div>
-          </LoyaltyList>
+  {loyaltyPrograms.length === 0 ? (
+    <div style={{ color: "#999" }}>No loyalty programs yet</div>
+  ) : (
+    loyaltyPrograms.map((entry: any) => (
+      <LoyaltyTile
+        key={entry._id}
+        name={entry.business?.businessName}
+        offer={entry.business?.loyalty?.rewardDescription || "Reward"}
+        filledCircles={entry.points}
+        totalCircles={
+          entry.business?.loyalty?.rewardThreshold || 5
+        }
+      />
+    ))
+  )}
+</LoyaltyList>
+
         </Card>
 
         {/* ---------- Logout Button ---------- */}

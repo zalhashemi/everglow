@@ -13,11 +13,12 @@ const createReview = async (req, res) => {
       business: businessId,
       customer: req.customer._id,
       rating,
-      comment
+      comment,
     });
 
     res.status(201).json({ message: "Review created", review });
   } catch (err) {
+    console.error("Create review error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -31,6 +32,7 @@ const getBusinessReviews = async (req, res) => {
 
     res.json(reviews);
   } catch (err) {
+    console.error("Get business reviews error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -38,11 +40,59 @@ const getBusinessReviews = async (req, res) => {
 // GET REVIEWS FOR LOGGED-IN CUSTOMER
 const getMyReviews = async (req, res) => {
   try {
-    const reviews = await Review.find({ customer: req.customer._id })
-      .populate("business", "businessName city");
+    const reviews = await Review.find({ customer: req.customer._id }).populate(
+      "business",
+      "businessName city"
+    );
 
     res.json(reviews);
   } catch (err) {
+    console.error("Get my reviews error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// UPDATE REVIEW (for logged-in customer)
+const updateReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+
+    if (!rating) {
+      return res.status(400).json({ message: "Rating is required" });
+    }
+
+    const review = await Review.findOneAndUpdate(
+      { _id: req.params.id, customer: req.customer._id },
+      { rating, comment },
+      { new: true }
+    );
+
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    res.json({ message: "Review updated", review });
+  } catch (err) {
+    console.error("Update review error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE REVIEW (for logged-in customer)
+const deleteReview = async (req, res) => {
+  try {
+    const deleted = await Review.findOneAndDelete({
+      _id: req.params.id,
+      customer: req.customer._id,
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    res.json({ message: "Review deleted" });
+  } catch (err) {
+    console.error("Delete review error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -50,5 +100,7 @@ const getMyReviews = async (req, res) => {
 module.exports = {
   createReview,
   getBusinessReviews,
-  getMyReviews
+  getMyReviews,
+  updateReview,
+  deleteReview,
 };

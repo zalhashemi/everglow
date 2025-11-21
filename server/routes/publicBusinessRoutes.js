@@ -5,17 +5,22 @@ const {
   getAllBusinesses,
   getBusinessDetails,
 } = require("../controllers/publicBusinessController");
+
 const { getPublicOffersForBusiness } = require("../controllers/offerController");
 
-// PUBLIC → GET ALL BUSINESSES
-// GET /api/public/businesses
+// ===============================
+// GET ALL BUSINESSES (homepage list)
+// ===============================
 router.get("/", getAllBusinesses);
 
-// PUBLIC → GET SINGLE BUSINESS + SERVICES + OFFERS
-// GET /api/public/businesses/:id
+// ===============================
+// GET SINGLE BUSINESS DETAILS 
+// ===============================
 router.get("/:id", getBusinessDetails);
 
-// PUBLIC → GET ACTIVE OFFERS FOR A SPECIFIC BUSINESS
+// ===============================
+// GET ACTIVE OFFERS FOR A SPECIFIC BUSINESS
+// ===============================
 router.get("/:businessId/offers", getPublicOffersForBusiness);
 
 module.exports = router;

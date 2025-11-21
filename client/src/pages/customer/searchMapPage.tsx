@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import L, { userIcon } from "../../leafletSetup";
 
 import TabBar from "../../components/common/TabBar";
@@ -8,7 +8,7 @@ import api from "../../utils/api";
 
 interface BusinessLocation {
   type: "Point";
-  coordinates: [number, number]; // [lng, lat]
+  coordinates: [number, number];
 }
 
 interface Business {
@@ -171,6 +171,8 @@ const hasValidCoords = (
 
 const SearchMapPage: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const params = new URLSearchParams(location.search);
   const initialQueryFromUrl = params.get("query") || "";
 
@@ -185,22 +187,18 @@ const SearchMapPage: React.FC = () => {
     zoom: DEFAULT_CENTER.zoom,
   });
 
-  const [userLocation, setUserLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(
     null
   );
 
-  // Leaflet refs
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
+
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const businessLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Init map once
+  // Initialize map
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
       const map = L.map(mapContainerRef.current).setView(
@@ -220,18 +218,13 @@ const SearchMapPage: React.FC = () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
-        businessLayerRef.current = null;
-        userMarkerRef.current = null;
       }
     };
   }, []);
 
-  // Get user location (only for centering + "You are here")
+  // Get user location
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLoading(false);
-      return;
-    }
+    if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -247,16 +240,14 @@ const SearchMapPage: React.FC = () => {
     );
   }, []);
 
-  // Fetch ALL businesses once
+  // Fetch businesses
   useEffect(() => {
     const fetchAll = async () => {
-      setLoading(true);
-      setError(null);
       try {
+        setLoading(true);
         const res = await api.get<Business[]>("/business");
         setBusinesses(res.data || []);
       } catch (err) {
-        console.error("Error fetching businesses:", err);
         setError("Couldn't load salons. Please try again.");
       } finally {
         setLoading(false);
@@ -266,17 +257,13 @@ const SearchMapPage: React.FC = () => {
     fetchAll();
   }, []);
 
-  const handleSearchSubmit = (value: string) => {
-    setSearchTerm(value);
-  };
+  const handleSearchSubmit = (value: string) => setSearchTerm(value);
 
-  // Only businesses that actually have coordinates
   const businessesWithCoords = useMemo(
     () => businesses.filter(hasValidCoords),
     [businesses]
   );
 
-  // Apply text search on top of that
   const filteredBusinesses = useMemo(() => {
     const base = businessesWithCoords;
     if (!searchTerm) return base;
@@ -285,44 +272,39 @@ const SearchMapPage: React.FC = () => {
       const name = b.businessName?.toLowerCase() || "";
       const city = b.city?.toLowerCase() || "";
       const type = b.businessType?.toLowerCase() || "";
-      return (
-        name.includes(term) || city.includes(term) || type.includes(term)
-      );
+      return name.includes(term) || city.includes(term) || type.includes(term);
     });
   }, [businessesWithCoords, searchTerm]);
 
-  // Update map center when mapCenter state changes
+  // Update map center
   useEffect(() => {
-    if (!mapRef.current) return;
-    mapRef.current.setView([mapCenter.lat, mapCenter.lng], mapCenter.zoom);
+    if (mapRef.current)
+      mapRef.current.setView([mapCenter.lat, mapCenter.lng], mapCenter.zoom);
   }, [mapCenter]);
 
-  // Update user marker
+  // Add user marker
   useEffect(() => {
     if (!mapRef.current) return;
+
     if (!userLocation) {
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
-        userMarkerRef.current = null;
       }
       return;
     }
 
     if (!userMarkerRef.current) {
-      userMarkerRef.current = L.marker(
-        [userLocation.lat, userLocation.lng],
-        { icon: userIcon }
-      ).addTo(mapRef.current);
-      userMarkerRef.current.bindPopup("You are here");
+      userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
+        icon: userIcon,
+      })
+        .addTo(mapRef.current)
+        .bindPopup("You are here");
     } else {
-      userMarkerRef.current.setLatLng([
-        userLocation.lat,
-        userLocation.lng,
-      ]);
+      userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
     }
   }, [userLocation]);
 
-  // Update business markers
+  // Add business markers with SAFE popup button
   useEffect(() => {
     if (!mapRef.current || !businessLayerRef.current) return;
 
@@ -330,19 +312,42 @@ const SearchMapPage: React.FC = () => {
 
     filteredBusinesses.forEach((b) => {
       const [lng, lat] = b.location!.coordinates;
-      const marker = L.marker([lat, lng]).addTo(businessLayerRef.current!);
 
       const popupHtml = `
-        <div style="max-width:220px">
+        <div style="max-width:220px;">
           <strong>${b.businessName}</strong><br/>
           <span style="font-size:12px;color:#666">${b.businessType}</span><br/>
-          <span style="font-size:12px;color:#666">${b.address ?? ""} ${
-        b.city ?? ""
-      }</span>
+          <span style="font-size:12px;color:#666">${b.address ?? ""} ${b.city}</span><br/>
+
+          <button 
+            class="popup-view-btn"
+            style="
+              margin-top:8px;
+              background:#4a5074;
+              color:white;
+              border:none;
+              padding:6px 10px;
+              border-radius:6px;
+              font-size:12px;
+              cursor:pointer;
+            "
+          >
+            View Salon
+          </button>
         </div>
       `;
 
+      const marker = L.marker([lat, lng]).addTo(businessLayerRef.current!);
+
+
       marker.bindPopup(popupHtml);
+
+      marker.on("popupopen", () => {
+        const btn = document.querySelector(".popup-view-btn");
+        if (btn)
+          btn.addEventListener("click", () => navigate(`/business/${b._id}`));
+      });
+
       marker.on("click", () => {
         setSelectedBusinessId(b._id);
       });
@@ -360,8 +365,7 @@ const SearchMapPage: React.FC = () => {
       <ContentWrapper>
         <Heading>Search Salons & Barbers</Heading>
         <Subheading>
-          Explore salons on the map, or search by name/city using the search bar
-          above.
+          Explore salons on the map or search by name/city using the bar above.
         </Subheading>
 
         <Layout>
@@ -374,58 +378,51 @@ const SearchMapPage: React.FC = () => {
 
           <ResultsPanel>
             <ResultsHeader>
-  <ResultsTitle>Results</ResultsTitle>
+              <ResultsTitle>Results</ResultsTitle>
 
-  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-    <ResultsCount>
-      {filteredBusinesses.length} salon
-      {filteredBusinesses.length === 1 ? "" : "s"} found
-    </ResultsCount>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <ResultsCount>
+                  {filteredBusinesses.length} salon
+                  {filteredBusinesses.length === 1 ? "" : "s"} found
+                </ResultsCount>
 
-    {searchTerm && (
-      <button
-        onClick={() => setSearchTerm("")}
-        style={{
-          background: "transparent",
-          border: "none",
-          fontSize: "12px",
-          color: "#b3261e",
-          cursor: "pointer",
-          textDecoration: "underline",
-        }}
-      >
-        Clear
-      </button>
-    )}
-  </div>
-</ResultsHeader>
-
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      fontSize: "12px",
+                      color: "#b3261e",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </ResultsHeader>
 
             {loading && <LoadingText>Loading salons…</LoadingText>}
             {error && <ErrorText>{error}</ErrorText>}
 
             {!loading && !error && filteredBusinesses.length === 0 && (
-              <Placeholder>
-                No salons found for this search. Try another name or city.
-              </Placeholder>
+              <Placeholder>No salons match this search.</Placeholder>
             )}
 
             {!loading &&
               !error &&
               filteredBusinesses.map((b) => {
                 const [lng, lat] = b.location!.coordinates;
+
                 return (
                   <ResultCard
                     key={b._id}
                     selected={selectedBusinessId === b._id}
                     onClick={() => {
                       setSelectedBusinessId(b._id);
-                      setMapCenter((prev) => ({
-                        ...prev,
-                        lat,
-                        lng,
-                        zoom: Math.max(prev.zoom, 13),
-                      }));
+                      setMapCenter({ lat, lng, zoom: 13 });
                     }}
                   >
                     <ResultName>{b.businessName}</ResultName>
@@ -436,6 +433,26 @@ const SearchMapPage: React.FC = () => {
                       {b.address ?? ""}{" "}
                       {b.description ? `• ${b.description}` : ""}
                     </ResultDescription>
+
+                    <div style={{ marginTop: "10px", textAlign: "right" }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/business/${b._id}`);
+                        }}
+                        style={{
+                          backgroundColor: "#4a5074",
+                          color: "white",
+                          fontSize: "12px",
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          border: "none",
+                          cursor: "pointer",
+                        }}
+                      >
+                        View Salon
+                      </button>
+                    </div>
                   </ResultCard>
                 );
               })}

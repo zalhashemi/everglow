@@ -9,8 +9,8 @@ interface SalonCardProps {
   name: string;
   distance?: string;
   location: string;
-  rating?: number;
-  reviews?: number;
+  rating?: number;   // ⭐ average rating
+  reviews?: number;  // number of reviews
   onClick: () => void;
 }
 
@@ -25,6 +25,8 @@ const SalonCard: React.FC<SalonCardProps> = ({
   onClick,
 }) => {
   const [imgSrc, setImgSrc] = React.useState(image || errorImage);
+
+  const showRating = rating && rating > 0;
 
   return (
     <div
@@ -68,26 +70,37 @@ const SalonCard: React.FC<SalonCardProps> = ({
       {/* Details */}
       <div style={{ padding: "10px 14px" }}>
 
-        {/* Name (ONLY this is shown visibly) */}
+        {/* Name + Rating on right */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             fontWeight: 600,
             fontSize: "16px",
+            alignItems: "center",
           }}
         >
           <span>{name}</span>
 
-          {/* --- COMMENTED OUT DISTANCE --- */}
-          {/* 
-          <span style={{ color: "#7A7A7A", fontSize: "13px" }}>
-            {distance}
-          </span>
-          */}
+          {/* ⭐ Rating (only if exists) */}
+          {showRating && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#000",
+              }}
+            >
+              <AiFillStar size={18} color="#FFD03F" />
+              {rating?.toFixed(1)}
+            </div>
+          )}
         </div>
 
-        {/* Location (visible) */}
+        {/* Location */}
         <div
           style={{
             display: "flex",
@@ -108,28 +121,6 @@ const SalonCard: React.FC<SalonCardProps> = ({
           </span>
         </div>
 
-        {/* --- COMMENTED OUT RATING/REVIEWS --- */}
-        {/*
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginTop: "6px",
-            fontSize: "14px",
-            fontWeight: 500,
-          }}
-        >
-          <AiFillStar
-            color="#FFD03F"
-            size={16}
-            style={{ marginRight: "5px", flexShrink: 0 }}
-          />
-          <span>{rating}</span>
-          <span style={{ color: "#7A7A7A", marginLeft: "5px" }}>
-            ({reviews})
-          </span>
-        </div>
-        */}
       </div>
     </div>
   );

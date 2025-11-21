@@ -1,141 +1,104 @@
 // server/controllers/loyaltyController.js
-const Loyalty = require("../models/Loyalty");
-const Business = require("../models/Business");
 
-/**
- * GET /api/loyalty/:businessId
- * Returns loyalty settings for the given business.
- * If none exist yet, creates a default doc and returns it.
- */
+const Loyalty = require("../models/loyalty");
+const Business = require("../models/Business");
+const CustomerLoyalty = require("../models/CustomerLoyalty");
+
+/* -------------------------------------------------------------------
+   GET loyalty settings for a business
+   Route: GET /api/loyalty/:businessId
+------------------------------------------------------------------- */
 const getBusinessLoyalty = async (req, res) => {
   try {
-    const { businessId } = req.params;
-
-    let loyalty = await Loyalty.findOne({ business: businessId });
+    const loyalty = await Loyalty.findOne({
+      business: req.params.businessId,
+    });
 
     if (!loyalty) {
-      // create default config for this business
-      loyalty = await Loyalty.create({
-        business: businessId,
+      // default disabled config
+      return res.json({
         enabled: false,
-        type: "points",
-        pointsPerBooking: 1,
         rewardThreshold: 5,
-        rewardDescription: "",
-        expiryMonths: 0,
-        rewards: [],
+        pointsPerBooking: 1,
       });
-
-      // mirror defaults on Business
-      const mirror = await Business.findByIdAndUpdate(
-        businessId,
-        {
-          $set: {
-            "loyalty.enabled": false,
-            "loyalty.type": "points",
-            "loyalty.pointsPerBooking": 1,
-            "loyalty.rewardThreshold": 5,
-            "loyalty.rewardDescription": "",
-            "loyalty.expiryMonths": 0,
-            "loyalty.rewards": [],
-            loyaltyEnabled: false,
-          },
-        },
-        { new: true }
-      );
-      console.log("Created default loyalty + mirrored to business:", mirror?._id);
     }
 
     res.json(loyalty);
   } catch (err) {
-    console.error("Error getting business loyalty:", err);
+    console.error("getBusinessLoyalty error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-/**
- * PUT /api/loyalty/:businessId
- * Updates loyalty settings for the given business.
- */
+/* -------------------------------------------------------------------
+   UPDATE loyalty settings for a business
+   Route: PUT /api/loyalty/:businessId
+------------------------------------------------------------------- */
 const updateBusinessLoyalty = async (req, res) => {
   try {
     const { businessId } = req.params;
-    const { enabled, rewards } = req.body;
 
     let loyalty = await Loyalty.findOne({ business: businessId });
 
     if (!loyalty) {
       loyalty = new Loyalty({
         business: businessId,
-        type: "points",
-        pointsPerBooking: 1,
-        rewardThreshold: 5,
-        expiryMonths: 0,
-        rewards: [],
+        ...req.body,
       });
+    } else {
+      Object.assign(loyalty, req.body);
     }
-
-    // --- normalize rewards ---
-    const cleanedRewards = Array.isArray(rewards)
-      ? rewards
-          .map((r) => (r || "").trim())
-          .filter((r) => r.length > 0)
-      : loyalty.rewards || [];
-
-    // --- normalize enabled (handles boolean or string) ---
-    let nextEnabled = loyalty.enabled ?? false;
-    if (typeof enabled === "boolean") {
-      nextEnabled = enabled;
-    } else if (typeof enabled === "string") {
-      const lowered = enabled.toLowerCase();
-      nextEnabled = lowered === "true" || lowered === "1" || lowered === "yes";
-    }
-
-    // update Loyalty collection (source of truth)
-    loyalty.enabled = nextEnabled;
-    loyalty.type = "points";
-    loyalty.pointsPerBooking = 1;
-    loyalty.rewardThreshold = 5;
-    loyalty.expiryMonths = 0;
-    loyalty.rewards = cleanedRewards;
-    loyalty.rewardDescription =
-      cleanedRewards[0] || loyalty.rewardDescription || "";
 
     await loyalty.save();
 
-    // mirror onto Business document with $set
-    const businessMirror = await Business.findByIdAndUpdate(
-      businessId,
-      {
-        $set: {
-          "loyalty.enabled": nextEnabled,
-          "loyalty.type": "points",
-          "loyalty.pointsPerBooking": 1,
-          "loyalty.rewardThreshold": 5,
-          "loyalty.rewardDescription": cleanedRewards[0] || "",
-          "loyalty.expiryMonths": 0,
-          "loyalty.rewards": cleanedRewards,
-          loyaltyEnabled: nextEnabled,
-        },
-      },
-      { new: true }
-    );
-
-    console.log(
-      "Mirrored loyalty to business:",
-      businessMirror?._id,
-      "enabled=",
-      businessMirror?.loyalty?.enabled
-    );
-
     res.json(loyalty);
   } catch (err) {
-    console.error("Error updating business loyalty:", err);
-    res.status(500).jsonthi({ message: "Server error" });
+    console.error("updateBusinessLoyalty error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+/* -------------------------------------------------------------------
+   GET all loyalty programs for logged-in customer
+   Route: GET /api/loyalty/customer/me
+------------------------------------------------------------------- */
+const getMyLoyaltyPrograms = async (req, res) => {
+  try {
+    const customerId =
+      req.customer?.id ||
+      req.customer?._id ||
+      req.user?.id;
+
+    if (!customerId) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const programs = await CustomerLoyalty.find({
+      customer: customerId,
+    })
+      .populate({
+        path: "business",
+        select: "businessName loyalty",
+        populate: {
+          path: "loyalty",
+          model: "Loyalty",
+          select: "rewardDescription rewardThreshold",
+        },
+      })
+      .lean();
+
+    res.json(programs);
+  } catch (err) {
+    console.error("getMyLoyaltyPrograms error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* -------------------------------------------------------------------
+   EXPORTS
+------------------------------------------------------------------- */
 module.exports = {
   getBusinessLoyalty,
   updateBusinessLoyalty,
+  getMyLoyaltyPrograms,
 };

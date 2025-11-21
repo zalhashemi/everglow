@@ -2,7 +2,7 @@ const Business = require("../models/Business");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
-const Loyalty = require("../models/Loyalty"); // to init default loyalty
+const Loyalty = require("../models/loyalty"); // to init default loyalty
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });

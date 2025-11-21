@@ -3,6 +3,8 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import SalonCard from "../../components/common/SalonCard";
 import TabBar from "../../components/common/TabBar";
+import PromoBanner from "../../components/common/PromoBanner";
+import errorLoading from "../../images/errorLoading.png"; 
 import promotionHeader from "../../images/promotionHeader.png";
 
 /* ============================================================
@@ -36,7 +38,7 @@ const OfferCarouselWrapper = styled.div`
   width: 100%;
   max-width: 1600px;
   overflow: hidden;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   position: relative;
 `;
 
@@ -47,73 +49,11 @@ const OfferTrack = styled.div`
   transition: transform 0.5s ease;
 `;
 
-const PromoBanner = styled.div`
-  width: 100%;
-  height: 220px;
-  border-radius: 12px;
-  background-size: cover;
-  background-position: center;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-`;
-
-const BannerImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
-`;
-
-const OfferTextContainer = styled.div`
-  position: absolute;
-  left: 20px;
-  bottom: 70px;
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-`;
-
-const OfferTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-`;
-
-const OfferDiscount = styled.div`
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 4px;
-`;
-
-const OfferServices = styled.div`
-  font-size: 14px;
-  font-weight: 400;
-`;
-
-const BookNowButton = styled.button`
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  background-color: #0b1c36;
-  color: white;
-  font-size: 16px;
-  font-weight: 500;
-  padding: 10px 18px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: 0.2s ease;
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
 const DotsWrapper = styled.div`
   display: flex;
   justify-content: center;
   gap: 8px;
   margin-top: 10px;
-  margin-bottom: 10px;
 `;
 
 const Dot = styled.button<{ active: boolean }>`
@@ -209,17 +149,21 @@ const HomePage: React.FC = () => {
   const [salons, setSalons] = useState<any[]>([]);
   const [loadingSalons, setLoadingSalons] = useState(true);
 
-  // For horizontal scrolling per category
+  const [offers, setOffers] = useState<any[]>([]);
+  const [loadingOffers, setLoadingOffers] = useState(true);
+
+  const [activeOfferIndex, setActiveOfferIndex] = useState(0);
+
   const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [scrollPositions, setScrollPositions] = useState<number[]>(
     () => Array(CATEGORY_NAMES.length).fill(0)
   );
 
   const CARDS_PER_PAGE = 5;
-  const CARD_WIDTH = 310 + 18; // Card width + gap
+  const CARD_WIDTH = 310 + 18;
 
   /* ============================================================
-     Fetch salons from backend
+     Fetch salons
   ============================================================ */
   useEffect(() => {
     const fetchSalons = async () => {
@@ -238,44 +182,39 @@ const HomePage: React.FC = () => {
   }, []);
 
   /* ============================================================
-     Dummy Offers (Carousel)
+     Fetch offers
   ============================================================ */
-  const offers = [
-    {
-      id: 1,
-      title: "Glow-Up Hair Package",
-      discountText: "20% OFF",
-      servicesText: "Haircut • Blowdry • Treatment",
-      image: promotionHeader,
-    },
-    {
-      id: 2,
-      title: "Weekend Pamper Deal",
-      discountText: "15% OFF",
-      servicesText: "Facial • Manicure • Pedicure",
-      image: promotionHeader,
-    },
-    {
-      id: 3,
-      title: "Grooming Essentials",
-      discountText: "25% OFF",
-      servicesText: "Haircut + Shave • Facial",
-      image: promotionHeader,
-    },
-  ];
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/public/offers");
+        const data = await res.json();
+        setOffers(data);
+      } catch (err) {
+        console.error("Error fetching offers:", err);
+      } finally {
+        setLoadingOffers(false);
+      }
+    };
 
-  const [activeOfferIndex, setActiveOfferIndex] = useState(0);
+    fetchOffers();
+  }, []);
 
+  /* ============================================================
+     Auto-slide carousel
+  ============================================================ */
   useEffect(() => {
     if (offers.length === 0) return;
+
     const interval = setInterval(() => {
       setActiveOfferIndex((prev) => (prev + 1) % offers.length);
     }, 10000);
+
     return () => clearInterval(interval);
   }, [offers.length]);
 
   /* ============================================================
-     Horizontal Scroll Logic
+     Scroll handling
   ============================================================ */
   const handleScroll = (index: number, direction: "left" | "right") => {
     const container = scrollRefs.current[index];
@@ -290,9 +229,10 @@ const HomePage: React.FC = () => {
 
     setScrollPositions((prev) => {
       const updated = [...prev];
-      const currentPage = updated[index] ?? 0;
       const nextPage =
-        direction === "right" ? currentPage + 1 : Math.max(0, currentPage - 1);
+        direction === "right"
+          ? updated[index] + 1
+          : Math.max(0, updated[index] - 1);
       updated[index] = nextPage;
       return updated;
     });
@@ -322,42 +262,48 @@ const HomePage: React.FC = () => {
       <ContentWrapper>
         <WelcomeText>Welcome Back!</WelcomeText>
 
-        {/* ===== OFFERS CAROUSEL ===== */}
-        <OfferCarouselWrapper>
-          <OfferTrack
-            style={{
-              transform: `translateX(-${activeOfferIndex * 100}%)`,
-            }}
-          >
-            {offers.map((offer) => (
-              <PromoBanner key={offer.id}>
-                <BannerImage src={offer.image} alt={offer.title} />
+        {/* ====== OFFERS CAROUSEL ====== */}
+        {!loadingOffers && offers.length > 0 && (
+          <>
+            <OfferCarouselWrapper>
+              <OfferTrack
+                style={{
+                  transform: `translateX(-${activeOfferIndex * 100}%)`,
+                }}
+              >
+                {offers.map((offer) => (
+                  <PromoBanner
+                    key={offer._id}
+                    image={
+                      offer.business?.imageUrl
+                        ? `http://localhost:5000${offer.business.imageUrl}`
+                        : errorLoading
+                    }
+                    title={offer.title}
+                    salonName={offer.business?.businessName || ""}
+                    onBookNow={() =>
+                      navigate(`/business/${offer.business._id}`)
+                    }
+                  />
+                ))}
+              </OfferTrack>
+            </OfferCarouselWrapper>
 
-                <OfferTextContainer>
-                  <OfferTitle>{offer.title}</OfferTitle>
-                  <OfferDiscount>{offer.discountText}</OfferDiscount>
-                  <OfferServices>{offer.servicesText}</OfferServices>
-                </OfferTextContainer>
-
-                <BookNowButton>Book Now</BookNowButton>
-              </PromoBanner>
-            ))}
-          </OfferTrack>
-        </OfferCarouselWrapper>
-
-        <DotsWrapper>
-          {offers.map((offer, index) => (
-            <Dot
-              key={offer.id}
-              active={index === activeOfferIndex}
-              onClick={() => setActiveOfferIndex(index)}
-            />
-          ))}
-        </DotsWrapper>
+            <DotsWrapper>
+              {offers.map((_, index) => (
+                <Dot
+                  key={index}
+                  active={index === activeOfferIndex}
+                  onClick={() => setActiveOfferIndex(index)}
+                />
+              ))}
+            </DotsWrapper>
+          </>
+        )}
 
         {/* ===== SALON CATEGORIES ===== */}
         {CATEGORY_NAMES.map((category, index) => {
-          const pageIndex = scrollPositions[index] ?? 0;
+          const pageIndex = scrollPositions[index];
           const start = pageIndex * CARDS_PER_PAGE;
           const visibleSalons = salons.slice(start, start + CARDS_PER_PAGE);
           const hasMore = start + CARDS_PER_PAGE < salons.length;
@@ -386,20 +332,21 @@ const HomePage: React.FC = () => {
                 >
                   {visibleSalons.map((salon: any) => (
                     <SalonCard
-                      key={`${category}-${salon._id}`}
-                      id={salon._id}
-                      image={
-                        salon.imageUrl
-                          ? `http://localhost:5000${salon.imageUrl}`
-                          : ""
-                      }
-                      name={salon.businessName}
-                      distance="—"
-                      location={`${salon.address}, ${salon.city}`}
-                      rating={0}
-                      reviews={0}
-                      onClick={() => navigate(`/business/${salon._id}`)} // ✅ FIXED
-                    />
+  key={`${category}-${salon._id}`}
+  id={salon._id}
+  image={
+    salon.imageUrl
+      ? `http://localhost:5000${salon.imageUrl}`
+      : errorLoading
+  }
+  name={salon.businessName}
+  distance="—"
+  location={`${salon.address}, ${salon.city}`}
+  rating={salon.averageRating}     // ⭐ NOW FROM BACKEND
+  reviews={salon.reviewCount}      // ⭐ NOW FROM BACKEND
+  onClick={() => navigate(`/business/${salon._id}`)}
+/>
+
                   ))}
                 </HorizontalScroll>
 
