@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
@@ -25,6 +25,42 @@ interface Offer {
   validTo: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
+
+interface Booking {
+  _id: string;
+  business?: string;
+  customer?: {
+    _id?: string;
+    fullName?: string;
+    name?: string;
+    email?: string;
+  };
+  services?: Array<
+    | string
+    | {
+        _id: string;
+        name?: string;
+        durationMinutes?: number;
+      }
+  >;
+  startTime: string;
+  endTime?: string;
+  status: BookingStatus;
+  notes?: string;
+}
+
+interface Review {
+  _id: string;
+  rating: number;
+  comment?: string;
+  createdAt?: string;
+  customer?: {
+    firstName?: string;
+    lastName?: string;
+  };
 }
 
 /* ---------- Styled Components ---------- */
@@ -166,7 +202,7 @@ const AppointmentContainer = styled.div`
   margin-bottom: 10px;
 `;
 
-const AppointmentRow = styled.div<{ status: "CONFIRMED" | "CANCELLED" }>`
+const AppointmentRow = styled.div<{ status: BookingStatus }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -175,12 +211,15 @@ const AppointmentRow = styled.div<{ status: "CONFIRMED" | "CANCELLED" }>`
 
   span.status {
     font-weight: 600;
+    text-transform: capitalize;
     color: ${(p) =>
-      p.status === "CONFIRMED"
+      p.status === "confirmed"
         ? "#3FAE57"
-        : p.status === "CANCELLED"
+        : p.status === "completed"
+        ? "#4b78db"
+        : p.status === "cancelled"
         ? "#E03B3B"
-        : "#888"};
+        : "#E0A800"};
   }
 `;
 
@@ -416,6 +455,48 @@ const ServiceRow = styled.label`
   padding: 4px 0;
 `;
 
+/* ---------- Reviews ---------- */
+
+const ReviewList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ReviewItem = styled.div`
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ReviewHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+`;
+
+const ReviewAuthor = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #27374d;
+`;
+
+const ReviewDate = styled.div`
+  font-size: 12px;
+  color: #999;
+`;
+
+const ReviewComment = styled.div`
+  font-size: 13px;
+  color: #555;
+  margin-top: 4px;
+  white-space: pre-wrap;
+`;
+
 /* ---------- Offer Popup Component ---------- */
 
 interface OfferPopupProps {
@@ -577,49 +658,95 @@ const BusinessDashboard: React.FC = () => {
   const [loadingServices, setLoadingServices] = useState(false);
   const [loadingOffers, setLoadingOffers] = useState(false);
 
-  const today = new Date().toLocaleDateString("en-US", {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
+  // Quick stats (from /business/dashboard-stats)
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [totalClients, setTotalClients] = useState<number | null>(null);
+  const [staffMembers, setStaffMembers] = useState<number | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  // Reviews
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+
+  const todayString = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
 
-  // dummy data still there – same as your old dashboard
-  const appointments = [
-    {
-      time: "09:00 AM",
-      name: "Sarah Johnson",
-      service: "Haircut • 60 min",
-      status: "CONFIRMED",
-    },
-    {
-      time: "10:30 AM",
-      name: "Mike Chen",
-      service: "Hair Coloring • 120 min",
-      status: "CONFIRMED",
-    },
-    {
-      time: "01:00 PM",
-      name: "Emily Davis",
-      service: "Manicure • 45 min",
-      status: "CANCELLED",
-    },
-    {
-      time: "03:00 PM",
-      name: "James Wilson",
-      service: "Massage • 90 min",
-      status: "CONFIRMED",
-    },
-  ];
+  // 1) BOOKINGS (EXISTING ROUTE: /bookings/business)
+  const fetchBookings = async () => {
+    try {
+      setLoadingBookings(true);
+      const res = await api.get("/bookings/business");
+      const data: Booking[] = res.data || [];
+      setBookings(data);
+      console.log("Dashboard bookings from DB:", data);
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
 
-  const popularServices = [
-    { name: "Haircut", bookings: 45 },
-    { name: "Hair Coloring", bookings: 32 },
-    { name: "Manicure", bookings: 28 },
-    { name: "Facial", bookings: 22 },
-    { name: "Massage", bookings: 18 },
-  ];
+  // Filter bookings for TODAY only
+  const todaysBookings = useMemo(() => {
+    if (!bookings.length) return [];
 
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    return bookings.filter((b) => {
+      const d = new Date(b.startTime);
+      return d >= start && d <= end;
+    });
+  }, [bookings]);
+
+  // Popular services from today's bookings
+  const popularServices = useMemo(() => {
+    const counts: Record<string, number> = {};
+    todaysBookings.forEach((b) => {
+      const firstService = Array.isArray(b.services) ? b.services[0] : null;
+
+      let name = "Service";
+      if (firstService && typeof firstService === "object" && firstService.name) {
+        name = firstService.name;
+      }
+
+      counts[name] = (counts[name] || 0) + 1;
+    });
+
+    return Object.entries(counts)
+      .map(([name, bookings]) => ({ name, bookings }))
+      .sort((a, b) => b.bookings - a.bookings)
+      .slice(0, 5);
+  }, [todaysBookings]);
+
+  const maxPopularBookings =
+    popularServices.reduce((max, s) => Math.max(max, s.bookings), 0) || 1;
+
+  const todaysBookingsCount = todaysBookings.length;
+  const pendingBookingsCount = todaysBookings.filter(
+    (b) => b.status === "pending"
+  ).length;
+  const completedBookingsCount = todaysBookings.filter(
+    (b) => b.status === "completed"
+  ).length;
+  const cancelledBookingsCount = todaysBookings.filter(
+    (b) => b.status === "cancelled"
+  ).length;
+  const completionRate =
+    todaysBookingsCount > 0
+      ? (completedBookingsCount / todaysBookingsCount) * 100
+      : 0;
+
+  // 2) SERVICES (for offer popup)
   const fetchServices = async () => {
     try {
       setLoadingServices(true);
@@ -632,6 +759,7 @@ const BusinessDashboard: React.FC = () => {
     }
   };
 
+  // 3) OFFERS
   const fetchOffers = async () => {
     try {
       setLoadingOffers(true);
@@ -644,9 +772,50 @@ const BusinessDashboard: React.FC = () => {
     }
   };
 
+  // 4) QUICK STATS
+  const fetchQuickStats = async () => {
+    try {
+      setLoadingStats(true);
+      const res = await api.get("/business/dashboard-stats");
+      const data = res.data || {};
+
+      setAvgRating(typeof data.avgRating === "number" ? data.avgRating : 0);
+      setTotalClients(
+        typeof data.totalClients === "number" ? data.totalClients : 0
+      );
+      setStaffMembers(
+        typeof data.staffMembers === "number" ? data.staffMembers : 0
+      );
+
+      console.log("Dashboard quick stats from DB:", data);
+    } catch (err) {
+      console.error("Error fetching dashboard stats:", err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  // 5) REVIEWS
+  const fetchReviews = async () => {
+    try {
+      setLoadingReviews(true);
+      const res = await api.get("/business/reviews");
+      const data: Review[] = res.data || [];
+      setReviews(data);
+      console.log("Dashboard reviews from DB:", data);
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
   useEffect(() => {
     fetchServices();
     fetchOffers();
+    fetchBookings();
+    fetchQuickStats();
+    fetchReviews();
   }, []);
 
   const handleNewOffer = () => {
@@ -676,7 +845,7 @@ const BusinessDashboard: React.FC = () => {
   const activeOffers = offers.filter((o) => new Date(o.validTo) >= now);
   const pastOffers = offers.filter((o) => new Date(o.validTo) < now);
 
-  const formatDate = (iso: string) => {
+  const formatDate = (iso?: string) => {
     if (!iso) return "";
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
@@ -701,6 +870,37 @@ const BusinessDashboard: React.FC = () => {
     return `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
   };
 
+  const getCustomerName = (b: Booking) => {
+    const c = b.customer;
+    if (!c) return "Customer";
+    return c.fullName || c.name || c.email || "Customer";
+  };
+
+  const getServiceLabel = (b: Booking) => {
+    const firstService = Array.isArray(b.services) ? b.services[0] : null;
+    if (!firstService) return "Service";
+
+    if (typeof firstService === "string") {
+      return "Service";
+    }
+
+    const name = firstService.name || "Service";
+    const duration =
+      typeof firstService.durationMinutes === "number"
+        ? `${firstService.durationMinutes} min`
+        : "";
+    return duration ? `${name} • ${duration}` : name;
+  };
+
+  const getReviewAuthor = (r: Review) => {
+    if (!r.customer) return "Anonymous";
+    const { firstName, lastName } = r.customer;
+    const full = [firstName, lastName].filter(Boolean).join(" ");
+    return full || "Anonymous";
+  };
+
+  const limitedReviews = reviews.slice(0, 4);
+
   return (
     <>
       <PageWrapper>
@@ -714,12 +914,10 @@ const BusinessDashboard: React.FC = () => {
             <DateAndButton>
               <DateBox>
                 {IconFix(FiCalendar, { size: 18 })}
-                {today}
+                {todayString}
               </DateBox>
 
-              <PrimaryButton onClick={() => navigate("/business/bookings")}>
-                + New Booking
-              </PrimaryButton>
+              {/* Removed "+ New Booking" button */}
 
               <PrimaryButton onClick={handleNewOffer}>+ Add Offer</PrimaryButton>
             </DateAndButton>
@@ -729,43 +927,65 @@ const BusinessDashboard: React.FC = () => {
           <StatsRow>
             <StatCard>
               <StatTitle>TODAY&apos;S BOOKINGS</StatTitle>
-              <StatValue>18</StatValue>
-              <StatSubText>3 pending confirmation</StatSubText>
+              <StatValue>{todaysBookingsCount}</StatValue>
+              <StatSubText>
+                {pendingBookingsCount} pending confirmation
+              </StatSubText>
             </StatCard>
 
             <StatCard>
-              <StatTitle>NEW CLIENTS</StatTitle>
-              <StatValue>5</StatValue>
-              <StatSubText>+2 from last week</StatSubText>
+              <StatTitle>COMPLETED TODAY</StatTitle>
+              <StatValue>{completedBookingsCount}</StatValue>
+              <StatSubText>{cancelledBookingsCount} cancelled</StatSubText>
             </StatCard>
 
             <StatCard>
               <StatTitle>COMPLETION RATE</StatTitle>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 {IconFix(AiOutlineCheckSquare, { size: 20 })}
-                <StatValue>94%</StatValue>
+                <StatValue>{completionRate.toFixed(0)}%</StatValue>
               </div>
-              <StatSubText>+3% this month</StatSubText>
+              <StatSubText>Based on today&apos;s bookings</StatSubText>
             </StatCard>
           </StatsRow>
 
           {/* Appointments + Popular services */}
           <SectionGrid>
             <Card>
-              <SectionTitle>Upcoming Appointments</SectionTitle>
-              {appointments.map((appt) => (
-                <AppointmentContainer key={appt.time}>
-                  <AppointmentRow status={appt.status as "CONFIRMED" | "CANCELLED"}>
-                    <div>
-                      <strong>{appt.time}</strong> — {appt.name}
-                      <div style={{ fontSize: "13px", color: "#7a7a7a" }}>
-                        {appt.service}
-                      </div>
-                    </div>
-                    <span className="status">{appt.status}</span>
-                  </AppointmentRow>
-                </AppointmentContainer>
-              ))}
+              <SectionTitle>Today&apos;s Appointments</SectionTitle>
+
+              {loadingBookings ? (
+                <div style={{ fontSize: 13, color: "#777" }}>
+                  Loading today&apos;s appointments…
+                </div>
+              ) : todaysBookings.length === 0 ? (
+                <div style={{ fontSize: 13, color: "#777" }}>
+                  No appointments for today yet.
+                </div>
+              ) : (
+                todaysBookings.map((appt) => {
+                  const d = new Date(appt.startTime);
+                  const timeString = d.toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+
+                  return (
+                    <AppointmentContainer key={appt._id}>
+                      <AppointmentRow status={appt.status}>
+                        <div>
+                          <strong>{timeString}</strong> — {getCustomerName(appt)}
+                          <div style={{ fontSize: "13px", color: "#7a7a7a" }}>
+                            {getServiceLabel(appt)}
+                          </div>
+                        </div>
+                        <span className="status">{appt.status}</span>
+                      </AppointmentRow>
+                    </AppointmentContainer>
+                  );
+                })
+              )}
+
               <div
                 style={{
                   textAlign: "center",
@@ -782,48 +1002,97 @@ const BusinessDashboard: React.FC = () => {
             </Card>
 
             <Card>
-              <SectionTitle>Popular Services</SectionTitle>
-              {popularServices.map((service) => (
-                <ProgressBarWrapper key={service.name}>
-                  <ProgressRow>
-                    <span>{service.name}</span>
-                    <span style={{ color: "#7a7a7a" }}>
-                      {service.bookings} bookings
-                    </span>
-                  </ProgressRow>
-                  <ProgressBar percent={(service.bookings / 45) * 100} />
-                </ProgressBarWrapper>
-              ))}
+              <SectionTitle>Popular Services (today)</SectionTitle>
+              {popularServices.length === 0 ? (
+                <div style={{ fontSize: 13, color: "#777" }}>
+                  No bookings data yet.
+                </div>
+              ) : (
+                popularServices.map((service) => (
+                  <ProgressBarWrapper key={service.name}>
+                    <ProgressRow>
+                      <span>{service.name}</span>
+                      <span style={{ color: "#7a7a7a" }}>
+                        {service.bookings} bookings
+                      </span>
+                    </ProgressRow>
+                    <ProgressBar
+                      percent={(service.bookings / maxPopularBookings) * 100}
+                    />
+                  </ProgressBarWrapper>
+                ))
+              )}
             </Card>
           </SectionGrid>
 
           {/* Quick stats */}
           <Card>
             <SectionTitle>Quick Stats</SectionTitle>
-            <QuickStatsGrid>
-              <QuickStatItem>
-                <QuickStatLabel>WEEKLY REVENUE</QuickStatLabel>
-                <QuickStatValue>$8,045</QuickStatValue>
-              </QuickStatItem>
 
-              <QuickStatItem>
-                <QuickStatLabel>AVG. RATING</QuickStatLabel>
-                <RatingRow>
-                  {IconFix(AiFillStar, { size: 18 })}
-                  <QuickStatValue>4.8</QuickStatValue>
-                </RatingRow>
-              </QuickStatItem>
+            {loadingStats ? (
+              <div style={{ fontSize: 13, color: "#777" }}>
+                Loading quick stats…
+              </div>
+            ) : (
+              <QuickStatsGrid>
+                <QuickStatItem>
+                  <QuickStatLabel>AVG. RATING</QuickStatLabel>
+                  <RatingRow>
+                    {IconFix(AiFillStar, { size: 18 })}
+                    <QuickStatValue>
+                      {avgRating !== null ? avgRating.toFixed(1) : "--"}
+                    </QuickStatValue>
+                  </RatingRow>
+                </QuickStatItem>
 
-              <QuickStatItem>
-                <QuickStatLabel>TOTAL CLIENTS</QuickStatLabel>
-                <QuickStatValue>342</QuickStatValue>
-              </QuickStatItem>
+                <QuickStatItem>
+                  <QuickStatLabel>TOTAL CLIENTS</QuickStatLabel>
+                  <QuickStatValue>
+                    {totalClients !== null ? totalClients : "--"}
+                  </QuickStatValue>
+                </QuickStatItem>
 
-              <QuickStatItem>
-                <QuickStatLabel>STAFF MEMBERS</QuickStatLabel>
-                <QuickStatValue>8</QuickStatValue>
-              </QuickStatItem>
-            </QuickStatsGrid>
+                <QuickStatItem>
+                  <QuickStatLabel>STAFF MEMBERS</QuickStatLabel>
+                  <QuickStatValue>
+                    {staffMembers !== null ? staffMembers : "--"}
+                  </QuickStatValue>
+                </QuickStatItem>
+              </QuickStatsGrid>
+            )}
+          </Card>
+
+          {/* Recent Reviews */}
+          <Card>
+            <SectionTitle>Recent Reviews</SectionTitle>
+
+            {loadingReviews ? (
+              <div style={{ fontSize: 13, color: "#777" }}>Loading reviews…</div>
+            ) : limitedReviews.length === 0 ? (
+              <div style={{ fontSize: 13, color: "#777" }}>
+                You don&apos;t have any reviews yet.
+              </div>
+            ) : (
+              <ReviewList>
+                {limitedReviews.map((review) => (
+                  <ReviewItem key={review._id}>
+                    <ReviewHeader>
+                      <ReviewAuthor>{getReviewAuthor(review)}</ReviewAuthor>
+                      <ReviewDate>{formatDate(review.createdAt)}</ReviewDate>
+                    </ReviewHeader>
+                    <RatingRow>
+                      {IconFix(AiFillStar, { size: 14 })}
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>
+                        {review.rating.toFixed(1)} / 5
+                      </span>
+                    </RatingRow>
+                    {review.comment && (
+                      <ReviewComment>{review.comment}</ReviewComment>
+                    )}
+                  </ReviewItem>
+                ))}
+              </ReviewList>
+            )}
           </Card>
 
           {/* Offers management */}

@@ -72,6 +72,19 @@ const LogoutButton = styled.button`
   }
 `;
 
+// Helper to parse "Name::Offer" strings coming from loyalty
+const parseRewardString = (value: string) => {
+  if (!value) return { name: "", offer: "" };
+  const parts = value.split("::");
+  if (parts.length >= 2) {
+    return {
+      name: parts[0] || "",
+      offer: parts.slice(1).join("::") || "",
+    };
+  }
+  return { name: value, offer: "" };
+};
+
 const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [customer, setCustomer] = useState<any>(null);
@@ -243,23 +256,38 @@ const ProfilePage: React.FC = () => {
         <Card>
           <SectionTitle>My Loyalty Programs</SectionTitle>
           <LoyaltyList>
-  {loyaltyPrograms.length === 0 ? (
-    <div style={{ color: "#999" }}>No loyalty programs yet</div>
-  ) : (
-    loyaltyPrograms.map((entry: any) => (
-      <LoyaltyTile
-        key={entry._id}
-        name={entry.business?.businessName}
-        offer={entry.business?.loyalty?.rewardDescription || "Reward"}
-        filledCircles={entry.points}
-        totalCircles={
-          entry.business?.loyalty?.rewardThreshold || 5
-        }
-      />
-    ))
-  )}
-</LoyaltyList>
+            {loyaltyPrograms.length === 0 ? (
+              <div style={{ color: "#999" }}>No loyalty programs yet</div>
+            ) : (
+              loyaltyPrograms.map((entry: any) => {
+                // Prefer the first reward string, then fallback to rewardDescription
+                const rawReward =
+                  entry.business?.loyalty?.rewards?.[0] ||
+                  entry.business?.loyalty?.rewardDescription ||
+                  "";
 
+                const parsed = parseRewardString(rawReward);
+
+                const tileName =
+                  parsed.name ||
+                  entry.business?.businessName ||
+                  "Salon";
+
+                const tileOffer = parsed.offer || "Reward";
+
+                return (
+                <LoyaltyTile
+  salon={entry.business?.businessName}   // NEW
+  name={tileName}
+  offer={tileOffer}
+  filledCircles={entry.points}
+  totalCircles={entry.business?.loyalty?.rewardThreshold || 5}
+/>
+
+                );
+              })
+            )}
+          </LoyaltyList>
         </Card>
 
         {/* ---------- Logout Button ---------- */}

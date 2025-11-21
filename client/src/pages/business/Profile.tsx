@@ -416,7 +416,15 @@ const BusinessProfile: React.FC = () => {
     setCity(info?.city || b.city || "");
     setAbout(info?.about || b.description || "");
 
-    setOperatingHours(b.operatingHours || {});
+    // always have all 7 days in state
+    const dbHours = b.operatingHours || {};
+    const initialHours: { [key in DayKey]: string } = {} as any;
+    DAY_KEYS.forEach((dayKey) => {
+      const rawDay = (dbHours as any)[dayKey];
+      initialHours[dayKey] = typeof rawDay === "string" ? rawDay : "";
+    });
+    setOperatingHours(initialHours);
+
     setSocialLinks(b.socialLinks || {});
 
     const rawStaff: any[] = b.staff || [];
@@ -485,17 +493,46 @@ const BusinessProfile: React.FC = () => {
   }
 
   /* ---------------- Business hours helpers ---------------- */
-  const parseHours = (value?: string) => {
+
+  // supports "Closed", "HH:MM - HH:MM", and partial values
+  const parseHours = (value?: string): DayHours => {
     if (!value) return { open: "", close: "", closed: false };
-    if (value === "Closed") return { open: "", close: "", closed: true };
-    const [open, close] = value.split("-").map((s) => s.trim());
-    return { open: open || "", close: close || "", closed: false };
+
+    const normalized = value.trim();
+
+    // closed (any casing)
+    if (normalized.toLowerCase() === "closed") {
+      return { open: "", close: "", closed: true };
+    }
+
+    // full "HH:MM - HH:MM"
+    if (normalized.includes("-")) {
+      const [openPart, closePart] = normalized.split("-").map((s) => s.trim());
+      return {
+        open: openPart || "",
+        close: closePart || "",
+        closed: false,
+      };
+    }
+
+    // partial value while editing (just "HH:MM")
+    return {
+      open: normalized,
+      close: "",
+      closed: false,
+    };
   };
 
-  const buildHours = (open: string, close: string, closed: boolean) => {
+  const buildHours = (open: string, close: string, closed: boolean): string => {
     if (closed) return "Closed";
-    if (!open || !close) return "";
-    return `${open} - ${close}`;
+
+    if (open && close) return `${open} - ${close}`;
+
+    // while editing, keep partial so next change can see it
+    if (open) return open;
+    if (close) return close;
+
+    return "";
   };
 
   const handleBusinessDayChange = (
@@ -513,7 +550,14 @@ const BusinessProfile: React.FC = () => {
 
       if (field === "open") updated.open = value as string;
       if (field === "close") updated.close = value as string;
-      if (field === "closed") updated.closed = value as boolean;
+      if (field === "closed") {
+        updated.closed = value as boolean;
+        if (updated.closed) {
+          // when marking as closed, clear times
+          updated.open = "";
+          updated.close = "";
+        }
+      }
 
       return {
         ...prev,
@@ -524,7 +568,7 @@ const BusinessProfile: React.FC = () => {
 
   const displayHours = (value?: string) => {
     if (!value) return "";
-    if (value === "Closed") return "Closed";
+    if (value.toLowerCase() === "closed") return "Closed";
     return value;
   };
 
@@ -578,7 +622,6 @@ const BusinessProfile: React.FC = () => {
       return;
     }
 
-    // Shape payload like registration wizard
     const payload = {
       businessInfo: {
         name,

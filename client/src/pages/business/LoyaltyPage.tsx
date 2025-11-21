@@ -80,47 +80,13 @@ const RewardsList = styled.div`
 
 const RewardRow = styled.div`
   display: grid;
-  grid-template-columns: 1.2fr 1fr auto;
+  grid-template-columns: 1.2fr 1fr;
   gap: 12px;
   align-items: flex-end;
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
     align-items: stretch;
-  }
-`;
-
-const RemoveRewardButton = styled.button`
-  border: none;
-  background: transparent;
-  color: #d14b4b;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-
-  &:hover {
-    background: rgba(209, 75, 75, 0.08);
-  }
-
-  @media (max-width: 720px) {
-    justify-self: flex-start;
-  }
-`;
-
-const AddRewardButton = styled.button`
-  margin-top: 8px;
-  border: none;
-  background: transparent;
-  color: #364fc7;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 4px 0;
-  font-weight: 500;
-
-  &:hover {
-    text-decoration: underline;
   }
 `;
 
@@ -143,7 +109,7 @@ interface RewardFormRow {
 
 interface LoyaltyFormState {
   enabled: boolean;
-  rewards: RewardFormRow[];
+  rewards: RewardFormRow[]; // we'll only ever use index 0
 }
 
 const parseRewardString = (value: string): RewardFormRow => {
@@ -168,7 +134,7 @@ const LoyaltyPage: React.FC = () => {
 
   const [form, setForm] = useState<LoyaltyFormState>({
     enabled: false,
-    rewards: [{ name: "", offer: "" }],
+    rewards: [{ name: "", offer: "" }], // single program
   });
 
   // 🔹 On mount: ask backend "who am I?" then load that business's loyalty
@@ -200,19 +166,21 @@ const LoyaltyPage: React.FC = () => {
               ? res.data.rewards
               : [res.data.rewardDescription || ""];
 
-          const parsed = rawRewards
+          const parsedList = rawRewards
             .map((r: string) => parseRewardString(r))
             .filter((row: RewardFormRow) => row.name || row.offer);
 
+          // ✅ only one program allowed → keep just the first one
+          const firstRow =
+            parsedList[0] || ({ name: "", offer: "" } as RewardFormRow);
+
           setForm({
             enabled: !!res.data.enabled,
-            rewards:
-              parsed.length > 0 ? parsed : [{ name: "", offer: "" }],
+            rewards: [firstRow],
           });
         }
       } catch (err: any) {
         console.error(err);
-        // 401 / 403 etc → probably not logged in as business
         setError(
           err?.response?.status === 401 || err?.response?.status === 403
             ? "Please log in as a business to manage loyalty."
@@ -231,31 +199,15 @@ const LoyaltyPage: React.FC = () => {
     field: keyof RewardFormRow,
     value: string
   ) => {
+    // We only care about index 0, but keep signature
     setForm((prev) => {
       const rewards = [...prev.rewards];
-      rewards[index] = { ...rewards[index], [field]: value };
-      return { ...prev, rewards };
-    });
-    setError("");
-    setSuccess("");
-  };
-
-  const addReward = () => {
-    setForm((prev) => ({
-      ...prev,
-      rewards: [...prev.rewards, { name: "", offer: "" }],
-    }));
-    setError("");
-    setSuccess("");
-  };
-
-  const removeReward = (index: number) => {
-    setForm((prev) => {
-      const rewards = prev.rewards.filter((_, i) => i !== index);
-      return {
-        ...prev,
-        rewards: rewards.length > 0 ? rewards : [{ name: "", offer: "" }],
+      const safeIndex = 0;
+      rewards[safeIndex] = {
+        ...rewards[safeIndex],
+        [field]: value,
       };
+      return { ...prev, rewards };
     });
     setError("");
     setSuccess("");
@@ -279,25 +231,28 @@ const LoyaltyPage: React.FC = () => {
       setError("");
       setSuccess("");
 
-      const cleanedRewardRows = form.rewards
-        .map((row) => ({
-          name: row.name.trim(),
-          offer: row.offer.trim(),
-        }))
-        .filter((row) => row.name || row.offer);
+      const singleRow = form.rewards[0] || { name: "", offer: "" };
 
-      const cleanedRewardStrings = cleanedRewardRows.map(
-        (row) => `${row.name}::${row.offer}`
-      );
+      const cleaned = {
+        name: singleRow.name.trim(),
+        offer: singleRow.offer.trim(),
+      };
+
+      // Ensure there is at least something if enabled
+      const hasContent = cleaned.name || cleaned.offer;
+
+      const cleanedRewardString = hasContent
+        ? `${cleaned.name}::${cleaned.offer}`
+        : "";
 
       const payload = {
         enabled: form.enabled,
         type: "points",
         pointsPerBooking: 1,
         rewardThreshold: 5,
-        rewardDescription: cleanedRewardStrings[0] || "",
+        rewardDescription: cleanedRewardString,
         expiryMonths: 0,
-        rewards: cleanedRewardStrings,
+        rewards: cleanedRewardString ? [cleanedRewardString] : [],
       };
 
       const res = await api.put(`/loyalty/${businessId}`, payload);
@@ -307,13 +262,16 @@ const LoyaltyPage: React.FC = () => {
           ? res.data.rewards
           : [res.data.rewardDescription || ""];
 
-      const parsed = returnedRewards
+      const parsedList = returnedRewards
         .map((r: string) => parseRewardString(r))
         .filter((row: RewardFormRow) => row.name || row.offer);
 
+      const firstRow =
+        parsedList[0] || ({ name: "", offer: "" } as RewardFormRow);
+
       setForm({
         enabled: !!res.data.enabled,
-        rewards: parsed.length > 0 ? parsed : [{ name: "", offer: "" }],
+        rewards: [firstRow],
       });
 
       setSuccess("Loyalty settings saved.");
@@ -325,6 +283,8 @@ const LoyaltyPage: React.FC = () => {
     }
   };
 
+  const singleReward = form.rewards[0] || { name: "", offer: "" };
+
   return (
     <PageWrapper>
       <TabBar type="business" />
@@ -332,8 +292,8 @@ const LoyaltyPage: React.FC = () => {
         <HeaderRow>
           <Title>Loyalty Program</Title>
           <Subtitle>
-            Set up points-based rewards your customers see in the app. Each
-            loyalty tile unlocks after 5 points.
+            Set up a single points-based reward your customers see in the app.
+            One loyalty program per salon.
           </Subtitle>
         </HeaderRow>
 
@@ -354,57 +314,43 @@ const LoyaltyPage: React.FC = () => {
                   <span>Enable loyalty program for this business</span>
                 </ToggleRow>
                 <HelperText>
-                  When disabled, customers won&apos;t see any loyalty tiles for
+                  When disabled, customers won&apos;t see a loyalty tile for
                   your salon.
                 </HelperText>
               </FormSection>
 
               <FormSection>
-                <SectionLabel>Loyalty rewards</SectionLabel>
+                <SectionLabel>Loyalty reward</SectionLabel>
                 <HelperText>
-                  Name is what the tile is called. Offer is what the customer
-                  gets (for example “20% off” or “Free blow-dry”). All rewards
-                  use 5 points.
+                  You can only have one loyalty reward active at a time. Name is
+                  what the tile is called. Offer is what the customer gets (for
+                  example “20% off” or “Free blow-dry”).
                 </HelperText>
 
                 <RewardsList>
-                  {form.rewards.map((reward, index) => (
-                    <RewardRow key={index}>
-                      <TextBox
-                        label={index === 0 ? "Reward name" : undefined}
-                        placeholder="e.g. Glow-up Blow-dry"
-                        value={reward.name}
-                        onChange={(
-                          e: React.ChangeEvent<HTMLInputElement>
-                        ) =>
-                          updateRewardField(index, "name", e.target.value)
-                        }
-                      />
-                      <TextBox
-                        label={index === 0 ? "Offer" : undefined}
-                        placeholder="e.g. 20% off, free treatment"
-                        value={reward.offer}
-                        onChange={(
-                          e: React.ChangeEvent<HTMLInputElement>
-                        ) =>
-                          updateRewardField(index, "offer", e.target.value)
-                        }
-                      />
-                      {form.rewards.length > 1 && (
-                        <RemoveRewardButton
-                          type="button"
-                          onClick={() => removeReward(index)}
-                        >
-                          Remove
-                        </RemoveRewardButton>
-                      )}
-                    </RewardRow>
-                  ))}
+                  <RewardRow>
+                    <TextBox
+                      label="Reward name"
+                      placeholder="e.g. Glow-up Blow-dry"
+                      value={singleReward.name}
+                      onChange={(
+                        e: React.ChangeEvent<HTMLInputElement>
+                      ) =>
+                        updateRewardField(0, "name", e.target.value)
+                      }
+                    />
+                    <TextBox
+                      label="Offer"
+                      placeholder="e.g. 20% off, free treatment"
+                      value={singleReward.offer}
+                      onChange={(
+                        e: React.ChangeEvent<HTMLInputElement>
+                      ) =>
+                        updateRewardField(0, "offer", e.target.value)
+                      }
+                    />
+                  </RewardRow>
                 </RewardsList>
-
-                <AddRewardButton type="button" onClick={addReward}>
-                  + Add another loyalty reward
-                </AddRewardButton>
               </FormSection>
 
               {error && businessId && (

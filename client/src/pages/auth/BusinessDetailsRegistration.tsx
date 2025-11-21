@@ -497,14 +497,40 @@ const BusinessRegistration: React.FC = () => {
     });
   };
 
+  /** ✅ Validate that working hours are fully set (mandatory) */
+  const validateOperatingHours = (): boolean => {
+    // every day must either be Closed OR have both open & close
+    const invalidDay = DAY_KEYS.find((dayKey) => {
+      const d = hoursSelection[dayKey];
+      if (d.closed) return false;
+      return !(d.open && d.close);
+    });
+
+    if (invalidDay) {
+      setError(
+        "Please set working hours for all days (From & To) or mark them as Closed before continuing."
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
+    // Step 1 → go to Step 2 but only if hours are valid
     if (currentStep !== 2) {
+      const ok = validateOperatingHours();
+      if (!ok) return;
       setCurrentStep(2);
       return;
     }
+
+    // On final submit, validate again
+    const ok = validateOperatingHours();
+    if (!ok) return;
 
     setIsSubmitting(true);
 
@@ -528,6 +554,8 @@ const BusinessRegistration: React.FC = () => {
         } else if (d.open && d.close) {
           operatingHoursPayload[dayKey] = `${d.open} - ${d.close}`;
         } else {
+          // this should no longer happen because of validation,
+          // but we keep it safe:
           operatingHoursPayload[dayKey] = "";
         }
       });
@@ -796,7 +824,7 @@ const BusinessRegistration: React.FC = () => {
                 </FileInputWrapper>
               </Section>
 
-              <NextButton type="button" onClick={() => setCurrentStep(2)}>
+              <NextButton type="button" onClick={handleSubmit}>
                 Next: Staff Members
               </NextButton>
             </>

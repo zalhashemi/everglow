@@ -1,248 +1,302 @@
-// src/pages/customer/SelectDatePage.tsx
 import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
-import api from "../../utils/api";
+import Button from "../../components/common/Button";
+import SecondaryButton from "../../components/common/SecondaryButton";
+import api from "../../utils/api"; // adjust path if needed
 
-type SelectedService = {
+type ServiceDto = {
   _id: string;
   name: string;
   durationMinutes: number;
   priceBHD: number;
-  description?: string;
 };
 
 type LocationState = {
-  businessId: string;
-  businessName: string;
-  selectedServices: SelectedService[];
-  totalDurationMinutes: number;
-  totalPrice: number;
   isReschedule?: boolean;
   bookingId?: string;
+  businessId: string;
+  businessName: string;
+  selectedServices: ServiceDto[];
+  totalDurationMinutes: number;
+  totalPrice: number;
 };
+
+const PageWrapper = styled.div`
+  background-color: #f2dcdc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ContentWrapper = styled.div`
+  width: 100%;
+  max-width: 900px;
+  padding: 40px 0 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const Title = styled.h1`
+  font-size: 32px;
+  font-weight: 800;
+  color: #27374d;
+`;
+
+const SubTitle = styled.p`
+  font-size: 15px;
+  color: #555;
+`;
+
+const Section = styled.div`
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 700;
+  color: #27374d;
+  margin-bottom: 12px;
+`;
+
+const FormRow = styled.div`
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  color: #555;
+`;
+
+const DateInput = styled.input`
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+`;
+
+const TimeSelect = styled.select`
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  min-width: 160px;
+`;
+
+const HelperText = styled.p`
+  margin-top: 8px;
+  font-size: 13px;
+  color: #777;
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+`;
+
+const ErrorText = styled.p`
+  color: red;
+  margin-top: 8px;
+`;
 
 const SelectDatePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as LocationState | undefined;
-
-  const [date, setDate] = useState<string>("");
-  const [slots, setSlots] = useState<string[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [selectedTime, setSelectedTime] = useState<string>("");
-
-  // redirect if no state (user hit URL directly)
-  useEffect(() => {
-    if (!state) {
-      navigate("/home");
-    }
-  }, [state, navigate]);
-
-  if (!state) return null;
+  const state = (location.state || {}) as LocationState;
 
   const {
+    isReschedule,
+    bookingId,
     businessId,
     businessName,
     selectedServices,
     totalDurationMinutes,
     totalPrice,
-    isReschedule,
-    bookingId,
   } = state;
 
-  const today = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().slice(0, 10); // YYYY-MM-DD
+  });
 
-  const fetchSlots = async (selectedDate: string) => {
-    if (!selectedDate) return;
-    try {
-      setLoadingSlots(true);
-      setSlots([]);
-      setSelectedTime("");
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<string>("");
 
-      const res = await api.get<string[]>(
-        `/bookings/available-slots/${businessId}`,
-        {
-          params: {
-            date: selectedDate,
-            duration: totalDurationMinutes,
-          },
-        }
-      );
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-      setSlots(res.data || []);
-    } catch (err: any) {
-      console.error("Error fetching slots", err);
-      alert(err?.response?.data?.message || "Failed to load time slots.");
-    } finally {
-      setLoadingSlots(false);
+  // If user came here without proper state, go back
+  useEffect(() => {
+    if (!businessId || !selectedServices || !selectedServices.length) {
+      navigate(-1);
     }
-  };
+  }, [businessId, selectedServices, navigate]);
 
-  const onDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setDate(value);
-    fetchSlots(value);
-  };
+  // Load slots whenever date changes
+  useEffect(() => {
+    if (!businessId || !totalDurationMinutes || !selectedDate) return;
 
-  const handleNext = () => {
-    if (!date || !selectedTime) {
-      alert("Please select a date and time.");
+    const loadSlots = async () => {
+      try {
+        setLoadingSlots(true);
+        setError(null);
+
+        const res = await api.get<string[]>(
+          `/bookings/available-slots/${businessId}`,
+          {
+            params: {
+              date: selectedDate,              // YYYY-MM-DD
+              duration: totalDurationMinutes,  // total mins of all services
+            },
+          }
+        );
+
+        setAvailableSlots(res.data || []);
+        setSelectedSlot("");
+      } catch (err: any) {
+        console.error("Error loading slots", err);
+        setError(
+          err?.response?.data?.message ||
+            "Failed to load available slots. Please try again."
+        );
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    loadSlots();
+  }, [businessId, totalDurationMinutes, selectedDate]);
+
+  const handleConfirm = async () => {
+    if (!selectedDate || !selectedSlot) {
+      setError("Please select a date and time.");
       return;
     }
 
-    navigate("/book/summary", {
-      state: {
-        businessId,
-        businessName,
-        selectedServices,
-        totalDurationMinutes,
-        totalPrice,
-        date,
-        time: selectedTime,
-        isReschedule: !!isReschedule,
-        bookingId,
-      },
-    });
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const startTimeIso = `${selectedDate}T${selectedSlot}:00`;
+      const serviceIds = selectedServices.map((s) => s._id);
+
+      if (isReschedule && bookingId) {
+        // RESCHEDULE existing booking
+        await api.patch(`/bookings/${bookingId}`, {
+          action: "reschedule",
+          newStartTime: startTimeIso,
+          serviceIds,
+        });
+      } else {
+        // CREATE new booking
+        await api.post("/bookings", {
+          businessId,
+          serviceIds,
+          startTime: startTimeIso,
+          notes: "",
+        });
+      }
+
+      alert("Booking confirmed!");
+      navigate("/bookings");
+    } catch (err: any) {
+      console.error("Confirm booking error:", err);
+      const msg =
+        err?.response?.data?.message ||
+        "Failed to confirm booking. The slot may have just been taken.";
+      setError(msg);
+      alert(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: "#F1DEDE",
-        minHeight: "100vh",
-        paddingBottom: "40px",
-      }}
-    >
+    <PageWrapper>
       <TabBar type="customer" />
 
-      <div
-        style={{
-          width: "90%",
-          maxWidth: "700px",
-          margin: "40px auto 0 auto",
-          backgroundColor: "#fff",
-          borderRadius: "16px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
-          padding: "24px",
-        }}
-      >
-        <h2 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "10px" }}>
-          {isReschedule ? "Reschedule Booking" : "Choose Date & Time"}
-        </h2>
-        <p style={{ marginTop: 0, color: "#555", fontSize: "14px" }}>
-          {businessName}
-        </p>
-
-        {/* Date input (can be replaced with calendar lib later) */}
-        <div style={{ marginTop: "20px" }}>
-          <label
-            htmlFor="date"
-            style={{ display: "block", marginBottom: "6px", fontSize: "14px" }}
-          >
-            Select a date:
-          </label>
-          <input
-            id="date"
-            type="date"
-            value={date}
-            min={today}
-            onChange={onDateChange}
-            style={{
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              fontSize: "14px",
-            }}
-          />
+      <ContentWrapper>
+        <div>
+          <Title>{businessName}</Title>
+          <SubTitle>
+            Select a date and time for your{" "}
+            {selectedServices.map((s) => s.name).join(", ")} (
+            {totalDurationMinutes} mins · {totalPrice.toFixed(2)} BHD)
+          </SubTitle>
         </div>
 
-        {/* Slots */}
-        <div style={{ marginTop: "24px" }}>
-          <h4 style={{ marginBottom: "10px" }}>Available time slots</h4>
+        <Section>
+          <SectionTitle>Choose Date & Time</SectionTitle>
 
-          {loadingSlots && <p>Loading slots...</p>}
+          <FormRow style={{ marginBottom: 16 }}>
+            <Label>
+              Date
+              <br />
+              <DateInput
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+            </Label>
 
-          {!loadingSlots && date && slots.length === 0 && (
-            <p style={{ color: "#777" }}>No available slots for this date.</p>
-          )}
+            <Label>
+              Time
+              <br />
+              <TimeSelect
+                value={selectedSlot}
+                onChange={(e) => setSelectedSlot(e.target.value)}
+                disabled={loadingSlots || availableSlots.length === 0}
+              >
+                <option value="">
+                  {loadingSlots
+                    ? "Loading..."
+                    : availableSlots.length === 0
+                    ? "No slots available"
+                    : "Select time"}
+                </option>
 
-          {!loadingSlots && slots.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "10px",
-              }}
-            >
-              {slots.map((slot) => (
-                <button
-                  key={slot}
-                  onClick={() => setSelectedTime(slot)}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border:
-                      selectedTime === slot
-                        ? "2px solid #27374d"
-                        : "1px solid #ddd",
-                    backgroundColor:
-                      selectedTime === slot ? "#27374d" : "#f9f9f9",
-                    color: selectedTime === slot ? "#fff" : "#333",
-                    cursor: "pointer",
-                    fontSize: "13px",
-                  }}
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+                {availableSlots.map((slot) => (
+                  <option key={slot} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </TimeSelect>
+            </Label>
+          </FormRow>
 
-        {/* Summary + Next */}
-        <div
-          style={{
-            marginTop: "30px",
-            paddingTop: "14px",
-            borderTop: "1px solid #eee",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "10px",
-          }}
-        >
-          <div style={{ fontSize: "14px" }}>
-            <div>
-              {selectedServices.length} service
-              {selectedServices.length > 1 ? "s" : ""} ·{" "}
-              {totalDurationMinutes} min
-            </div>
-            <div>
-              Total: <strong>{totalPrice.toFixed(2)} BD</strong>
-            </div>
-          </div>
+          <HelperText>
+            Time options are limited to the salon's working hours for the
+            selected day. If a slot is already booked, it will not appear.
+          </HelperText>
 
-          <button
-            onClick={handleNext}
-            disabled={!date || !selectedTime}
-            style={{
-              padding: "10px 20px",
-              borderRadius: "10px",
-              border: "none",
-              cursor: !date || !selectedTime ? "not-allowed" : "pointer",
-              backgroundColor:
-                !date || !selectedTime ? "#ccc" : "#27374d",
-              color: "#fff",
-              fontWeight: 600,
-            }}
-          >
-            Next: Review
-          </button>
-        </div>
-      </div>
-    </div>
+          {error && <ErrorText>{error}</ErrorText>}
+
+          <ButtonRow>
+            <SecondaryButton width="160px" onClick={() => navigate(-1)}>
+              Back
+            </SecondaryButton>
+            <Button width="220px" onClick={handleConfirm} disabled={submitting}>
+              {submitting
+                ? "Saving..."
+                : isReschedule
+                ? "Confirm Changes"
+                : "Confirm Booking"}
+            </Button>
+          </ButtonRow>
+        </Section>
+      </ContentWrapper>
+    </PageWrapper>
   );
 };
 

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import TabBar from "../../components/common/TabBar";
 import Button from "../../components/common/Button";
+import api from "../../utils/api";
 
 type CalendarValue = Date | Date[] | [Date | null, Date | null] | null;
 
@@ -113,9 +114,9 @@ const BookingCard = styled.div<{ status: string }>`
   margin-bottom: 16px;
   border-left: 5px solid
     ${(p) =>
-      p.status === "CONFIRMED"
+      p.status === "confirmed" || p.status === "completed"
         ? "#4CAF50"
-        : p.status === "PENDING"
+        : p.status === "pending"
         ? "#FFD700"
         : "#E57373"};
   transition: 0.2s;
@@ -134,9 +135,9 @@ const BookingCard = styled.div<{ status: string }>`
     font-weight: 600;
     font-size: 13px;
     color: ${(p) =>
-      p.status === "CONFIRMED"
+      p.status === "confirmed" || p.status === "completed"
         ? "#4CAF50"
-        : p.status === "PENDING"
+        : p.status === "pending"
         ? "#FFD700"
         : "#E57373"};
   }
@@ -192,90 +193,196 @@ const SaveButton = styled(Button)`
   color: #fff;
 `;
 
+/* ---------------------- Types ---------------------- */
+
+// Shape of a booking coming from the backend for the business
+type RawBookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
+
+type RawBooking = {
+  _id: string;
+  startTime: string;
+  endTime: string;
+  status: RawBookingStatus;
+  notes?: string;
+  customer?: {
+    firstName?: string;
+    lastName?: string;
+  };
+  services?: {
+    _id: string;
+    name: string;
+    durationMinutes?: number;
+  }[];
+};
+
+// Shape used inside this UI (calendar + sidebar)
+type UiBooking = {
+  id: string;
+  dateKey: string; // e.g. "2025-10-28"
+  timeLabel: string; // e.g. "10:00 AM"
+  client: string;
+  service: string;
+  status: RawBookingStatus;
+  notes?: string;
+};
+
+/* ---------------------- Helpers ---------------------- */
+
+const formatDateKey = (d: Date) =>
+  d.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+
+const statusLabel: Record<RawBookingStatus, string> = {
+  pending: "PENDING",
+  confirmed: "CONFIRMED",
+  cancelled: "CANCELLED",
+  completed: "COMPLETED",
+};
+
 /* ---------------------- Component ---------------------- */
 const BusinessBookings: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<any>(null);
+  const [editingBooking, setEditingBooking] = useState<UiBooking | null>(null);
 
-  const bookings = [
-    {
-      id: "b1",
-      date: "2025-10-28",
-      time: "10:00 AM",
-      client: "Emily Davis",
-      service: "Manicure (45 min)",
-      status: "PENDING",
-      notes: "Prefers gel polish",
-    },
-    {
-      id: "b2",
-      date: "2025-10-28",
-      time: "2:00 PM",
-      client: "James Wilson",
-      service: "Massage (90 min)",
-      status: "CONFIRMED",
-    },
-    {
-      id: "b3",
-      date: "2025-10-29",
-      time: "1:00 PM",
-      client: "Sofia Lopez",
-      service: "Facial (60 min)",
-      status: "CONFIRMED",
-    },
-  ];
+  const [bookings, setBookings] = useState<UiBooking[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // ✅ Calendar handler updated to accept react-calendar's Value shape (single date, array, or nullable range)
-    const handleDateChange = (
-      value: CalendarValue,
-      _event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
-    ) => {
-      if (!value) return;
+  /* ------- Load bookings for this business from API ------- */
 
-      if (value instanceof Date) {
-        setSelectedDate(value);
-      } else if (Array.isArray(value)) {
-        // value may be Date[] or [Date | null, Date | null]; pick the first Date we can find
-        const firstDate = (value as Array<Date | null>).find((v) => v instanceof Date) as
-          | Date
-          | undefined;
-        if (firstDate) setSelectedDate(firstDate);
-      }
-    };
+  const loadBookings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await api.get<RawBooking[]>("/bookings/business");
+      const data = res.data || [];
+
+      const mapped: UiBooking[] = data.map((b) => {
+        const start = new Date(b.startTime);
+
+        const dateKey = formatDateKey(start);
+        const timeLabel = start.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+
+        const clientName =
+          (b.customer
+            ? `${b.customer.firstName || ""} ${b.customer.lastName || ""}`.trim()
+            : "") || "Client";
+
+        const services = Array.isArray(b.services) ? b.services : [];
+        const serviceLabel =
+          services.length > 0
+            ? services.map((s) => s.name).join(", ")
+            : "Services";
+
+        return {
+          id: b._id,
+          dateKey,
+          timeLabel,
+          client: clientName,
+          service: serviceLabel,
+          status: b.status,
+          notes: b.notes,
+        };
+      });
+
+      setBookings(mapped);
+    } catch (err: any) {
+      console.error("Error loading business bookings:", err);
+      setError(
+        err?.response?.data?.message || "Failed to load bookings for business."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  /* ------- Calendar handler (same UI, better typing) ------- */
+
+  const handleDateChange = (
+    value: CalendarValue,
+    _event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    if (!value) return;
+
+    if (value instanceof Date) {
+      setSelectedDate(value);
+    } else if (Array.isArray(value)) {
+      const firstDate = (value as Array<Date | null>).find(
+        (v) => v instanceof Date
+      ) as Date | undefined;
+      if (firstDate) setSelectedDate(firstDate);
+    }
+  };
+
+  const selectedKey = formatDateKey(selectedDate);
 
   const selectedDayBookings = bookings.filter(
-    (b) =>
-      new Date(b.date).toDateString() === selectedDate.toDateString()
+    (b) => b.dateKey === selectedKey
   );
 
-  const handleEditClick = (booking: any) => {
+  /* ------- Edit / Cancel in modal ------- */
+
+  const handleEditClick = (booking: UiBooking) => {
     setEditingBooking(booking);
     setShowModal(true);
   };
 
-  const handleSaveChanges = () => {
-    alert("✅ Booking updated!");
-    setShowModal(false);
+  const handleSaveChanges = async () => {
+    if (!editingBooking) return;
+    try {
+      await api.patch(`/bookings/business/${editingBooking.id}/status`, {
+        status: editingBooking.status,
+      });
+      setShowModal(false);
+      setEditingBooking(null);
+      await loadBookings();
+    } catch (err: any) {
+      console.error("Update booking status error:", err);
+      alert(
+        err?.response?.data?.message || "Failed to update booking status."
+      );
+    }
   };
 
-  const handleCancelBooking = () => {
-    alert("❌ Booking cancelled!");
-    setShowModal(false);
+  const handleCancelBooking = async () => {
+    if (!editingBooking) return;
+    try {
+      await api.patch(`/bookings/business/${editingBooking.id}/status`, {
+        status: "cancelled",
+      });
+      setShowModal(false);
+      setEditingBooking(null);
+      await loadBookings();
+    } catch (err: any) {
+      console.error("Cancel booking error:", err);
+      alert(err?.response?.data?.message || "Failed to cancel booking.");
+    }
   };
+
+  /* ------- Calendar little “x bookings” label ------- */
 
   const getTileContent = ({ date, view }: any) => {
     if (view === "month") {
-      const count = bookings.filter(
-        (b) => new Date(b.date).toDateString() === date.toDateString()
-      ).length;
+      const key = formatDateKey(date);
+      const count = bookings.filter((b) => b.dateKey === key).length;
       return count > 0 ? (
         <span className="booking-count">
           {count} booking{count > 1 ? "s" : ""}
         </span>
       ) : null;
     }
+    return null;
   };
+
+  /* ---------------------- Render ---------------------- */
 
   return (
     <PageContainer>
@@ -295,11 +402,17 @@ const BusinessBookings: React.FC = () => {
             Booking Calendar
           </h2>
 
-          <Calendar
-            onChange={handleDateChange}
-            value={selectedDate}
-            tileContent={getTileContent}
-          />
+          {loading ? (
+            <p>Loading bookings…</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>{error}</p>
+          ) : (
+            <Calendar
+              onChange={handleDateChange}
+              value={selectedDate}
+              tileContent={getTileContent}
+            />
+          )}
         </CalendarContainer>
 
         {/* ----- RIGHT: Bookings ----- */}
@@ -313,16 +426,18 @@ const BusinessBookings: React.FC = () => {
             })}
           </SidebarTitle>
 
-          {selectedDayBookings.length > 0 ? (
+          {loading ? (
+            <p>Loading bookings…</p>
+          ) : selectedDayBookings.length > 0 ? (
             selectedDayBookings.map((b) => (
               <BookingCard key={b.id} status={b.status}>
-                <h4>{b.time}</h4>
+                <h4>{b.timeLabel}</h4>
                 <p>
                   <strong>{b.client}</strong>
                 </p>
                 <p>{b.service}</p>
                 {b.notes && <p>📝 {b.notes}</p>}
-                <p className="status">{b.status}</p>
+                <p className="status">{statusLabel[b.status]}</p>
 
                 <div style={{ textAlign: "right", marginTop: "10px" }}>
                   <Button
@@ -355,34 +470,13 @@ const BusinessBookings: React.FC = () => {
             <h3 style={{ color: "#0C1B33" }}>Edit Booking</h3>
 
             <label>Client Name</label>
-            <Input
-              value={editingBooking.client}
-              onChange={(e) =>
-                setEditingBooking({ ...editingBooking, client: e.target.value })
-              }
-            />
+            <Input value={editingBooking.client} disabled />
 
-            <label>Service</label>
-            <Input
-              value={editingBooking.service}
-              onChange={(e) =>
-                setEditingBooking({
-                  ...editingBooking,
-                  service: e.target.value,
-                })
-              }
-            />
+            <label>Service(s)</label>
+            <Input value={editingBooking.service} disabled />
 
             <label>Time</label>
-            <Input
-              type="time"
-              onChange={(e) =>
-                setEditingBooking({
-                  ...editingBooking,
-                  time: e.target.value,
-                })
-              }
-            />
+            <Input value={editingBooking.timeLabel} disabled />
 
             <label>Status</label>
             <Select
@@ -390,13 +484,14 @@ const BusinessBookings: React.FC = () => {
               onChange={(e) =>
                 setEditingBooking({
                   ...editingBooking,
-                  status: e.target.value,
+                  status: e.target.value as RawBookingStatus,
                 })
               }
             >
-              <option value="PENDING">Pending</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="CANCELLED">Cancelled</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="completed">Completed</option>
             </Select>
 
             <ModalButtons>
