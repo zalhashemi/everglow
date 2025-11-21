@@ -11,7 +11,10 @@ const {
   updateMyBusinessProfile,
   getNearbyBusinesses,
   updateBusinessProfileImage,
+  getBusinessDashboardStats,
 } = require("../controllers/businessController");
+
+const { getMyBusinessReviews } = require("../controllers/reviewController");
 
 const {
   createOffer,
@@ -35,12 +38,18 @@ router.get("/near", getNearbyBusinesses);
 // GET BUSINESS PROFILE (protected)
 router.get("/me", protectBusiness, getMyBusinessProfile);
 
+// DASHBOARD STATS (protected)
+router.get("/dashboard-stats", protectBusiness, getBusinessDashboardStats);
+
+// REVIEWS FOR LOGGED-IN BUSINESS (protected)
+router.get("/reviews", protectBusiness, getMyBusinessReviews);
+
 // UPDATE BUSINESS PROFILE (protected)
 router.put("/me", protectBusiness, updateMyBusinessProfile);
 
-// UPDATE ONLY PROFILE IMAGE
-router.post(
-  "/profile-image",
+// UPDATE ONLY PROFILE IMAGE (protected)
+router.put(
+  "/me/profile-image",
   protectBusiness,
   upload.single("image"),
   updateBusinessProfileImage

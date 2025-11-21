@@ -3,6 +3,8 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const Loyalty = require("../models/loyalty"); // to init default loyalty
+const Booking = require("../models/Booking");
+const Review = require("../models/Review");
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -513,13 +515,65 @@ const updateBusinessProfileImage = async (req, res) => {
   }
 };
 
+
+
+// DASHBOARD QUICK STATS FOR LOGGED-IN BUSINESS
+const getBusinessDashboardStats = async (req, res) => {
+  try {
+    const businessId = req.business._id;
+
+    // Staff count from Business document
+    const business = await Business.findById(businessId).select("staff");
+    const staffMembers = business?.staff?.length || 0;
+
+    // Total unique clients from bookings
+    const distinctCustomers = await Booking.distinct("customer", {
+      business: businessId,
+    });
+    const totalClients = Array.isArray(distinctCustomers)
+      ? distinctCustomers.length
+      : 0;
+
+    // Average rating from reviews
+    const ratingAgg = await Review.aggregate([
+      { $match: { business: businessId } },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: "$rating" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    let avgRating = 0;
+    let reviewCount = 0;
+
+    if (ratingAgg && ratingAgg.length) {
+      avgRating = ratingAgg[0].avgRating || 0;
+      reviewCount = ratingAgg[0].count || 0;
+    }
+
+    res.json({
+      staffMembers,
+      totalClients,
+      avgRating,
+      reviewCount,
+    });
+  } catch (err) {
+    console.error("Error in getBusinessDashboardStats:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
-  registerBusiness,
+ registerBusiness,
   loginBusiness,
   getMyBusinessProfile,
   updateMyBusinessProfile,
   getNearbyBusinesses,
-  updateBusinessProfileImage, // 👈 add this
+  updateBusinessProfileImage,
+  getBusinessDashboardStats,
 };
 
 

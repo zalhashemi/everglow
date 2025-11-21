@@ -17,12 +17,12 @@ const LoyaltySchema = new mongoose.Schema(
     },
     pointsPerBooking: {
       type: Number,
-      default: 1, // 1 point per completed booking
+      default: 1,
       min: 0,
     },
     rewardThreshold: {
       type: Number,
-      default: 5, // 5 points = full tile
+      default: 5,
       min: 1,
     },
     rewardDescription: {
@@ -31,10 +31,10 @@ const LoyaltySchema = new mongoose.Schema(
     },
     expiryMonths: {
       type: Number,
-      default: 0, // 0 = never expires
+      default: 0,
       min: 0,
     },
-    // we store "name::offer" strings here (e.g. "Glow-up Blow-dry::20% off")
+    // We keep these as strings: "Name::Offer"
     rewards: [
       {
         type: String,
@@ -44,4 +44,4 @@ const LoyaltySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Loyalty", LoyaltySchema);
+module.exports = mongoose.models.Loyalty || mongoose.model("Loyalty", LoyaltySchema);

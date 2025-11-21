@@ -9,11 +9,21 @@ const {
   getAvailableSlots,
   getCustomerBookings,
   updateBookingAsCustomer,
-  getSingleBooking
+  getSingleBooking,
 } = require("../controllers/bookingController");
 
 const { protectCustomer } = require("../middleware/customerAuthMiddleware");
 const { protectBusiness } = require("../middleware/authMiddleware");
+
+// ===================== BUSINESS ROUTES ===================== //
+
+// Business: view all bookings for THIS business
+router.get("/business", protectBusiness, getBookingsForMyBusiness);
+
+// Business: update booking status
+router.patch("/business/:id/status", protectBusiness, updateBookingStatus);
+
+// ===================== CUSTOMER ROUTES ===================== //
 
 // Customer: create booking
 router.post("/", protectCustomer, createBookingAsCustomer);
@@ -29,11 +39,5 @@ router.get("/:id", protectCustomer, getSingleBooking);
 
 // Customer: cancel/reschedule
 router.patch("/:id", protectCustomer, updateBookingAsCustomer);
-
-// Business: view all bookings
-router.get("/business", protectBusiness, getBookingsForMyBusiness);
-
-// Business: update booking status
-router.patch("/business/:id/status", protectBusiness, updateBookingStatus);
 
 module.exports = router;

@@ -97,10 +97,27 @@ const deleteReview = async (req, res) => {
   }
 };
 
+// GET REVIEWS FOR LOGGED-IN BUSINESS (for business dashboard)
+const getMyBusinessReviews = async (req, res) => {
+  try {
+    const businessId = req.business._id;
+
+    const reviews = await Review.find({ business: businessId })
+      .populate("customer", "firstName lastName")
+      .sort({ createdAt: -1 });
+
+    res.json(reviews);
+  } catch (err) {
+    console.error("Get my business reviews error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   createReview,
   getBusinessReviews,
   getMyReviews,
   updateReview,
   deleteReview,
+  getMyBusinessReviews,
 };

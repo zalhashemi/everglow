@@ -4,8 +4,8 @@ const staffSchema = new mongoose.Schema(
   {
     fullName: { type: String, default: "" },
     role: { type: String, default: "" },
-    email: { type: String, default: "" },
-    phone: { type: String, default: "" },
+    //email: { type: String, default: "" },
+    //phone: { type: String, default: "" },
     // allow per-staff work schedule (we store a generic object)
     schedule: {
       type: Object,
@@ -14,7 +14,6 @@ const staffSchema = new mongoose.Schema(
   },
   { _id: false }
 );
-
 
 const socialLinksSchema = new mongoose.Schema(
   {
@@ -26,6 +25,7 @@ const socialLinksSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// ✅ operatingHours is ONE object with day keys, not an array
 const operatingHoursSchema = new mongoose.Schema(
   {
     monday: { type: String, default: "" },
@@ -68,7 +68,7 @@ const LoyaltySchema = new mongoose.Schema(
     },
     rewards: [
       {
-        type: String, // e.g. "Free blow-dry"
+        type: String, // e.g. "Name::Offer"
       },
     ],
   },
@@ -80,6 +80,7 @@ const businessSchema = new mongoose.Schema(
     // Old auth-style flow fields
     ownerFirstName: { type: String },
     ownerLastName: { type: String },
+    // ✅ no raw password field; you store a hash instead
     passwordHash: { type: String },
 
     // Common fields
@@ -94,6 +95,7 @@ const businessSchema = new mongoose.Schema(
 
     description: { type: String, default: "" },
 
+    // ✅ operatingHours matches what the frontend sends
     operatingHours: { type: operatingHoursSchema, default: () => ({}) },
 
     staff: { type: [staffSchema], default: [] },
@@ -106,7 +108,6 @@ const businessSchema = new mongoose.Schema(
     },
 
     // 🌍 Geo location for map / "near me"
-    // Only set this when we actually have coordinates
     location: {
       type: {
         type: String,
