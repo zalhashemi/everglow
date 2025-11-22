@@ -266,7 +266,7 @@ const LoginPage: React.FC = () => {
           <span
             onClick={() =>
               (window.location.href =
-                mode === "customer" ? "/signup" : "/business/register")
+                mode === "customer" ? "/signup" : "/signup")
             }
           >
             {mode === "customer" ? "Sign Up" : "Register your business"}
