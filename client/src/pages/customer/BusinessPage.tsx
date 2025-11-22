@@ -33,7 +33,8 @@ type Service = {
 type Offer = {
   _id: string;
   title: string;
-  discountPercentage: number;
+  // 👇 match backend field name: discountPercent
+  discountPercent: number;
   validFrom?: string;
   validTo?: string;
 };
@@ -317,7 +318,7 @@ const BusinessPage: React.FC = () => {
                       {offer.title}
                     </h4>
                     <p style={{ margin: "6px 0", color: "#666" }}>
-                      Discount: {offer.discountPercentage}%
+                      Discount: {offer.discountPercent}%
                     </p>
                   </div>
                 ))}

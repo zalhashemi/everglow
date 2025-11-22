@@ -1,8 +1,13 @@
 import React from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import lashImg from "../../images/lash.png";
+import nailsImg from "../../images/nails.png";
+import facialImg from "../../images/facial.png";
+import hairImg from "../../images/hair.png";
+import everglowLogo from "../../images/everglowLogo.png";
 
-const everglowLogo = "/images/everglowLogo.png";
+//const everglowLogo = "/images/everglowLogo.png";
 
 const Container = styled.div`
   display: flex;
@@ -164,10 +169,10 @@ const LandingPage: React.FC = () => {
         </LeftColumn>
 
         <RightColumn>
-          <img src="/images/lash.jpg" alt="Lash Extension" />
-          <img src="/images/nails.jpg" alt="Nail Art" />
-          <img src="/images/facial.jpg" alt="Facial Treatment" />
-          <img src="/images/hair.jpg" alt="Hair Styling" />
+           <img src={lashImg} alt="Lash Extension" />
+          <img src={nailsImg} alt="Nail Art" />
+          <img src={facialImg} alt="Facial Treatment" />
+          <img src={hairImg} alt="Hair Styling" />
         </RightColumn>
       </Content>
     </Container>
