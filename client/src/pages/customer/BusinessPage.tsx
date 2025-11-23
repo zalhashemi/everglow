@@ -1,26 +1,45 @@
+// src/pages/customer/BusinessPage.tsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiMapPin } from "react-icons/fi";
 import { Star } from "react-feather";
 import TabBar from "../../components/common/TabBar";
 import ServiceTile from "../../components/common/ServiceTile";
-import axios from "../../utils/api";
+import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
 import AlertPopup from "../../components/common/AlertPopup";
 
-
 /* ---------- TYPES ---------- */
+
+type StaffRaw = {
+  _id?: string;
+  id?: string;
+  name?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+};
+
+type Staff = {
+  _id: string;
+  name: string;
+};
 
 type Business = {
   _id: string;
   businessName: string;
-  businessType: string;
-  address: string;
+  businessType?: string;
+  address?: string;
   city: string;
   description?: string;
   operatingHours?: any;
   socialLinks?: any;
   imageUrl?: string | null;
+
+  // different possible backend field names
+  staff?: StaffRaw[];
+  staffMembers?: StaffRaw[];
+  employees?: StaffRaw[];
 };
 
 type Service = {
@@ -35,7 +54,6 @@ type Service = {
 type Offer = {
   _id: string;
   title: string;
-  // 👇 match backend field name: discountPercent
   discountPercent: number;
   validFrom?: string;
   validTo?: string;
@@ -62,6 +80,7 @@ const BusinessPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [staffList, setStaffList] = useState<Staff[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [imgSrc, setImgSrc] = useState<string>(errorImage);
@@ -71,13 +90,11 @@ const BusinessPage: React.FC = () => {
   );
 
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-
   const [alertData, setAlertData] = useState<{
-  type: "error" | "success";
-  title?: string;
-  message: string;
-} | null>(null);
-
+    type: "error" | "success";
+    title?: string;
+    message: string;
+  } | null>(null);
 
   /* ---------- FETCH BUSINESS + SERVICES + OFFERS ---------- */
 
@@ -86,17 +103,41 @@ const BusinessPage: React.FC = () => {
 
     const fetchBusiness = async () => {
       try {
-        const res = await axios.get(`/public/businesses/${id}`);
+        const res = await api.get(`/public/businesses/${id}`);
         const { business, services, offers } = res.data;
+
+        console.log("Business API response:", res.data); // helps you debug staff field
 
         setBusiness(business || null);
         setServices(services || []);
         setOffers(offers || []);
+
         setImgSrc(
           business?.imageUrl
             ? `http://localhost:5000${business.imageUrl}`
             : errorImage
         );
+
+        // --------- derive staff list in a robust way ---------
+        const rawStaff: StaffRaw[] =
+          business?.staff ||
+          business?.staffMembers ||
+          business?.employees ||
+          [];
+
+        const normalized: Staff[] = rawStaff
+          .map((s) => {
+            const _id = (s._id || s.id || "").toString();
+            const name =
+              s.name ||
+              s.fullName ||
+              `${s.firstName || ""} ${s.lastName || ""}`.trim();
+            if (!_id || !name) return null;
+            return { _id, name };
+          })
+          .filter(Boolean) as Staff[];
+
+        setStaffList(normalized);
       } catch (err) {
         console.error("Error loading business details:", err);
         setBusiness(null);
@@ -115,7 +156,7 @@ const BusinessPage: React.FC = () => {
 
     const fetchReviews = async () => {
       try {
-        const res = await axios.get(`/reviews/business/${id}`);
+        const res = await api.get(`/reviews/business/${id}`);
         setReviews(res.data || []);
       } catch (err) {
         console.error("Error loading reviews:", err);
@@ -151,10 +192,9 @@ const BusinessPage: React.FC = () => {
   const handleNext = () => {
     if (!business || selectedServices.length === 0) {
       setAlertData({
-  type: "error",
-  message: "Please select at least one service to continue.",
-});
-
+        type: "error",
+        message: "Please select at least one service to continue.",
+      });
       return;
     }
 
@@ -165,6 +205,8 @@ const BusinessPage: React.FC = () => {
         selectedServices,
         totalDurationMinutes,
         totalPrice,
+        // ⭐ pass staff to the date/time page
+        staffList,
       },
     });
   };
@@ -202,7 +244,7 @@ const BusinessPage: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        {/* ---------- Cover Image ---------- */}
+        {/* Cover Image */}
         <img
           src={imgSrc}
           alt={business.businessName}
@@ -232,8 +274,7 @@ const BusinessPage: React.FC = () => {
             {business.city}
           </div>
 
-          {/* ---------- Tabs ---------- */}
-
+          {/* Tabs */}
           <div
             style={{
               display: "flex",
@@ -266,8 +307,7 @@ const BusinessPage: React.FC = () => {
             ))}
           </div>
 
-          {/* ---------- TAB CONTENT ---------- */}
-
+          {/* Tab content */}
           <div style={{ marginTop: "20px" }}>
             {/* SERVICES */}
             {activeTab === "Services" && (
@@ -338,7 +378,7 @@ const BusinessPage: React.FC = () => {
               </>
             )}
 
-            {/* ⭐ REVIEWS TAB */}
+            {/* REVIEWS */}
             {activeTab === "Reviews" && (
               <>
                 {reviews.length === 0 && (
@@ -356,7 +396,6 @@ const BusinessPage: React.FC = () => {
                       backgroundColor: "#faf7f7",
                     }}
                   >
-                    {/* Date */}
                     <div style={{ fontSize: "13px", color: "#777" }}>
                       {new Date(review.createdAt).toLocaleDateString("en-US", {
                         year: "numeric",
@@ -365,7 +404,6 @@ const BusinessPage: React.FC = () => {
                       })}
                     </div>
 
-                    {/* Stars */}
                     <div style={{ display: "flex", marginTop: "6px" }}>
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star
@@ -377,7 +415,6 @@ const BusinessPage: React.FC = () => {
                       ))}
                     </div>
 
-                    {/* Comment */}
                     {review.comment && (
                       <p style={{ marginTop: "8px", color: "#444" }}>
                         {review.comment}
@@ -389,7 +426,7 @@ const BusinessPage: React.FC = () => {
             )}
           </div>
 
-          {/* FOOTER: Selected Services */}
+          {/* Footer: selected services + next button */}
           {activeTab === "Services" && (
             <div
               style={{
@@ -441,15 +478,15 @@ const BusinessPage: React.FC = () => {
           )}
         </div>
       </div>
-      {alertData && (
-  <AlertPopup
-    type={alertData.type}
-    title={alertData.type === "error" ? "ERROR" : ""}
-    message={alertData.message}
-    onClose={() => setAlertData(null)}
-  />
-)}
 
+      {alertData && (
+        <AlertPopup
+          type={alertData.type}
+          title={alertData.type === "error" ? "ERROR" : ""}
+          message={alertData.message}
+          onClose={() => setAlertData(null)}
+        />
+      )}
     </div>
   );
 };

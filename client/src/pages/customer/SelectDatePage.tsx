@@ -6,9 +6,6 @@ import Button from "../../components/common/Button";
 import SecondaryButton from "../../components/common/SecondaryButton";
 import api from "../../utils/api";
 
-// NEW IMPORT
-import AlertPopup from "../../components/common/AlertPopup";
-
 type ServiceDto = {
   _id: string;
   name: string;
@@ -24,6 +21,12 @@ type LocationState = {
   selectedServices: ServiceDto[];
   totalDurationMinutes: number;
   totalPrice: number;
+};
+
+type StaffOption = {
+  index: number;
+  fullName: string;
+  role?: string;
 };
 
 const PageWrapper = styled.div`
@@ -95,9 +98,23 @@ const TimeSelect = styled.select`
   min-width: 160px;
 `;
 
+const StaffSelect = styled.select`
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  min-width: 200px;
+`;
+
 const HelperText = styled.p`
   margin-top: 8px;
   font-size: 13px;
+  color: #777;
+`;
+
+const SmallText = styled.p`
+  margin-top: 4px;
+  font-size: 12px;
   color: #777;
 `;
 
@@ -135,19 +152,22 @@ const SelectDatePage: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string>("");
 
+  const [availableStaff, setAvailableStaff] = useState<StaffOption[]>([]);
+  const [selectedStaffIndex, setSelectedStaffIndex] = useState<string>("");
+
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [loadingStaff, setLoadingStaff] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [staffError, setStaffError] = useState<string | null>(null);
 
-  // NEW: popup state
-  const [showPopup, setShowPopup] = useState(false);
-
+  // Guard: if we somehow got here without required state, go back
   useEffect(() => {
     if (!businessId || !selectedServices || !selectedServices.length) {
       navigate(-1);
     }
   }, [businessId, selectedServices, navigate]);
 
+  // Load available time slots
   useEffect(() => {
     if (!businessId || !totalDurationMinutes || !selectedDate) return;
 
@@ -168,12 +188,16 @@ const SelectDatePage: React.FC = () => {
 
         setAvailableSlots(res.data || []);
         setSelectedSlot("");
+        setAvailableStaff([]);
+        setSelectedStaffIndex("");
+        setStaffError(null);
       } catch (err: any) {
         console.error("Error loading slots", err);
         setError(
           err?.response?.data?.message ||
             "Failed to load available slots. Please try again."
         );
+        setAvailableSlots([]);
       } finally {
         setLoadingSlots(false);
       }
@@ -182,50 +206,83 @@ const SelectDatePage: React.FC = () => {
     loadSlots();
   }, [businessId, totalDurationMinutes, selectedDate]);
 
-  const handleConfirm = async () => {
+  // Load available staff
+  useEffect(() => {
+    if (!businessId || !selectedDate || !selectedSlot) {
+      setAvailableStaff([]);
+      setSelectedStaffIndex("");
+      setStaffError(null);
+      return;
+    }
+
+    const loadStaff = async () => {
+      try {
+        setLoadingStaff(true);
+        setStaffError(null);
+
+        const startTimeIso = `${selectedDate}T${selectedSlot}:00`;
+
+        const res = await api.get<{ staff: StaffOption[] }>(
+          "/bookings/available-staff",
+          {
+            params: {
+              businessId,
+              startTime: startTimeIso,
+            },
+          }
+        );
+
+        const staff = res.data?.staff || [];
+        setAvailableStaff(staff);
+        setSelectedStaffIndex("");
+      } catch (err: any) {
+        console.error("Error loading staff", err);
+        setAvailableStaff([]);
+        setStaffError(
+          err?.response?.data?.message ||
+            "Failed to load staff availability. Please try again."
+        );
+      } finally {
+        setLoadingStaff(false);
+      }
+    };
+
+    loadStaff();
+  }, [businessId, selectedDate, selectedSlot]);
+
+  const handleNext = () => {
     if (!selectedDate || !selectedSlot) {
       setError("Please select a date and time.");
       return;
     }
 
-    setError(null);
-    setSubmitting(true);
-
-    try {
-      const startTimeIso = `${selectedDate}T${selectedSlot}:00`;
-      const serviceIds = selectedServices.map((s) => s._id);
-
-      if (isReschedule && bookingId) {
-        await api.patch(`/bookings/${bookingId}`, {
-          action: "reschedule",
-          newStartTime: startTimeIso,
-          serviceIds,
-        });
-      } else {
-        await api.post("/bookings", {
-          businessId,
-          serviceIds,
-          startTime: startTimeIso,
-          notes: "",
-        });
-      }
-
-      // SHOW POPUP INSTEAD OF ALERT
-      setShowPopup(true);
-
-      // redirect after popup closes (5 seconds + user can close early)
-      setTimeout(() => {
-        navigate("/bookings");
-      }, 5200);
-    } catch (err: any) {
-      console.error("Confirm booking error:", err);
-      const msg =
-        err?.response?.data?.message ||
-        "Failed to confirm booking. The slot may have just been taken.";
-      setError(msg);
-    } finally {
-      setSubmitting(false);
+    if (!selectedStaffIndex) {
+      setError("Please select a staff member.");
+      return;
     }
+
+    setError(null);
+
+    const staffIndexNumber = Number(selectedStaffIndex);
+    const staffObj = availableStaff.find(
+      (s) => s.index === staffIndexNumber
+    );
+
+    navigate("/book/summary", {
+      state: {
+        businessId,
+        businessName,
+        selectedServices,
+        totalDurationMinutes,
+        totalPrice,
+        date: selectedDate,
+        time: selectedSlot,
+        isReschedule,
+        bookingId,
+        staffIndex: staffIndexNumber,
+        staffName: staffObj?.fullName || "",
+      },
+    });
   };
 
   return (
@@ -281,10 +338,49 @@ const SelectDatePage: React.FC = () => {
             </Label>
           </FormRow>
 
+          {/* Staff selection */}
+          <FormRow style={{ marginBottom: 8 }}>
+            <Label>
+              Staff Member
+              <br />
+              <StaffSelect
+                value={selectedStaffIndex}
+                onChange={(e) => setSelectedStaffIndex(e.target.value)}
+                disabled={
+                  !selectedSlot ||
+                  loadingStaff ||
+                  availableStaff.length === 0
+                }
+              >
+                <option value="">
+                  {!selectedSlot
+                    ? "Select a time first"
+                    : loadingStaff
+                    ? "Loading staff..."
+                    : availableStaff.length === 0
+                    ? "No staff available for this time"
+                    : "Select staff"}
+                </option>
+                {availableStaff.map((staff) => (
+                  <option key={staff.index} value={staff.index}>
+                    {staff.fullName}
+                    {staff.role ? ` - ${staff.role}` : ""}
+                  </option>
+                ))}
+              </StaffSelect>
+            </Label>
+          </FormRow>
+
+          {staffError && <ErrorText>{staffError}</ErrorText>}
+
           <HelperText>
             Time options are limited to the salon's working hours for the
             selected day. If a slot is already booked, it will not appear.
           </HelperText>
+          <SmallText>
+            Staff options update based on the selected time. Only staff who are
+            working and not already booked will be shown.
+          </SmallText>
 
           {error && <ErrorText>{error}</ErrorText>}
 
@@ -292,41 +388,12 @@ const SelectDatePage: React.FC = () => {
             <SecondaryButton width="160px" onClick={() => navigate(-1)}>
               Back
             </SecondaryButton>
-            <Button width="220px" onClick={handleConfirm} disabled={submitting}>
-              {submitting
-                ? "Saving..."
-                : isReschedule
-                ? "Confirm Changes"
-                : "Confirm Booking"}
+            <Button width="220px" onClick={handleNext}>
+              Review Booking
             </Button>
           </ButtonRow>
         </Section>
       </ContentWrapper>
-
-      {/* POPUP */}
-      {showPopup && (
-  <AlertPopup
-    title="Booking Confirmed!"
-    message="Your appointment has been successfully booked."
-    onClose={() => {
-      setShowPopup(false);
-      navigate("/book/summary", {
-        state: {
-          businessId,
-          businessName,
-          selectedServices,
-          totalDurationMinutes,
-          totalPrice,
-          date: selectedDate,
-          time: selectedSlot,
-          isReschedule,
-          bookingId,
-        },
-      });
-    }}
-  />
-)}
-
     </PageWrapper>
   );
 };

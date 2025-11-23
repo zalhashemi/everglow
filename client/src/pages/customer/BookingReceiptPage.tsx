@@ -55,6 +55,8 @@ const BookingReceiptPage: React.FC = () => {
     0
   );
 
+  const staffName: string | undefined = booking.staff?.name;
+
   return (
     <div
       style={{
@@ -101,7 +103,7 @@ const BookingReceiptPage: React.FC = () => {
           }}
         />
 
-        {/* Date/time */}
+        {/* Date/time/staff */}
         <div
           style={{
             marginTop: "20px",
@@ -116,6 +118,11 @@ const BookingReceiptPage: React.FC = () => {
           <div>
             <strong>Time:</strong> {timeStr}
           </div>
+          {staffName && (
+            <div>
+              <strong>Staff:</strong> {staffName}
+            </div>
+          )}
         </div>
 
         {/* Services */}
@@ -169,7 +176,8 @@ const BookingReceiptPage: React.FC = () => {
               lineHeight: "1.5",
             }}
           >
-            Payment done in-person at the appointment.<br />
+            Payment done in-person at the appointment.
+            <br />
             <i>
               Any offers or discounts will be calculated after the appointment
               in-person.

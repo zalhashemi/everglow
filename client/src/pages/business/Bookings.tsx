@@ -5,14 +5,14 @@ import "react-calendar/dist/Calendar.css";
 import TabBar from "../../components/common/TabBar";
 import Button from "../../components/common/Button";
 import api from "../../utils/api";
-import AlertPopup from "../../components/common/AlertPopup"; // ✅ NEW
+import AlertPopup from "../../components/common/AlertPopup";
 
 type CalendarValue = Date | Date[] | [Date | null, Date | null] | null;
 
 /* ---------------------- Styled Components ---------------------- */
 const PageContainer = styled.div`
   min-height: 100vh;
-  background-color: #fFAF6EA;
+  background-color: #FAF6EA;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -101,11 +101,32 @@ const Sidebar = styled.div`
   align-self: flex-start;
 `;
 
+const SidebarHeaderRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
 const SidebarTitle = styled.h3`
   font-size: 18px;
   font-weight: 700;
   color: #0c1b33;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
+`;
+
+const StaffFilterLabel = styled.label`
+  font-size: 13px;
+  color: #555;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const StaffFilterSelect = styled.select`
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 13px;
 `;
 
 const BookingCard = styled.div<{ status: string }>`
@@ -201,18 +222,20 @@ type RawBookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 type RawBooking = {
   _id: string;
   startTime: string;
-  endTime: string;
+  endTime?: string;
   status: RawBookingStatus;
   notes?: string;
   customer?: {
     firstName?: string;
     lastName?: string;
   };
-  services?: {
+  service?: {
     _id: string;
     name: string;
     durationMinutes?: number;
-  }[];
+  };
+  staffName?: string;
+  staffIndex?: number;
 };
 
 type UiBooking = {
@@ -223,12 +246,10 @@ type UiBooking = {
   service: string;
   status: RawBookingStatus;
   notes?: string;
+  staffName?: string;
 };
 
-/* ---------------------- Helpers ---------------------- */
-
-const formatDateKey = (d: Date) =>
-  d.toLocaleDateString("en-CA");
+const formatDateKey = (d: Date) => d.toLocaleDateString("en-CA");
 
 const statusLabel: Record<RawBookingStatus, string> = {
   pending: "PENDING",
@@ -255,6 +276,9 @@ const BusinessBookings: React.FC = () => {
     message: string;
   } | null>(null);
 
+  // NEW: staff filter (string is staffName, or "all")
+  const [staffFilter, setStaffFilter] = useState<string>("all");
+
   /* ------- Load bookings from API ------- */
   const loadBookings = async () => {
     try {
@@ -271,14 +295,13 @@ const BusinessBookings: React.FC = () => {
 
         const clientName =
           (b.customer
-            ? `${b.customer.firstName || ""} ${b.customer.lastName || ""}`.trim()
+            ? `${b.customer.firstName || ""} ${
+                b.customer.lastName || ""
+              }`.trim()
             : "") || "Client";
 
-        const services = Array.isArray(b.services) ? b.services : [];
-        const serviceLabel =
-          services.length > 0
-            ? services.map((s) => s.name).join(", ")
-            : "Services";
+        const serviceLabel = b.service?.name || "Service";
+        const staffLabel = b.staffName || "Staff";
 
         return {
           id: b._id,
@@ -288,11 +311,13 @@ const BusinessBookings: React.FC = () => {
           service: serviceLabel,
           status: b.status,
           notes: b.notes,
+          staffName: staffLabel,
         };
       });
 
       setBookings(mapped);
     } catch (err: any) {
+      console.error("Error loading business bookings", err);
       setPopup({
         type: "error",
         message:
@@ -319,7 +344,22 @@ const BusinessBookings: React.FC = () => {
   };
 
   const selectedKey = formatDateKey(selectedDate);
-  const selectedDayBookings = bookings.filter((b) => b.dateKey === selectedKey);
+
+  // All staff names that appear in bookings (for any date)
+  const staffOptions = Array.from(
+    new Set(
+      bookings
+        .map((b) => (b.staffName || "").trim())
+        .filter((name) => name.length > 0)
+    )
+  );
+
+  // Bookings for selected day, optionally filtered by staff
+  const selectedDayBookings = bookings.filter((b) => {
+    if (b.dateKey !== selectedKey) return false;
+    if (staffFilter === "all") return true;
+    return (b.staffName || "").trim() === staffFilter;
+  });
 
   /* ------- Edit / Cancel Modal ------- */
 
@@ -345,6 +385,7 @@ const BusinessBookings: React.FC = () => {
       setEditingBooking(null);
       loadBookings();
     } catch (err: any) {
+      console.error("Error updating booking", err);
       setPopup({
         type: "error",
         message:
@@ -371,6 +412,7 @@ const BusinessBookings: React.FC = () => {
       setEditingBooking(null);
       loadBookings();
     } catch (err: any) {
+      console.error("Error cancelling booking", err);
       setPopup({
         type: "error",
         message:
@@ -408,7 +450,9 @@ const BusinessBookings: React.FC = () => {
               tileContent={({ date, view }: any) => {
                 if (view === "month") {
                   const key = formatDateKey(date);
-                  const count = bookings.filter((b) => b.dateKey === key).length;
+                  const count = bookings.filter(
+                    (b) => b.dateKey === key
+                  ).length;
                   return count > 0 ? (
                     <span className="booking-count">
                       {count} booking{count > 1 ? "s" : ""}
@@ -421,51 +465,75 @@ const BusinessBookings: React.FC = () => {
           )}
         </CalendarContainer>
 
-        {/* RIGHT: List of Bookings */}
+        {/* RIGHT: List of Bookings + Staff filter */}
         <Sidebar>
-          <SidebarTitle>
-            {selectedDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </SidebarTitle>
+          <SidebarHeaderRow>
+            <SidebarTitle>
+              {selectedDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </SidebarTitle>
 
-          {loading ? (
-            <p>Loading…</p>
-          ) : selectedDayBookings.length > 0 ? (
-            selectedDayBookings.map((b) => (
-              <BookingCard key={b.id} status={b.status}>
-                <h4>{b.timeLabel}</h4>
-                <p>
-                  <strong>{b.client}</strong>
-                </p>
-                <p>{b.service}</p>
-                {b.notes && <p>📝 {b.notes}</p>}
-                <p className="status">{statusLabel[b.status]}</p>
+            <StaffFilterLabel>
+              Filter by staff
+              <StaffFilterSelect
+                value={staffFilter}
+                onChange={(e) => setStaffFilter(e.target.value)}
+              >
+                <option value="all">All staff</option>
+                {staffOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </StaffFilterSelect>
+            </StaffFilterLabel>
+          </SidebarHeaderRow>
 
-                <div style={{ textAlign: "right", marginTop: "10px" }}>
-                  <Button
-                    variant="primary"
-                    style={{
-                      width: "auto",
-                      padding: "6px 14px",
-                      fontSize: "14px",
-                      borderRadius: "6px",
-                      backgroundColor: "#4A5174",
-                      color: "#fff",
-                    }}
-                    onClick={() => handleEditClick(b)}
-                  >
-                    Edit / Cancel
-                  </Button>
-                </div>
-              </BookingCard>
-            ))
-          ) : (
-            <p>No bookings for this date.</p>
-          )}
+          <div style={{ marginTop: "16px" }}>
+            {loading ? (
+              <p>Loading…</p>
+            ) : selectedDayBookings.length > 0 ? (
+              selectedDayBookings.map((b) => (
+                <BookingCard key={b.id} status={b.status}>
+                  <h4>{b.timeLabel}</h4>
+                  <p>
+                    <strong>{b.client}</strong>
+                  </p>
+                  <p>{b.service}</p>
+                  {b.staffName && (
+                    <p>
+                      👤 <strong>Staff:</strong> {b.staffName}
+                    </p>
+                  )}
+                  {b.notes && <p>📝 {b.notes}</p>}
+                  <p className="status">{statusLabel[b.status]}</p>
+
+                  <div style={{ textAlign: "right", marginTop: "10px" }}>
+                    <Button
+                      variant="primary"
+                      style={{
+                        width: "auto",
+                        padding: "6px 14px",
+                        fontSize: "14px",
+                        borderRadius: "6px",
+                        backgroundColor: "#4A5174",
+                        color: "#fff",
+                      }}
+                      onClick={() => handleEditClick(b)}
+                    >
+                      Edit / Cancel
+                    </Button>
+                  </div>
+                </BookingCard>
+              ))
+            ) : (
+              <p>No bookings for this date.</p>
+            )}
+          </div>
         </Sidebar>
       </Layout>
 
@@ -478,11 +546,18 @@ const BusinessBookings: React.FC = () => {
             <label>Client Name</label>
             <Input value={editingBooking.client} disabled />
 
-            <label>Service(s)</label>
+            <label>Service</label>
             <Input value={editingBooking.service} disabled />
 
             <label>Time</label>
             <Input value={editingBooking.timeLabel} disabled />
+
+            {editingBooking.staffName && (
+              <>
+                <label>Staff</label>
+                <Input value={editingBooking.staffName} disabled />
+              </>
+            )}
 
             <label>Status</label>
             <Select

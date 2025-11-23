@@ -5,7 +5,6 @@ import TabBar from "../../components/common/TabBar";
 import api from "../../utils/api";
 import AlertPopup from "../../components/common/AlertPopup";
 
-
 type SelectedService = {
   _id: string;
   name: string;
@@ -24,19 +23,22 @@ type LocationState = {
   time: string; // HH:mm
   isReschedule?: boolean;
   bookingId?: string;
+
+  staffIndex: number;
+  staffName?: string;
 };
 
 const BookingSummaryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | undefined;
+
   const [submitting, setSubmitting] = useState(false);
   const [alertData, setAlertData] = useState<{
-  type: "error" | "success";
-  title?: string;
-  message: string;
-} | null>(null);
-
+    type: "error" | "success";
+    title?: string;
+    message: string;
+  } | null>(null);
 
   if (!state) {
     navigate("/home");
@@ -53,55 +55,56 @@ const BookingSummaryPage: React.FC = () => {
     time,
     isReschedule,
     bookingId,
+    staffIndex,
+    staffName,
   } = state;
 
+  const mainService = selectedServices[0];
+
   const handleConfirm = async () => {
+    if (!mainService) {
+      setAlertData({
+        type: "error",
+        message: "No service selected.",
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
       const isoStart = `${date}T${time}:00`;
 
-      if (isReschedule && bookingId) {
-        await api.patch(`/bookings/${bookingId}`, {
-          action: "reschedule",
-          newStartTime: isoStart,
-          serviceIds: selectedServices.map((s) => s._id),
-        });
-
-        setAlertData({
-  type: "success",
-  message: "Booking rescheduled!",
-});
-setTimeout(() => navigate("/home"), 500); // optional small delay
-return;
-
-        navigate("/home");
-        return;
-      }
-
+      // If you later add reschedule PATCH, you can handle it here.
+      // For now we always create a new booking.
       await api.post("/bookings", {
         businessId,
-        serviceIds: selectedServices.map((s) => s._id),
+        serviceId: mainService._id,
         startTime: isoStart,
         notes: "",
+        staffIndex,
       });
 
       setAlertData({
-  type: "success",
-  message: "Booking confirmed!",
-});
-setTimeout(() => navigate("/home"), 500);
-
-      navigate("/home");
+        type: "success",
+        message: "Booking confirmed!",
+      });
     } catch (err: any) {
       console.error("Error confirming booking", err);
       setAlertData({
-  type: "error",
-  message: err?.response?.data?.message || "Failed to confirm booking",
-});
-
+        type: "error",
+        message:
+          err?.response?.data?.message || "Failed to confirm booking",
+      });
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePopupClose = () => {
+    if (alertData?.type === "success") {
+      navigate("/bookings");
+    }
+    setAlertData(null);
   };
 
   return (
@@ -132,7 +135,7 @@ setTimeout(() => navigate("/home"), 500);
           {businessName}
         </p>
 
-        {/* Date & time */}
+        {/* Date, Time & Staff */}
         <div
           style={{
             marginTop: "16px",
@@ -147,6 +150,11 @@ setTimeout(() => navigate("/home"), 500);
           <div style={{ fontSize: "14px" }}>
             <strong>Time:</strong> {time}
           </div>
+          {staffName && (
+            <div style={{ fontSize: "14px", marginTop: "4px" }}>
+              <strong>Staff:</strong> {staffName}
+            </div>
+          )}
         </div>
 
         {/* Services */}
@@ -183,12 +191,10 @@ setTimeout(() => navigate("/home"), 500);
         >
           <div style={{ fontSize: "14px" }}>
             <div>
-              Total duration:{" "}
-              <strong>{totalDurationMinutes} min</strong>
+              Total duration: <strong>{totalDurationMinutes} min</strong>
             </div>
             <div>
-              Total price:{" "}
-              <strong>{totalPrice.toFixed(2)} BD</strong>
+              Total price: <strong>{totalPrice.toFixed(2)} BD</strong>
             </div>
           </div>
 
@@ -200,7 +206,8 @@ setTimeout(() => navigate("/home"), 500);
               lineHeight: "1.5",
             }}
           >
-            Payment done in-person at the appointment.<br />
+            Payment done in-person at the appointment.
+            <br />
             <i>
               Any offers or discounts will be calculated after the appointment
               in-person.
@@ -255,17 +262,16 @@ setTimeout(() => navigate("/home"), 500);
           </button>
         </div>
       </div>
-      {alertData && (
-  <AlertPopup
-    type={alertData.type}
-    title={alertData.type === "error" ? "ERROR" : ""}
-    message={alertData.message}
-    onClose={() => setAlertData(null)}
-  />
-)}
 
+      {alertData && (
+        <AlertPopup
+          type={alertData.type}
+          title={alertData.type === "error" ? "ERROR" : ""}
+          message={alertData.message}
+          onClose={handlePopupClose}
+        />
+      )}
     </div>
-    
   );
 };
 

@@ -13,12 +13,12 @@ interface BookingTileProps {
   services?: string[] | string;
   serviceName?: string;
   location?: string;
-  status: "upcoming" | "past" | "completed" | "cancelled";
+  status: "pending" | "confirmed" | "completed" | "cancelled";
   onCancel?: () => void;
   onViewReceipt?: () => void;
   onLeaveRating?: () => void;
   onReschedule?: () => void;
-  hasReview?: boolean; // ⭐ NEW: determines button label
+  hasReview?: boolean; // ⭐ determines button label
 }
 
 /* ---- STYLED COMPONENTS ---- */
@@ -125,7 +125,9 @@ const BookingTile: React.FC<BookingTileProps> = ({
     : services || serviceName || "";
 
   const [imgSrc, setImgSrc] = React.useState(image || errorImage);
-  const isPast = status === "past" || status === "completed";
+
+  const isUpcoming = status === "pending" || status === "confirmed";
+  const isPast = status === "completed" || status === "cancelled";
 
   const displayDate =
     typeof date === "string"
@@ -165,7 +167,7 @@ const BookingTile: React.FC<BookingTileProps> = ({
       </InfoRow>
 
       {/* Upcoming Booking Buttons */}
-      {status === "upcoming" && (
+      {isUpcoming && (
         <ButtonRow>
           <SecondaryButton width="180px" onClick={onReschedule}>
             Reschedule
@@ -180,7 +182,7 @@ const BookingTile: React.FC<BookingTileProps> = ({
       )}
 
       {/* Past Booking Button */}
-      {status === "past" && (
+      {isPast && (
         <ReceiptButton fullWidth onClick={onViewReceipt}>
           View Receipt
         </ReceiptButton>
