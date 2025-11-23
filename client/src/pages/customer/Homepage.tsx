@@ -1,17 +1,19 @@
+// src/pages/customer/Homepage.tsx
 import React, { useRef, useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import SalonCard from "../../components/common/SalonCard";
 import TabBar from "../../components/common/TabBar";
 import PromoBanner from "../../components/common/PromoBanner";
-import errorLoading from "../../images/errorLoading.png"; 
-import promotionHeader from "../../images/promotionHeader.png";
+import errorLoading from "../../images/errorLoading.png";
+import Footer from "../../components/common/Footer";
+
 
 /* ============================================================
    Styled Components
 ============================================================ */
 const PageWrapper = styled.div`
-  background-color: #f2dcdc;
+  background-color: #FAF6EA;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -141,12 +143,28 @@ const ArrowIcon = ({ direction }: { direction: "left" | "right" }) => (
    Component
 ============================================================ */
 
-const CATEGORY_NAMES = ["Trending Now", "Near You", "For Her", "For Him"];
+// Order matters: Trending first, then Highest Rated, then For Her / For Him
+const CATEGORIES = [
+  { title: "Trending Now", key: "trending" as const },
+  { title: "Highest Rated", key: "highestRated" as const },
+  { title: "For Her", key: "forHer" as const },
+  { title: "For Him", key: "forHis" as const },
+];
+
+type CategoryKey = (typeof CATEGORIES)[number]["key"];
+
+const CARD_WIDTH = 310 + 18; // card + gap
+const SCROLL_CARDS = 4;
+const SCROLL_AMOUNT = CARD_WIDTH * SCROLL_CARDS;
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [salons, setSalons] = useState<any[]>([]);
+  // All salons (used for For Her / For Him – same as current behavior)
+  const [allSalons, setAllSalons] = useState<any[]>([]);
+  // New datasets
+  const [trendingSalons, setTrendingSalons] = useState<any[]>([]);
+  const [highestRatedSalons, setHighestRatedSalons] = useState<any[]>([]);
   const [loadingSalons, setLoadingSalons] = useState(true);
 
   const [offers, setOffers] = useState<any[]>([]);
@@ -155,22 +173,32 @@ const HomePage: React.FC = () => {
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
 
   const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [scrollPositions, setScrollPositions] = useState<number[]>(
-    () => Array(CATEGORY_NAMES.length).fill(0)
+
+  const [scrollInfo, setScrollInfo] = useState(
+    CATEGORIES.map(() => ({ atStart: true, atEnd: false }))
   );
 
-  const CARDS_PER_PAGE = 5;
-  const CARD_WIDTH = 310 + 18;
-
   /* ============================================================
-     Fetch salons
+     Fetch salons (all + trending + highest rated)
   ============================================================ */
   useEffect(() => {
     const fetchSalons = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/public/businesses");
-        const data = await res.json();
-        setSalons(data);
+        const [allRes, trendingRes, highestRes] = await Promise.all([
+          fetch("http://localhost:5000/api/public/businesses"),
+          fetch("http://localhost:5000/api/public/businesses/trending"),
+          fetch("http://localhost:5000/api/public/businesses/highest-rated"),
+        ]);
+
+        const [allData, trendingData, highestData] = await Promise.all([
+          allRes.json(),
+          trendingRes.json(),
+          highestRes.json(),
+        ]);
+
+        setAllSalons(allData || []);
+        setTrendingSalons(trendingData || []);
+        setHighestRatedSalons(highestData || []);
       } catch (err) {
         console.error("Error fetching salons:", err);
       } finally {
@@ -214,28 +242,77 @@ const HomePage: React.FC = () => {
   }, [offers.length]);
 
   /* ============================================================
-     Scroll handling
+     Scroll handling (max 4 cards)
   ============================================================ */
   const handleScroll = (index: number, direction: "left" | "right") => {
     const container = scrollRefs.current[index];
     if (!container) return;
 
-    const delta =
-      direction === "right"
-        ? CARDS_PER_PAGE * CARD_WIDTH
-        : -(CARDS_PER_PAGE * CARD_WIDTH);
+    const delta = direction === "right" ? SCROLL_AMOUNT : -SCROLL_AMOUNT;
 
     container.scrollBy({ left: delta, behavior: "smooth" });
 
-    setScrollPositions((prev) => {
-      const updated = [...prev];
-      const nextPage =
-        direction === "right"
-          ? updated[index] + 1
-          : Math.max(0, updated[index] - 1);
-      updated[index] = nextPage;
-      return updated;
+    setTimeout(() => {
+      const atStart = container.scrollLeft <= 5;
+      const atEnd =
+        container.scrollLeft + container.clientWidth >=
+        container.scrollWidth - 5;
+
+      setScrollInfo((prev) => {
+        const arr = [...prev];
+        arr[index] = { atStart, atEnd };
+        return arr;
+      });
+    }, 350);
+  };
+
+  /* ============================================================
+     Attach scroll listeners (same behavior as before)
+  ============================================================ */
+  useEffect(() => {
+    const elements = scrollRefs.current;
+
+    const listeners: Array<() => void> = [];
+
+    elements.forEach((el, index) => {
+      if (!el) return;
+
+      const onScroll = () => {
+        const atStart = el.scrollLeft <= 5;
+        const atEnd =
+          el.scrollLeft + el.clientWidth >= el.scrollWidth - 5;
+
+        setScrollInfo((prev) => {
+          const arr = [...prev];
+          arr[index] = { atStart, atEnd };
+          return arr;
+        });
+      };
+
+      el.addEventListener("scroll", onScroll);
+      listeners.push(() => el.removeEventListener("scroll", onScroll));
     });
+
+    return () => {
+      listeners.forEach((cleanup) => cleanup());
+    };
+  }, [allSalons, trendingSalons, highestRatedSalons]);
+
+  /* ============================================================
+     Helper: which salons to show for each category
+  ============================================================ */
+  const getSalonsForCategory = (key: CategoryKey) => {
+    switch (key) {
+      case "trending":
+        return trendingSalons;
+      case "highestRated":
+        return highestRatedSalons;
+      case "forHer":
+      case "forHis":
+      default:
+        // For now: same behavior as before = show all salons
+        return allSalons;
+    }
   };
 
   /* ============================================================
@@ -302,21 +379,18 @@ const HomePage: React.FC = () => {
         )}
 
         {/* ===== SALON CATEGORIES ===== */}
-        {CATEGORY_NAMES.map((category, index) => {
-          const pageIndex = scrollPositions[index];
-          const start = pageIndex * CARDS_PER_PAGE;
-          const visibleSalons = salons.slice(start, start + CARDS_PER_PAGE);
-          const hasMore = start + CARDS_PER_PAGE < salons.length;
-          const canScrollBack = start > 0;
+        {CATEGORIES.map((category, index) => {
+          const salonsForCategory = getSalonsForCategory(category.key);
 
           return (
-            <div key={category}>
+            <div key={category.title}>
               <CategoryHeader>
-                <SectionTitle>{category}</SectionTitle>
+                <SectionTitle>{category.title}</SectionTitle>
               </CategoryHeader>
 
               <ScrollWrapper>
-                {canScrollBack && (
+                {/* LEFT ARROW (only show if not at start) */}
+                {!scrollInfo[index].atStart && (
                   <ScrollButton
                     side="left"
                     onClick={() => handleScroll(index, "left")}
@@ -330,27 +404,28 @@ const HomePage: React.FC = () => {
                     scrollRefs.current[index] = el;
                   }}
                 >
-                  {visibleSalons.map((salon: any) => (
-                    <SalonCard
-  key={`${category}-${salon._id}`}
-  id={salon._id}
-  image={
-    salon.imageUrl
-      ? `http://localhost:5000${salon.imageUrl}`
-      : errorLoading
-  }
-  name={salon.businessName}
-  distance="—"
-  location={`${salon.address}, ${salon.city}`}
-  rating={salon.averageRating}     // ⭐ NOW FROM BACKEND
-  reviews={salon.reviewCount}      // ⭐ NOW FROM BACKEND
-  onClick={() => navigate(`/business/${salon._id}`)}
-/>
+                  {salonsForCategory.slice(0, 13).map((salon: any) => (
 
+                    <SalonCard
+                      key={`${category.title}-${salon._id}`}
+                      id={salon._id}
+                      image={
+                        salon.imageUrl
+                          ? `http://localhost:5000${salon.imageUrl}`
+                          : errorLoading
+                      }
+                      name={salon.businessName}
+                      distance="—"
+                      location={`${salon.address}, ${salon.city}`}
+                      rating={salon.averageRating}
+                      reviews={salon.reviewCount}
+                      onClick={() => navigate(`/business/${salon._id}`)}
+                    />
                   ))}
                 </HorizontalScroll>
 
-                {hasMore && (
+                {/* RIGHT ARROW (only show if not at end) */}
+                {!scrollInfo[index].atEnd && (
                   <ScrollButton
                     side="right"
                     onClick={() => handleScroll(index, "right")}
@@ -363,8 +438,12 @@ const HomePage: React.FC = () => {
           );
         })}
       </ContentWrapper>
+      <Footer />
+
     </PageWrapper>
   );
 };
+
+
 
 export default HomePage;

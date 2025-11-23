@@ -7,11 +7,13 @@ import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
 import Popup from "../../components/common/Popup";
 import RatingPopup from "../../components/common/RatingPopup";
+import AlertPopup from "../../components/common/AlertPopup";
+
 
 /* ---------- Styled Components ---------- */
 
 const PageWrapper = styled.div`
-  background-color: #f2dcdc;
+  background-color: #FAF6EA;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -20,7 +22,7 @@ const PageWrapper = styled.div`
 
 const ContentWrapper = styled.div`
   width: 100%;
-  max-width: 1600px;
+  max-width: 1200px;
   padding: 40px 0;
   display: flex;
   flex-direction: column;
@@ -118,6 +120,12 @@ const BookingsPage: React.FC = () => {
 
   // ⭐ Rating popup states
   const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const [alertData, setAlertData] = useState<{
+  type: "error" | "success";
+  title?: string;
+  message: string;
+} | null>(null);
+
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(
     null
   );
@@ -236,7 +244,11 @@ const BookingsPage: React.FC = () => {
       loadBookings();
     } catch (err: any) {
       console.error("Cancel booking error:", err);
-      alert(err?.response?.data?.message || "Failed to cancel booking.");
+      setAlertData({
+  type: "error",
+  message: err?.response?.data?.message || "Failed to cancel booking."
+});
+
     }
   };
 
@@ -302,7 +314,11 @@ const BookingsPage: React.FC = () => {
         });
       }
 
-      alert("Your review has been saved.");
+      setAlertData({
+  type: "success",
+  message: "Your review has been saved."
+});
+
       setShowRatingPopup(false);
       setSelectedBusinessId(null);
       setEditingReviewId(null);
@@ -311,7 +327,11 @@ const BookingsPage: React.FC = () => {
       loadMyReviews();
     } catch (err) {
       console.error("Submit review error:", err);
-      alert("Failed to submit review.");
+      setAlertData({
+  type: "error",
+  message: "Failed to submit review."
+});
+
     }
   };
 
@@ -322,7 +342,11 @@ const BookingsPage: React.FC = () => {
 
     try {
       await api.delete(`/reviews/${editingReviewId}`);
-      alert("Your review has been deleted.");
+      setAlertData({
+  type: "success",
+  message: "Your review has been deleted."
+});
+
       setShowRatingPopup(false);
       setSelectedBusinessId(null);
       setEditingReviewId(null);
@@ -331,7 +355,11 @@ const BookingsPage: React.FC = () => {
       loadMyReviews();
     } catch (err) {
       console.error("Delete review error:", err);
-      alert("Failed to delete review.");
+      setAlertData({
+  type: "error",
+  message: "Failed to delete review."
+});
+
     }
   };
 
@@ -430,6 +458,15 @@ const BookingsPage: React.FC = () => {
           onDelete={editingReviewId ? deleteReview : undefined}
         />
       )}
+      {alertData && (
+  <AlertPopup
+    type={alertData.type}
+    title={alertData.type === "error" ? "ERROR" : ""}
+    message={alertData.message}
+    onClose={() => setAlertData(null)}
+  />
+)}
+
     </PageWrapper>
   );
 };

@@ -23,7 +23,7 @@ interface BookingTileProps {
 
 /* ---- STYLED COMPONENTS ---- */
 const Tile = styled.div`
-  width: 1600px;
+  width: 1200px;
   background-color: #ffffff;
   border-radius: 12px;
   padding: 28px 32px;

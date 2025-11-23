@@ -46,6 +46,14 @@ const StarButton = styled.div`
   transition: color 0.2s;
 `;
 
+const ErrorText = styled.p`
+  margin: 0;
+  margin-top: 6px;
+  font-size: 14px;
+  color: #d10000; /* red */
+  font-weight: 600;
+`;
+
 const TextArea = styled.textarea`
   width: 100%;
   padding: 14px;
@@ -111,9 +119,11 @@ const RatingPopup: React.FC<Props> = ({
   initialRating = 0,
   initialComment = "",
 }) => {
-  // ⭐ FIXED: rating is ALWAYS a number
   const [rating, setRating] = useState<number>(initialRating ?? 0);
   const [comment, setComment] = useState(initialComment);
+
+  // New: error state for missing stars
+  const [error, setError] = useState("");
 
   const isEditing = (initialRating ?? 0) > 0;
 
@@ -121,6 +131,7 @@ const RatingPopup: React.FC<Props> = ({
     <Overlay>
       <PopupBox>
         <Title>{isEditing ? "Edit Your Rating" : "Rate Your Experience"}</Title>
+
         <Description>
           {isEditing
             ? "Update your rating or edit your review for this salon."
@@ -132,7 +143,10 @@ const RatingPopup: React.FC<Props> = ({
           {[1, 2, 3, 4, 5].map((num) => {
             const active = num <= rating;
             return (
-              <StarButton key={num} onClick={() => setRating(num)}>
+              <StarButton key={num} onClick={() => {
+                setRating(num);
+                setError(""); // clear error once user selects stars
+              }}>
                 <Star
                   size={35}
                   color={active ? "#FFD700" : "#ccc"}
@@ -143,7 +157,9 @@ const RatingPopup: React.FC<Props> = ({
           })}
         </StarsRow>
 
-        {/* COMMENT */}
+        {/* ⭐ ERROR UNDER STARS */}
+        {error && <ErrorText>{error}</ErrorText>}
+
         <TextArea
           placeholder="Write your review (optional)..."
           value={comment}
@@ -169,9 +185,10 @@ const RatingPopup: React.FC<Props> = ({
           <PrimaryButton
             onClick={() => {
               if (rating < 1) {
-                alert("Please select at least 1 star");
+                setError("Please select at least 1 star");
                 return;
               }
+              setError(""); // clear before submitting
               onSubmit(rating, comment);
             }}
           >

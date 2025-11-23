@@ -6,6 +6,8 @@ import TabBar from "../../components/common/TabBar";
 import ServiceTile from "../../components/common/ServiceTile";
 import axios from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
+import AlertPopup from "../../components/common/AlertPopup";
+
 
 /* ---------- TYPES ---------- */
 
@@ -69,6 +71,13 @@ const BusinessPage: React.FC = () => {
   );
 
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+
+  const [alertData, setAlertData] = useState<{
+  type: "error" | "success";
+  title?: string;
+  message: string;
+} | null>(null);
+
 
   /* ---------- FETCH BUSINESS + SERVICES + OFFERS ---------- */
 
@@ -141,7 +150,11 @@ const BusinessPage: React.FC = () => {
 
   const handleNext = () => {
     if (!business || selectedServices.length === 0) {
-      alert("Please select at least one service to continue.");
+      setAlertData({
+  type: "error",
+  message: "Please select at least one service to continue.",
+});
+
       return;
     }
 
@@ -171,7 +184,7 @@ const BusinessPage: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: "#F1DEDE",
+        backgroundColor: "#FAF6EA",
         minHeight: "100vh",
         paddingBottom: "40px",
       }}
@@ -428,6 +441,15 @@ const BusinessPage: React.FC = () => {
           )}
         </div>
       </div>
+      {alertData && (
+  <AlertPopup
+    type={alertData.type}
+    title={alertData.type === "error" ? "ERROR" : ""}
+    message={alertData.message}
+    onClose={() => setAlertData(null)}
+  />
+)}
+
     </div>
   );
 };

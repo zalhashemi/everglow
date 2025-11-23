@@ -1,10 +1,10 @@
 import React from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import lashImg from "../../images/lash.png";
-import nailsImg from "../../images/nails.png";
-import facialImg from "../../images/facial.png";
-import hairImg from "../../images/hair.png";
+import b1 from "../../images/barber1.jpg";
+import salon1 from "../../images/salon1.jpg";
+import salon2 from "../../images/salon2.jpg";
+import b2 from "../../images/barber2.jpg";
 import everglowLogo from "../../images/everglowLogo.png";
 
 //const everglowLogo = "/images/everglowLogo.png";
@@ -38,8 +38,8 @@ const Logo = styled.div`
   width: 100%;
 
   img {
-    width: 40%;
-    height: 40%;
+    width: 30%;
+    height: 30%;
     object-fit: contain;
   }
 `;
@@ -169,10 +169,10 @@ const LandingPage: React.FC = () => {
         </LeftColumn>
 
         <RightColumn>
-           <img src={lashImg} alt="Lash Extension" />
-          <img src={nailsImg} alt="Nail Art" />
-          <img src={facialImg} alt="Facial Treatment" />
-          <img src={hairImg} alt="Hair Styling" />
+           <img src={b1} alt="Barber 1" />
+          <img src={salon1} alt="Salon 1" />
+          <img src={salon2} alt="Salon 2" />
+          <img src={b2} alt="Barber 2" />
         </RightColumn>
       </Content>
     </Container>

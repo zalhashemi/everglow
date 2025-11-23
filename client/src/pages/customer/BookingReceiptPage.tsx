@@ -58,7 +58,7 @@ const BookingReceiptPage: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: "#F1DEDE",
+        backgroundColor: "#FAF6EA",
         minHeight: "100vh",
         paddingBottom: "40px",
       }}
@@ -142,27 +142,42 @@ const BookingReceiptPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Totals */}
+        {/* Totals + Payment Note */}
         <div
           style={{
-            marginTop: "20px",
+            marginTop: "28px",
             paddingTop: "12px",
             borderTop: "1px solid #eee",
-            display: "flex",
-            justifyContent: "space-between",
           }}
         >
-          <div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
-              Total duration: <strong>{totalMinutes} min</strong>
+              <div>
+                Total duration: <strong>{totalMinutes} min</strong>
+              </div>
+              <div>
+                Total price: <strong>{totalPrice.toFixed(2)} BD</strong>
+              </div>
             </div>
-            <div>
-              Total price: <strong>{totalPrice.toFixed(2)} BD</strong>
-            </div>
+          </div>
+
+          {/* Payment Note */}
+          <div
+            style={{
+              marginTop: "26px",
+              textAlign: "center",
+              lineHeight: "1.5",
+            }}
+          >
+            Payment done in-person at the appointment.<br />
+            <i>
+              Any offers or discounts will be calculated after the appointment
+              in-person.
+            </i>
           </div>
         </div>
 
-        {/* Back button ONLY */}
+        {/* Back button */}
         <div
           style={{
             marginTop: "30px",

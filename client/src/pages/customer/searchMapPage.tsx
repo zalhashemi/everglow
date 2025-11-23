@@ -23,7 +23,7 @@ interface Business {
 }
 
 const PageWrapper = styled.div`
-  background-color: #f2dcdc;
+  background-color: #FAF6EA;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

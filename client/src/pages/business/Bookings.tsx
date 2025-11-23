@@ -5,13 +5,14 @@ import "react-calendar/dist/Calendar.css";
 import TabBar from "../../components/common/TabBar";
 import Button from "../../components/common/Button";
 import api from "../../utils/api";
+import AlertPopup from "../../components/common/AlertPopup"; // ✅ NEW
 
 type CalendarValue = Date | Date[] | [Date | null, Date | null] | null;
 
 /* ---------------------- Styled Components ---------------------- */
 const PageContainer = styled.div`
   min-height: 100vh;
-  background-color: #f1dede;
+  background-color: #fFAF6EA;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -195,7 +196,6 @@ const SaveButton = styled(Button)`
 
 /* ---------------------- Types ---------------------- */
 
-// Shape of a booking coming from the backend for the business
 type RawBookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
 type RawBooking = {
@@ -215,11 +215,10 @@ type RawBooking = {
   }[];
 };
 
-// Shape used inside this UI (calendar + sidebar)
 type UiBooking = {
   id: string;
-  dateKey: string; // e.g. "2025-10-28"
-  timeLabel: string; // e.g. "10:00 AM"
+  dateKey: string;
+  timeLabel: string;
   client: string;
   service: string;
   status: RawBookingStatus;
@@ -229,7 +228,7 @@ type UiBooking = {
 /* ---------------------- Helpers ---------------------- */
 
 const formatDateKey = (d: Date) =>
-  d.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+  d.toLocaleDateString("en-CA");
 
 const statusLabel: Record<RawBookingStatus, string> = {
   pending: "PENDING",
@@ -238,29 +237,32 @@ const statusLabel: Record<RawBookingStatus, string> = {
   completed: "COMPLETED",
 };
 
-/* ---------------------- Component ---------------------- */
+/* ================================================================
+                            MAIN COMPONENT
+   ================================================================ */
+
 const BusinessBookings: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
   const [showModal, setShowModal] = useState(false);
   const [editingBooking, setEditingBooking] = useState<UiBooking | null>(null);
 
   const [bookings, setBookings] = useState<UiBooking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
-  /* ------- Load bookings for this business from API ------- */
+  const [popup, setPopup] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
 
+  /* ------- Load bookings from API ------- */
   const loadBookings = async () => {
     try {
       setLoading(true);
-      setError(null);
-
       const res = await api.get<RawBooking[]>("/bookings/business");
-      const data = res.data || [];
 
-      const mapped: UiBooking[] = data.map((b) => {
+      const mapped: UiBooking[] = res.data.map((b) => {
         const start = new Date(b.startTime);
-
         const dateKey = formatDateKey(start);
         const timeLabel = start.toLocaleTimeString("en-US", {
           hour: "numeric",
@@ -291,10 +293,12 @@ const BusinessBookings: React.FC = () => {
 
       setBookings(mapped);
     } catch (err: any) {
-      console.error("Error loading business bookings:", err);
-      setError(
-        err?.response?.data?.message || "Failed to load bookings for business."
-      );
+      setPopup({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          "Failed to load bookings for business.",
+      });
     } finally {
       setLoading(false);
     }
@@ -304,31 +308,20 @@ const BusinessBookings: React.FC = () => {
     loadBookings();
   }, []);
 
-  /* ------- Calendar handler (same UI, better typing) ------- */
-
-  const handleDateChange = (
-    value: CalendarValue,
-    _event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
+  /* ------- Calendar handler ------- */
+  const handleDateChange = (value: CalendarValue) => {
     if (!value) return;
-
-    if (value instanceof Date) {
-      setSelectedDate(value);
-    } else if (Array.isArray(value)) {
-      const firstDate = (value as Array<Date | null>).find(
-        (v) => v instanceof Date
-      ) as Date | undefined;
-      if (firstDate) setSelectedDate(firstDate);
+    if (value instanceof Date) setSelectedDate(value);
+    else if (Array.isArray(value)) {
+      const d = value.find((x) => x instanceof Date) as Date | undefined;
+      if (d) setSelectedDate(d);
     }
   };
 
   const selectedKey = formatDateKey(selectedDate);
+  const selectedDayBookings = bookings.filter((b) => b.dateKey === selectedKey);
 
-  const selectedDayBookings = bookings.filter(
-    (b) => b.dateKey === selectedKey
-  );
-
-  /* ------- Edit / Cancel in modal ------- */
+  /* ------- Edit / Cancel Modal ------- */
 
   const handleEditClick = (booking: UiBooking) => {
     setEditingBooking(booking);
@@ -337,59 +330,63 @@ const BusinessBookings: React.FC = () => {
 
   const handleSaveChanges = async () => {
     if (!editingBooking) return;
+
     try {
       await api.patch(`/bookings/business/${editingBooking.id}/status`, {
         status: editingBooking.status,
       });
+
+      setPopup({
+        type: "success",
+        message: "Booking updated successfully!",
+      });
+
       setShowModal(false);
       setEditingBooking(null);
-      await loadBookings();
+      loadBookings();
     } catch (err: any) {
-      console.error("Update booking status error:", err);
-      alert(
-        err?.response?.data?.message || "Failed to update booking status."
-      );
+      setPopup({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          "Failed to update booking status.",
+      });
     }
   };
 
   const handleCancelBooking = async () => {
     if (!editingBooking) return;
+
     try {
       await api.patch(`/bookings/business/${editingBooking.id}/status`, {
         status: "cancelled",
       });
+
+      setPopup({
+        type: "success",
+        message: "Booking cancelled successfully!",
+      });
+
       setShowModal(false);
       setEditingBooking(null);
-      await loadBookings();
+      loadBookings();
     } catch (err: any) {
-      console.error("Cancel booking error:", err);
-      alert(err?.response?.data?.message || "Failed to cancel booking.");
+      setPopup({
+        type: "error",
+        message:
+          err?.response?.data?.message || "Failed to cancel booking.",
+      });
     }
   };
 
-  /* ------- Calendar little “x bookings” label ------- */
-
-  const getTileContent = ({ date, view }: any) => {
-    if (view === "month") {
-      const key = formatDateKey(date);
-      const count = bookings.filter((b) => b.dateKey === key).length;
-      return count > 0 ? (
-        <span className="booking-count">
-          {count} booking{count > 1 ? "s" : ""}
-        </span>
-      ) : null;
-    }
-    return null;
-  };
-
-  /* ---------------------- Render ---------------------- */
+  /* ------- Render ------- */
 
   return (
     <PageContainer>
       <TabBar type="business" />
 
       <Layout>
-        {/* ----- LEFT: Calendar ----- */}
+        {/* LEFT: Calendar */}
         <CalendarContainer>
           <h2
             style={{
@@ -404,18 +401,27 @@ const BusinessBookings: React.FC = () => {
 
           {loading ? (
             <p>Loading bookings…</p>
-          ) : error ? (
-            <p style={{ color: "red" }}>{error}</p>
           ) : (
             <Calendar
               onChange={handleDateChange}
               value={selectedDate}
-              tileContent={getTileContent}
+              tileContent={({ date, view }: any) => {
+                if (view === "month") {
+                  const key = formatDateKey(date);
+                  const count = bookings.filter((b) => b.dateKey === key).length;
+                  return count > 0 ? (
+                    <span className="booking-count">
+                      {count} booking{count > 1 ? "s" : ""}
+                    </span>
+                  ) : null;
+                }
+                return null;
+              }}
             />
           )}
         </CalendarContainer>
 
-        {/* ----- RIGHT: Bookings ----- */}
+        {/* RIGHT: List of Bookings */}
         <Sidebar>
           <SidebarTitle>
             {selectedDate.toLocaleDateString("en-US", {
@@ -427,7 +433,7 @@ const BusinessBookings: React.FC = () => {
           </SidebarTitle>
 
           {loading ? (
-            <p>Loading bookings…</p>
+            <p>Loading…</p>
           ) : selectedDayBookings.length > 0 ? (
             selectedDayBookings.map((b) => (
               <BookingCard key={b.id} status={b.status}>
@@ -463,7 +469,7 @@ const BusinessBookings: React.FC = () => {
         </Sidebar>
       </Layout>
 
-      {/* ----- Modal for Edit / Cancel ----- */}
+      {/* MODAL */}
       {showModal && editingBooking && (
         <Overlay>
           <Modal>
@@ -498,10 +504,21 @@ const BusinessBookings: React.FC = () => {
               <CancelButton onClick={handleCancelBooking}>
                 Cancel Booking
               </CancelButton>
-              <SaveButton onClick={handleSaveChanges}>Save Changes</SaveButton>
+              <SaveButton onClick={handleSaveChanges}>
+                Save Changes
+              </SaveButton>
             </ModalButtons>
           </Modal>
         </Overlay>
+      )}
+
+      {/* POPUP */}
+      {popup && (
+        <AlertPopup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup(null)}
+        />
       )}
     </PageContainer>
   );

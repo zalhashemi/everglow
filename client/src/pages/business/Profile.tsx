@@ -7,6 +7,8 @@ import Button from "../../components/common/Button";
 import Popup from "../../components/common/Popup";
 import { FiEdit2 } from "react-icons/fi";
 import placeholderImage from "../../images/errorLoading.png";
+import AlertPopup from "../../components/common/AlertPopup";
+
 
 /* ---- Styled Components ---- */
 const PageContainer = styled.div`
@@ -399,6 +401,13 @@ const BusinessProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
+  const [alertData, setAlertData] = useState<{
+  type: "error" | "success";
+  title?: string;
+  message: string;
+} | null>(null);
+
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /* -------- helper to hydrate from backend/local -------- */
@@ -618,7 +627,11 @@ const BusinessProfile: React.FC = () => {
       localStorage.getItem("businessToken") ||
       localStorage.getItem("token");
     if (!token) {
-      alert("Not logged in as business.");
+      setAlertData({
+  type: "error",
+  message: "Not logged in as business."
+});
+
       return;
     }
 
@@ -664,11 +677,19 @@ const BusinessProfile: React.FC = () => {
         setIsEditing(false);
       } else {
         console.error("Update failed:", data);
-        alert(data.message || "Failed to update profile");
+        setAlertData({
+  type: "error",
+  message: data.message || "Failed to update profile"
+});
+
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving profile");
+      setAlertData({
+  type: "error",
+  message: "Error saving profile"
+});
+
     }
   };
 
@@ -1193,6 +1214,15 @@ const BusinessProfile: React.FC = () => {
             onSecondary={() => setShowLogoutPopup(false)}
           />
         )}
+        {alertData && (
+  <AlertPopup
+    type={alertData.type}
+    title={alertData.type === "error" ? "ERROR" : ""}
+    message={alertData.message}
+    onClose={() => setAlertData(null)}
+  />
+)}
+
       </ContentWrapper>
     </PageContainer>
   );

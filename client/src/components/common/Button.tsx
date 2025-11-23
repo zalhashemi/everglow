@@ -14,7 +14,7 @@ const StyledButton = styled.button<ButtonProps>`
   align-items: center;
   justify-content: center;
   height: 48px;
-  width: ${props => props.width || '1280px'};
+  width: ${props => props.width || '990px'};
   border-radius: 10px;
   font-family: 'Inter', sans-serif;
   font-size: 16px;

@@ -6,6 +6,8 @@ import LoyaltyTile from "../../components/common/LoyaltyTile";
 import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
 import Popup from "../../components/common/Popup";
+import AlertPopup from "../../components/common/AlertPopup";
+
 
 /* ---- Styled Wrappers ---- */
 const PageWrapper = styled.div`
@@ -100,6 +102,13 @@ const ProfilePage: React.FC = () => {
   const [totalBookings, setTotalBookings] = useState(0);
   const [visitedSalons, setVisitedSalons] = useState(0);
 
+  const [alertData, setAlertData] = useState<{
+  type: "error" | "success";
+  title?: string;
+  message: string;
+} | null>(null);
+
+
   /* ---------------- Load User Data + Stats + Loyalty ---------------- */
   useEffect(() => {
     const stored = localStorage.getItem("customer");
@@ -177,7 +186,11 @@ const ProfilePage: React.FC = () => {
       localStorage.setItem("customer", JSON.stringify(data.customer));
       setIsEditing(false);
     } else {
-      alert(data.message || "Failed to update profile");
+      setAlertData({
+  type: "error",
+  message: data.message || "Failed to update profile",
+});
+
     }
   };
 
@@ -306,6 +319,15 @@ const ProfilePage: React.FC = () => {
             onSecondary={() => setShowLogoutPopup(false)}
           />
         )}
+        {alertData && (
+  <AlertPopup
+    type={alertData.type}
+    title={alertData.type === "error" ? "ERROR" : ""}
+    message={alertData.message}
+    onClose={() => setAlertData(null)}
+  />
+)}
+
       </ContentWrapper>
     </PageWrapper>
   );

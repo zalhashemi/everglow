@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import L from "../../leafletSetup";
 import type { LeafletMouseEvent } from "leaflet";
-
+import AlertPopup from "../../components/common/AlertPopup";
 import TextBox from "../../components/common/TextBox";
 
 const PageContainer = styled.div`
@@ -588,15 +588,33 @@ const BusinessRegistration: React.FC = () => {
         localStorage.setItem("businessInfo", JSON.stringify(data.business));
       }
 
-      alert("Business registered successfully!");
-      navigate("/business/dashboard");
+      setPopup({
+  type: "success",
+  message: "Business registered successfully!",
+});
+
+// Auto redirect after popup closes
+setTimeout(() => {
+  navigate("/business/dashboard");
+}, 5200);
+
     } catch (err: any) {
       console.error("Error registering business:", err);
-      setError(err.message || "Something went wrong");
+      setPopup({
+  type: "error",
+  message: err.message || "Something went wrong",
+});
+
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const [popup, setPopup] = useState<{
+  type: "error" | "success";
+  message: string;
+} | null>(null);
+
 
   return (
     <PageContainer>
@@ -956,6 +974,14 @@ const BusinessRegistration: React.FC = () => {
           {error && <ErrorText>{error}</ErrorText>}
         </form>
       </FormWrapper>
+      {popup && (
+  <AlertPopup
+    type={popup.type}
+    message={popup.message}
+    onClose={() => setPopup(null)}
+  />
+)}
+
     </PageContainer>
   );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import ellieProfile from "../../images/ellieProfile.jpg";
 
 interface ProfileStat {
   label: string;
@@ -10,12 +9,10 @@ interface ProfileStat {
 interface ProfileHeaderProps {
   type: "customer" | "business";
   name: string;
-  // legacy numeric stats
   stat1?: number;
   stat2?: number;
   stat3?: number;
-  // optional richer props
-  image?: string;
+  image?: string | null;
   coverImage?: string;
   stats?: ProfileStat[];
 }
@@ -52,16 +49,21 @@ const AvatarWrapper = styled.div`
   align-items: center;
 `;
 
-const InfoColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding-top: 8px;
-`;
-
-const InfoRow = styled.div`
+/* -------- INITIALS CIRCLE (USED FOR CUSTOMERS + BUSINESSES WITH NO IMAGE) -------- */
+const InitialsCircle = styled.div`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #76949f; /* background */
+  margin-top: -65px;
+  border: 4px solid #fff;
+  font-size: 42px;
+  font-weight: 700;
+  color: #faf6ea; /* text color */
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  text-transform: uppercase;
 `;
 
 const ProfileImage = styled.img`
@@ -71,6 +73,12 @@ const ProfileImage = styled.img`
   border: 4px solid #fff;
   margin-top: -65px;
   object-fit: cover;
+`;
+
+const InfoColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
 `;
 
 const Name = styled.div`
@@ -113,6 +121,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   coverImage,
   stats,
 }) => {
+  
+  // Generate initials (first 2 letters)
+  const initials =
+    name
+      ?.trim()
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("") || "C";
+
+  // Determine if business has a real image
+  const hasBusinessImage =
+    type === "business" && image && image !== "" && image !== null;
+
   return (
     <Container>
       <HeaderBanner
@@ -126,7 +148,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <Content>
         <ProfileSection>
           <AvatarWrapper>
-            <ProfileImage src={image || ellieProfile} alt="Profile" />
+            {/* CUSTOMER → initials only */}
+            {type === "customer" && <InitialsCircle>{initials}</InitialsCircle>}
+
+            {/* BUSINESS → show image if exists, else initials */}
+            {type === "business" &&
+              (hasBusinessImage ? (
+                <ProfileImage src={image} alt="Profile" />
+              ) : (
+                <InitialsCircle>{initials}</InitialsCircle>
+              ))}
           </AvatarWrapper>
 
           <InfoColumn>

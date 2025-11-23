@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
 import api from "../../utils/api";
+import AlertPopup from "../../components/common/AlertPopup";
+
 
 type SelectedService = {
   _id: string;
@@ -29,6 +31,12 @@ const BookingSummaryPage: React.FC = () => {
   const location = useLocation();
   const state = location.state as LocationState | undefined;
   const [submitting, setSubmitting] = useState(false);
+  const [alertData, setAlertData] = useState<{
+  type: "error" | "success";
+  title?: string;
+  message: string;
+} | null>(null);
+
 
   if (!state) {
     navigate("/home");
@@ -53,19 +61,23 @@ const BookingSummaryPage: React.FC = () => {
       const isoStart = `${date}T${time}:00`;
 
       if (isReschedule && bookingId) {
-        // 🔁 Update existing booking
         await api.patch(`/bookings/${bookingId}`, {
           action: "reschedule",
           newStartTime: isoStart,
           serviceIds: selectedServices.map((s) => s._id),
         });
 
-        alert("Booking rescheduled!");
+        setAlertData({
+  type: "success",
+  message: "Booking rescheduled!",
+});
+setTimeout(() => navigate("/home"), 500); // optional small delay
+return;
+
         navigate("/home");
         return;
       }
 
-      // 🆕 Create new booking
       await api.post("/bookings", {
         businessId,
         serviceIds: selectedServices.map((s) => s._id),
@@ -73,11 +85,20 @@ const BookingSummaryPage: React.FC = () => {
         notes: "",
       });
 
-      alert("Booking confirmed!");
+      setAlertData({
+  type: "success",
+  message: "Booking confirmed!",
+});
+setTimeout(() => navigate("/home"), 500);
+
       navigate("/home");
     } catch (err: any) {
       console.error("Error confirming booking", err);
-      alert(err?.response?.data?.message || "Failed to confirm booking");
+      setAlertData({
+  type: "error",
+  message: err?.response?.data?.message || "Failed to confirm booking",
+});
+
     } finally {
       setSubmitting(false);
     }
@@ -86,7 +107,7 @@ const BookingSummaryPage: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: "#F1DEDE",
+        backgroundColor: "#FAF6EA",
         minHeight: "100vh",
         paddingBottom: "40px",
       }}
@@ -158,12 +179,9 @@ const BookingSummaryPage: React.FC = () => {
             marginTop: "20px",
             paddingTop: "12px",
             borderTop: "1px solid #eee",
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "14px",
           }}
         >
-          <div>
+          <div style={{ fontSize: "14px" }}>
             <div>
               Total duration:{" "}
               <strong>{totalDurationMinutes} min</strong>
@@ -172,6 +190,21 @@ const BookingSummaryPage: React.FC = () => {
               Total price:{" "}
               <strong>{totalPrice.toFixed(2)} BD</strong>
             </div>
+          </div>
+
+          {/* Payment Note */}
+          <div
+            style={{
+              marginTop: "26px",
+              textAlign: "center",
+              lineHeight: "1.5",
+            }}
+          >
+            Payment done in-person at the appointment.<br />
+            <i>
+              Any offers or discounts will be calculated after the appointment
+              in-person.
+            </i>
           </div>
         </div>
 
@@ -222,7 +255,17 @@ const BookingSummaryPage: React.FC = () => {
           </button>
         </div>
       </div>
+      {alertData && (
+  <AlertPopup
+    type={alertData.type}
+    title={alertData.type === "error" ? "ERROR" : ""}
+    message={alertData.message}
+    onClose={() => setAlertData(null)}
+  />
+)}
+
     </div>
+    
   );
 };
 

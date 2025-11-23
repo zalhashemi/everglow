@@ -4,7 +4,7 @@ import styled from "styled-components";
 const PageWrapper = styled.div`
   width: 100vw;
   height: 100vh;
-  background: #f2dcdc;
+  background: #FAF6EA;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -30,13 +30,6 @@ const Label = styled.label`
   font-weight: 500;
 `;
 
-const RememberSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  margin-top: 6px;
-`;
 
 const SmallLink = styled.span`
   color: #6b868f;
@@ -243,13 +236,6 @@ const LoginPage: React.FC = () => {
         <span style={{ fontSize: "12px", color: "#666" }}>
           It must be a combination of minimum 8 letters, numbers, and symbols.
         </span>
-
-        <RememberSection>
-          <input type="checkbox" />
-          Remember me
-          <div style={{ flex: 1 }} />
-          <SmallLink>Forgot Password?</SmallLink>
-        </RememberSection>
 
         <Button fullWidth disabled={loading} onClick={handleLogin}>
           {loading

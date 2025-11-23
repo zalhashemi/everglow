@@ -9,6 +9,8 @@ import errorImage from "../../images/errorLoading.png";
 import oliviaSalon from "../../images/oliviaSalon.jpg";
 import api from "../../utils/api";
 import { FiTrash2 } from "react-icons/fi";
+import AlertPopup from "../../components/common/AlertPopup";
+
 
 
 // --- Types that match your backend ---
@@ -49,6 +51,12 @@ const BusinessServices: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // ------------ UI STATE ------------
+  const [alertData, setAlertData] = useState<{
+  type: "error" | "success";
+  title?: string;
+  message: string;
+} | null>(null);
+
   const [activeTab, setActiveTab] = useState<string>("All");
   const [showModal, setShowModal] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -175,7 +183,11 @@ const BusinessServices: React.FC = () => {
     const priceBHDNum = Number(formData.priceBHD);
 
     if (!formData.name || !durationMinutesNum || !priceBHDNum) {
-      alert("Please fill at least name, duration and price.");
+      setAlertData({
+  type: "error",
+  message: "Please fill at least name, duration and price."
+});
+
       return;
     }
 
@@ -218,10 +230,13 @@ const BusinessServices: React.FC = () => {
       setShowModal(false);
     } catch (err: any) {
       console.error(err);
-      alert(
-        err?.response?.data?.message ||
-          "Failed to save service. Please try again."
-      );
+      setAlertData({
+  type: "error",
+  message:
+    err?.response?.data?.message ||
+    "Failed to save service. Please try again."
+});
+
     }
   };
 
@@ -238,10 +253,13 @@ const BusinessServices: React.FC = () => {
       setError(null);
     } catch (err: any) {
       console.error(err);
-      alert(
-        err?.response?.data?.message ||
-          "Failed to delete service. Please try again."
-      );
+      setAlertData({
+  type: "error",
+  message:
+    err?.response?.data?.message ||
+    "Failed to delete service. Please try again."
+});
+
     }
   };
 
@@ -258,7 +276,7 @@ const BusinessServices: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: "#F1DEDE",
+        backgroundColor: "#FAF6EA",
         minHeight: "100vh",
         paddingBottom: "40px",
       }}
@@ -564,6 +582,15 @@ const BusinessServices: React.FC = () => {
           </div>
         </div>
       )}
+      {alertData && (
+  <AlertPopup
+    type={alertData.type}
+    title={alertData.type === "error" ? "ERROR" : ""}
+    message={alertData.message}
+    onClose={() => setAlertData(null)}
+  />
+)}
+
     </div>
   );
 };

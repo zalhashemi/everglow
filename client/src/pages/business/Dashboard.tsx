@@ -6,6 +6,7 @@ import { AiOutlineCheckSquare, AiFillStar } from "react-icons/ai";
 import { FiCalendar } from "react-icons/fi";
 import { IconFix } from "../../utils/IconFix";
 import api from "../../utils/api";
+import AlertPopup from "../../components/common/AlertPopup";
 
 /* ---------- Types ---------- */
 
@@ -66,7 +67,7 @@ interface Review {
 /* ---------- Styled Components ---------- */
 
 const PageWrapper = styled.div`
-  background-color: ${(p) => p.theme.colors.background || "#f2dcdc"};
+  background-color: ${(p) => p.theme.colors.background || "#FAF6EA"};
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -332,8 +333,10 @@ const Chip = styled.span<{ variant?: "active" | "past" }>`
   padding: 4px 8px;
   border-radius: 999px;
   border: 1px solid
-    ${(p) => (p.variant === "active" ? "#3FAE57" : p.variant === "past" ? "#aaa" : "#ddd")};
-  color: ${(p) => (p.variant === "active" ? "#3FAE57" : p.variant === "past" ? "#666" : "#555")};
+    ${(p) =>
+      p.variant === "active" ? "#3FAE57" : p.variant === "past" ? "#aaa" : "#ddd"};
+  color: ${(p) =>
+    p.variant === "active" ? "#3FAE57" : p.variant === "past" ? "#666" : "#555"};
   background: #fff;
 `;
 
@@ -387,6 +390,13 @@ const PopupTitle = styled.h3`
   font-size: 20px;
   font-weight: 700;
   color: #0b1c36;
+`;
+
+const InlineError = styled.p`
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #d10000;
+  font-weight: 600;
 `;
 
 const Input = styled.input`
@@ -530,6 +540,14 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
   });
   const [saving, setSaving] = useState(false);
 
+  // inline validation error under title
+  const [validationError, setValidationError] = useState("");
+  // popup for API error
+  const [popup, setPopup] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
+
   const toggleService = (id: string) => {
     setSelectedServiceIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -538,9 +556,11 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
 
   const handleSave = async () => {
     if (!name.trim() || !discount || !start || !end) {
-      alert("Please fill all required fields.");
+      setValidationError("Please fill all required fields.");
       return;
     }
+
+    setValidationError("");
 
     const payload = {
       title: name.trim(),
@@ -561,87 +581,109 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
       onClose();
     } catch (err: any) {
       console.error("Error saving offer:", err);
-      alert(
-        err?.response?.data?.message || "Something went wrong while saving the offer."
-      );
+      setPopup({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          "Something went wrong while saving the offer.",
+      });
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <PopupOverlay onClick={onClose}>
-      <PopupCard onClick={(e) => e.stopPropagation()}>
-        <PopupTitle>{existingOffer ? "Edit Offer" : "Create New Offer"}</PopupTitle>
+    <>
+      <PopupOverlay onClick={onClose}>
+        <PopupCard onClick={(e) => e.stopPropagation()}>
+          <PopupTitle>
+            {existingOffer ? "Edit Offer" : "Create New Offer"}
+          </PopupTitle>
 
-        <div>
-          <Label>Offer Name</Label>
-          <Input
-            placeholder="e.g. Summer Glow Package"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
+          {validationError && <InlineError>{validationError}</InlineError>}
 
-        <div>
-          <Label>Discount Applied (%)</Label>
-          <Input
-            placeholder="e.g. 20"
-            type="number"
-            min={1}
-            max={100}
-            value={discount}
-            onChange={(e) => setDiscount(e.target.value)}
-          />
-        </div>
-
-        <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ flex: 1 }}>
-            <Label>Begins On</Label>
+          <div>
+            <Label>Offer Name</Label>
             <Input
-              type="date"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
+              placeholder="e.g. Summer Glow Package"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           </div>
-          <div style={{ flex: 1 }}>
-            <Label>Ends On</Label>
-            <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+
+          <div>
+            <Label>Discount Applied (%)</Label>
+            <Input
+              placeholder="e.g. 20"
+              type="number"
+              min={1}
+              max={100}
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
+            />
           </div>
-        </div>
 
-        <div>
-          <Label>Services Included in Offer</Label>
-          {services.length === 0 ? (
-            <div style={{ fontSize: 12, color: "#777" }}>
-              You have no services yet. Add services first to attach them to offers.
+          <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ flex: 1 }}>
+              <Label>Begins On</Label>
+              <Input
+                type="date"
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+              />
             </div>
-          ) : (
-            <ServicesList>
-              {services.map((service) => (
-                <ServiceRow key={service._id}>
-                  <input
-                    type="checkbox"
-                    checked={selectedServiceIds.includes(service._id)}
-                    onChange={() => toggleService(service._id)}
-                  />
-                  <span>{service.name}</span>
-                </ServiceRow>
-              ))}
-            </ServicesList>
-          )}
-        </div>
+            <div style={{ flex: 1 }}>
+              <Label>Ends On</Label>
+              <Input
+                type="date"
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+              />
+            </div>
+          </div>
 
-        <PopupActions>
-          <CancelButton onClick={onClose} disabled={saving}>
-            Cancel
-          </CancelButton>
-          <SaveButton onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save Offer"}
-          </SaveButton>
-        </PopupActions>
-      </PopupCard>
-    </PopupOverlay>
+          <div>
+            <Label>Services Included in Offer</Label>
+            {services.length === 0 ? (
+              <div style={{ fontSize: 12, color: "#777" }}>
+                You have no services yet. Add services first to attach them to
+                offers.
+              </div>
+            ) : (
+              <ServicesList>
+                {services.map((service) => (
+                  <ServiceRow key={service._id}>
+                    <input
+                      type="checkbox"
+                      checked={selectedServiceIds.includes(service._id)}
+                      onChange={() => toggleService(service._id)}
+                    />
+                    <span>{service.name}</span>
+                  </ServiceRow>
+                ))}
+              </ServicesList>
+            )}
+          </div>
+
+          <PopupActions>
+            <CancelButton onClick={onClose} disabled={saving}>
+              Cancel
+            </CancelButton>
+            <SaveButton onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save Offer"}
+            </SaveButton>
+          </PopupActions>
+        </PopupCard>
+      </PopupOverlay>
+
+      {popup && (
+        <AlertPopup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup(null)}
+        />
+      )}
+    </>
   );
 };
 
@@ -671,6 +713,12 @@ const BusinessDashboard: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
+  // Global popup for this dashboard
+  const [popup, setPopup] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
+
   const todayString = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -678,7 +726,7 @@ const BusinessDashboard: React.FC = () => {
     year: "numeric",
   });
 
-  // 1) BOOKINGS (EXISTING ROUTE: /bookings/business)
+  // 1) BOOKINGS
   const fetchBookings = async () => {
     try {
       setLoadingBookings(true);
@@ -693,7 +741,6 @@ const BusinessDashboard: React.FC = () => {
     }
   };
 
-  // Filter bookings for TODAY only
   const todaysBookings = useMemo(() => {
     if (!bookings.length) return [];
 
@@ -708,7 +755,6 @@ const BusinessDashboard: React.FC = () => {
     });
   }, [bookings]);
 
-  // Popular services from today's bookings
   const popularServices = useMemo(() => {
     const counts: Record<string, number> = {};
     todaysBookings.forEach((b) => {
@@ -746,7 +792,7 @@ const BusinessDashboard: React.FC = () => {
       ? (completedBookingsCount / todaysBookingsCount) * 100
       : 0;
 
-  // 2) SERVICES (for offer popup)
+  // 2) SERVICES
   const fetchServices = async () => {
     try {
       setLoadingServices(true);
@@ -835,9 +881,16 @@ const BusinessDashboard: React.FC = () => {
     try {
       await api.delete(`/business/offers/${offer._id}`);
       await fetchOffers();
+      setPopup({
+        type: "success",
+        message: "Offer deleted successfully.",
+      });
     } catch (err: any) {
       console.error("Error deleting offer:", err);
-      alert(err?.response?.data?.message || "Could not delete offer.");
+      setPopup({
+        type: "error",
+        message: err?.response?.data?.message || "Could not delete offer.",
+      });
     }
   };
 
@@ -857,7 +910,8 @@ const BusinessDashboard: React.FC = () => {
   };
 
   const getOfferServiceNames = (offer: Offer) => {
-    if (!offer.servicesAppliedOn || !services.length) return "All included services";
+    if (!offer.servicesAppliedOn || !services.length)
+      return "All included services";
     const ids = offer.servicesAppliedOn.map((s) =>
       typeof s === "string" ? s : s._id
     );
@@ -917,9 +971,9 @@ const BusinessDashboard: React.FC = () => {
                 {todayString}
               </DateBox>
 
-              {/* Removed "+ New Booking" button */}
-
-              <PrimaryButton onClick={handleNewOffer}>+ Add Offer</PrimaryButton>
+              <PrimaryButton onClick={handleNewOffer}>
+                + Add Offer
+              </PrimaryButton>
             </DateAndButton>
           </HeaderRow>
 
@@ -974,8 +1028,14 @@ const BusinessDashboard: React.FC = () => {
                     <AppointmentContainer key={appt._id}>
                       <AppointmentRow status={appt.status}>
                         <div>
-                          <strong>{timeString}</strong> — {getCustomerName(appt)}
-                          <div style={{ fontSize: "13px", color: "#7a7a7a" }}>
+                          <strong>{timeString}</strong> —{" "}
+                          {getCustomerName(appt)}
+                          <div
+                            style={{
+                              fontSize: "13px",
+                              color: "#7a7a7a",
+                            }}
+                          >
                             {getServiceLabel(appt)}
                           </div>
                         </div>
@@ -1067,7 +1127,9 @@ const BusinessDashboard: React.FC = () => {
             <SectionTitle>Recent Reviews</SectionTitle>
 
             {loadingReviews ? (
-              <div style={{ fontSize: 13, color: "#777" }}>Loading reviews…</div>
+              <div style={{ fontSize: 13, color: "#777" }}>
+                Loading reviews…
+              </div>
             ) : limitedReviews.length === 0 ? (
               <div style={{ fontSize: 13, color: "#777" }}>
                 You don&apos;t have any reviews yet.
@@ -1082,7 +1144,12 @@ const BusinessDashboard: React.FC = () => {
                     </ReviewHeader>
                     <RatingRow>
                       {IconFix(AiFillStar, { size: 14 })}
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                        }}
+                      >
                         {review.rating.toFixed(1)} / 5
                       </span>
                     </RatingRow>
@@ -1099,13 +1166,17 @@ const BusinessDashboard: React.FC = () => {
           <Card>
             <SectionTitle>
               Offers{" "}
-              <span style={{ fontSize: 12, color: "#777", fontWeight: 400 }}>
+              <span
+                style={{ fontSize: 12, color: "#777", fontWeight: 400 }}
+              >
                 (Create, edit, delete, and view past offers)
               </span>
             </SectionTitle>
 
             {loadingOffers ? (
-              <div style={{ fontSize: 13, color: "#777" }}>Loading offers…</div>
+              <div style={{ fontSize: 13, color: "#777" }}>
+                Loading offers…
+              </div>
             ) : offers.length === 0 ? (
               <div style={{ fontSize: 13, color: "#777" }}>
                 You haven&apos;t created any offers yet. Click{" "}
@@ -1133,7 +1204,12 @@ const BusinessDashboard: React.FC = () => {
                             <div>
                               <OfferTitle>
                                 {offer.title}{" "}
-                                <span style={{ fontSize: 12, fontWeight: 400 }}>
+                                <span
+                                  style={{
+                                    fontSize: 12,
+                                    fontWeight: 400,
+                                  }}
+                                >
                                   · {offer.discountPercent}% off
                                 </span>
                               </OfferTitle>
@@ -1143,14 +1219,22 @@ const BusinessDashboard: React.FC = () => {
                               </OfferMeta>
                             </div>
                             <div
-                              style={{ display: "flex", gap: 8, alignItems: "center" }}
+                              style={{
+                                display: "flex",
+                                gap: 8,
+                                alignItems: "center",
+                              }}
                             >
                               <Chip variant="active">Active</Chip>
                               <OfferActions>
-                                <SmallButton onClick={() => handleEditOffer(offer)}>
+                                <SmallButton
+                                  onClick={() => handleEditOffer(offer)}
+                                >
                                   Edit
                                 </SmallButton>
-                                <SmallButton onClick={() => handleDeleteOffer(offer)}>
+                                <SmallButton
+                                  onClick={() => handleDeleteOffer(offer)}
+                                >
                                   Delete
                                 </SmallButton>
                               </OfferActions>
@@ -1186,7 +1270,12 @@ const BusinessDashboard: React.FC = () => {
                             <div>
                               <OfferTitle>
                                 {offer.title}{" "}
-                                <span style={{ fontSize: 12, fontWeight: 400 }}>
+                                <span
+                                  style={{
+                                    fontSize: 12,
+                                    fontWeight: 400,
+                                  }}
+                                >
                                   · {offer.discountPercent}% off
                                 </span>
                               </OfferTitle>
@@ -1196,14 +1285,22 @@ const BusinessDashboard: React.FC = () => {
                               </OfferMeta>
                             </div>
                             <div
-                              style={{ display: "flex", gap: 8, alignItems: "center" }}
+                              style={{
+                                display: "flex",
+                                gap: 8,
+                                alignItems: "center",
+                              }}
                             >
                               <Chip variant="past">Ended</Chip>
                               <OfferActions>
-                                <SmallButton onClick={() => handleEditOffer(offer)}>
+                                <SmallButton
+                                  onClick={() => handleEditOffer(offer)}
+                                >
                                   Duplicate / Edit
                                 </SmallButton>
-                                <SmallButton onClick={() => handleDeleteOffer(offer)}>
+                                <SmallButton
+                                  onClick={() => handleDeleteOffer(offer)}
+                                >
                                   Delete
                                 </SmallButton>
                               </OfferActions>
@@ -1235,6 +1332,14 @@ const BusinessDashboard: React.FC = () => {
           onSaved={fetchOffers}
           services={services}
           existingOffer={editingOffer || undefined}
+        />
+      )}
+
+      {popup && (
+        <AlertPopup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup(null)}
         />
       )}
     </>

@@ -14,19 +14,19 @@ const Bar = styled.div`
   border-bottom: 1px solid #e4e4e4;
   height: 80px;
   width: 100%;
-  padding: 0 60px;
+  padding: 0 20px;
   box-sizing: border-box;
 `;
 
 const LeftSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 3px;
 `;
 
 const Logo = styled.img`
-  width: 285px;
-  height: 70px;
+  
+  height: 140px;
   object-fit: contain;
   cursor: pointer;
 `;
@@ -37,7 +37,7 @@ const SearchBox = styled.div`
   background-color: #f5f5f5;
   border-radius: 6px;
   padding: 0 12px;
-  width: 903px;
+  width: 700px;
   height: 40px;
 
   input {
@@ -52,7 +52,7 @@ const SearchBox = styled.div`
 
   svg {
     color: #888;
-    margin-right: 8px;
+    margin-right: 4px;
   }
 `;
 

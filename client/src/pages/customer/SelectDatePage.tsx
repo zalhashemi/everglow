@@ -4,7 +4,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
 import Button from "../../components/common/Button";
 import SecondaryButton from "../../components/common/SecondaryButton";
-import api from "../../utils/api"; // adjust path if needed
+import api from "../../utils/api";
+
+// NEW IMPORT
+import AlertPopup from "../../components/common/AlertPopup";
 
 type ServiceDto = {
   _id: string;
@@ -24,7 +27,7 @@ type LocationState = {
 };
 
 const PageWrapper = styled.div`
-  background-color: #f2dcdc;
+  background-color: #FAF6EA;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -126,7 +129,7 @@ const SelectDatePage: React.FC = () => {
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date();
-    return today.toISOString().slice(0, 10); // YYYY-MM-DD
+    return today.toISOString().slice(0, 10);
   });
 
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -136,14 +139,15 @@ const SelectDatePage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // If user came here without proper state, go back
+  // NEW: popup state
+  const [showPopup, setShowPopup] = useState(false);
+
   useEffect(() => {
     if (!businessId || !selectedServices || !selectedServices.length) {
       navigate(-1);
     }
   }, [businessId, selectedServices, navigate]);
 
-  // Load slots whenever date changes
   useEffect(() => {
     if (!businessId || !totalDurationMinutes || !selectedDate) return;
 
@@ -156,8 +160,8 @@ const SelectDatePage: React.FC = () => {
           `/bookings/available-slots/${businessId}`,
           {
             params: {
-              date: selectedDate,              // YYYY-MM-DD
-              duration: totalDurationMinutes,  // total mins of all services
+              date: selectedDate,
+              duration: totalDurationMinutes,
             },
           }
         );
@@ -192,14 +196,12 @@ const SelectDatePage: React.FC = () => {
       const serviceIds = selectedServices.map((s) => s._id);
 
       if (isReschedule && bookingId) {
-        // RESCHEDULE existing booking
         await api.patch(`/bookings/${bookingId}`, {
           action: "reschedule",
           newStartTime: startTimeIso,
           serviceIds,
         });
       } else {
-        // CREATE new booking
         await api.post("/bookings", {
           businessId,
           serviceIds,
@@ -208,15 +210,19 @@ const SelectDatePage: React.FC = () => {
         });
       }
 
-      alert("Booking confirmed!");
-      navigate("/bookings");
+      // SHOW POPUP INSTEAD OF ALERT
+      setShowPopup(true);
+
+      // redirect after popup closes (5 seconds + user can close early)
+      setTimeout(() => {
+        navigate("/bookings");
+      }, 5200);
     } catch (err: any) {
       console.error("Confirm booking error:", err);
       const msg =
         err?.response?.data?.message ||
         "Failed to confirm booking. The slot may have just been taken.";
       setError(msg);
-      alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -296,6 +302,31 @@ const SelectDatePage: React.FC = () => {
           </ButtonRow>
         </Section>
       </ContentWrapper>
+
+      {/* POPUP */}
+      {showPopup && (
+  <AlertPopup
+    title="Booking Confirmed!"
+    message="Your appointment has been successfully booked."
+    onClose={() => {
+      setShowPopup(false);
+      navigate("/book/summary", {
+        state: {
+          businessId,
+          businessName,
+          selectedServices,
+          totalDurationMinutes,
+          totalPrice,
+          date: selectedDate,
+          time: selectedSlot,
+          isReschedule,
+          bookingId,
+        },
+      });
+    }}
+  />
+)}
+
     </PageWrapper>
   );
 };
