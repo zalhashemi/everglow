@@ -1,3 +1,4 @@
+// src/pages/business/Dashboard.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -124,40 +125,43 @@ const DateBox = styled.div`
 const PrimaryButton = styled.button`
   background-color: ${(p) => p.theme.colors.primary || "#0b1c36"};
   color: #fff;
+  border-radius: 999px;
+  border: none;
+  padding: 10px 18px;
   font-size: 14px;
   font-weight: 600;
-  padding: 10px 18px;
-  border-radius: 8px;
-  border: none;
   cursor: pointer;
-  transition: 0.2s ease;
-  white-space: nowrap;
 
   &:hover {
-    opacity: 0.9;
+    opacity: 0.96;
   }
 `;
 
 const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
   background-color: #fff;
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 `;
 
 const StatTitle = styled.div`
-  font-weight: 700;
-  color: #27374d;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a7a7a;
+  letter-spacing: 0.04em;
 `;
 
 const StatValue = styled.div`
@@ -167,78 +171,93 @@ const StatValue = styled.div`
 `;
 
 const StatSubText = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   color: #999;
 `;
 
 const SectionGrid = styled.div`
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 24px;
-  margin-top: 20px;
+  grid-template-columns: 2.1fr 1.4fr;
+  gap: 20px;
 
-  @media (max-width: 1000px) {
+  @media (max-width: 980px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const Card = styled.div`
   background-color: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 `;
 
-const SectionTitle = styled.h3`
+const SectionTitle = styled.h2`
   font-size: 18px;
   font-weight: 700;
-  color: #27374d;
-  margin-bottom: 16px;
+  color: #0b1c36;
+  margin: 0 0 10px 0;
 `;
 
+/* Appointments list */
+
 const AppointmentContainer = styled.div`
-  background-color: #f7f7f7;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 10px;
+  margin-top: 4px;
 `;
 
 const AppointmentRow = styled.div<{ status: BookingStatus }>`
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  padding: 10px 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  background-color: #f8f8f8;
   font-size: 14px;
-  color: #333;
 
-  span.status {
+  .status {
+    font-size: 12px;
     font-weight: 600;
-    text-transform: capitalize;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid
+      ${(p) =>
+        p.status === "completed"
+          ? "#4caf50"
+          : p.status === "cancelled"
+          ? "#f44336"
+          : p.status === "pending"
+          ? "#ff9800"
+          : "#2196f3"};
     color: ${(p) =>
-      p.status === "confirmed"
-        ? "#3FAE57"
-        : p.status === "completed"
-        ? "#4b78db"
+      p.status === "completed"
+        ? "#388e3c"
         : p.status === "cancelled"
-        ? "#E03B3B"
-        : "#E0A800"};
+        ? "#d32f2f"
+        : p.status === "pending"
+        ? "#ef6c00"
+        : "#1565c0"};
+    background-color: #ffffff;
   }
 `;
 
+/* Popular services chart */
+
 const ProgressBarWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 `;
 
 const ProgressRow = styled.div`
   display: flex;
   justify-content: space-between;
   font-size: 13px;
+  margin-bottom: 4px;
 `;
 
 const ProgressBar = styled.div<{ percent: number }>`
-  background-color: #eaeaea;
+  width: 100%;
+  background-color: #e9edf0;
   border-radius: 8px;
   height: 8px;
   overflow: hidden;
@@ -334,9 +353,17 @@ const Chip = styled.span<{ variant?: "active" | "past" }>`
   border-radius: 999px;
   border: 1px solid
     ${(p) =>
-      p.variant === "active" ? "#3FAE57" : p.variant === "past" ? "#aaa" : "#ddd"};
+      p.variant === "active"
+        ? "#3FAE57"
+        : p.variant === "past"
+        ? "#aaa"
+        : "#ddd"};
   color: ${(p) =>
-    p.variant === "active" ? "#3FAE57" : p.variant === "past" ? "#666" : "#555"};
+    p.variant === "active"
+      ? "#3FAE57"
+      : p.variant === "past"
+      ? "#666"
+      : "#555"};
   background: #fff;
 `;
 
@@ -363,123 +390,24 @@ const OfferServicesText = styled.div`
   color: #555;
 `;
 
-/* ---------- Popup ---------- */
-
-const PopupOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-`;
-
-const PopupCard = styled.div`
-  width: 480px;
-  max-width: 95vw;
-  background: #fff;
-  padding: 24px;
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`;
-
-const PopupTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  color: #0b1c36;
-`;
-
-const InlineError = styled.p`
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #d10000;
-  font-weight: 600;
-`;
-
-const Input = styled.input`
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  width: 100%;
-`;
-
-const Label = styled.label`
-  font-size: 13px;
-  font-weight: 600;
-  color: #27374d;
-  display: block;
-  margin-bottom: 4px;
-`;
-
-const SaveButton = styled.button`
-  padding: 12px 0;
-  background: #0b1c36;
-  color: white;
-  border: none;
-  font-size: 15px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  margin-top: 6px;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const CancelButton = styled.button`
-  padding: 10px 0;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: #fff;
-  font-size: 14px;
-  cursor: pointer;
-`;
-
-const PopupActions = styled.div`
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 8px;
-`;
-
-const ServicesList = styled.div`
-  border: 1px solid #eee;
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 8px;
-  background: #fafafa;
-`;
-
-const ServiceRow = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  padding: 4px 0;
-`;
-
 /* ---------- Reviews ---------- */
 
-const ReviewList = styled.div`
+const ReviewList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 `;
 
-const ReviewItem = styled.div`
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
-
-  &:last-child {
-    border-bottom: none;
-  }
+const ReviewItem = styled.li`
+  background-color: #f8f8f8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
 
 const ReviewHeader = styled.div`
@@ -515,6 +443,127 @@ interface OfferPopupProps {
   services: Service[];
   existingOffer?: Offer | null;
 }
+
+const PopupOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+`;
+
+const PopupCard = styled.div`
+  background: #fff;
+  border-radius: 16px;
+  width: 420px;
+  max-width: 90vw;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const PopupTitle = styled.h2`
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b1c36;
+`;
+
+const Label = styled.label`
+  font-size: 13px;
+  font-weight: 600;
+  color: #27374d;
+`;
+
+const InlineError = styled.div`
+  font-size: 12px;
+  color: #d32f2f;
+  margin-top: -4px;
+  margin-bottom: 4px;
+`;
+
+const PopupInput = styled.input`
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+`;
+
+const ServicesList = styled.div`
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 8px 10px;
+  max-height: 150px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const ServiceRow = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+
+  input {
+    cursor: pointer;
+  }
+`;
+
+/* ✅ NEW BUTTON STYLES (fix text bigger than button) */
+
+const SaveButton = styled.button`
+  background: #0b1c36;
+  border: none;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+
+const CancelButton = styled.button`
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  color: #27374d;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const PopupActions = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+`;
+
+/* ---------- OfferPopup Component ---------- */
 
 const OfferPopup: React.FC<OfferPopupProps> = ({
   onClose,
@@ -604,7 +653,7 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
 
           <div>
             <Label>Offer Name</Label>
-            <Input
+            <PopupInput
               placeholder="e.g. Summer Glow Package"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -613,7 +662,7 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
 
           <div>
             <Label>Discount Applied (%)</Label>
-            <Input
+            <PopupInput
               placeholder="e.g. 20"
               type="number"
               min={1}
@@ -626,7 +675,7 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
           <div style={{ display: "flex", gap: "10px" }}>
             <div style={{ flex: 1 }}>
               <Label>Begins On</Label>
-              <Input
+              <PopupInput
                 type="date"
                 value={start}
                 onChange={(e) => setStart(e.target.value)}
@@ -634,7 +683,7 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
             </div>
             <div style={{ flex: 1 }}>
               <Label>Ends On</Label>
-              <Input
+              <PopupInput
                 type="date"
                 value={end}
                 onChange={(e) => setEnd(e.target.value)}
@@ -761,7 +810,11 @@ const BusinessDashboard: React.FC = () => {
       const firstService = Array.isArray(b.services) ? b.services[0] : null;
 
       let name = "Service";
-      if (firstService && typeof firstService === "object" && firstService.name) {
+      if (
+        firstService &&
+        typeof firstService === "object" &&
+        firstService.name
+      ) {
         name = firstService.name;
       }
 
@@ -995,7 +1048,9 @@ const BusinessDashboard: React.FC = () => {
 
             <StatCard>
               <StatTitle>COMPLETION RATE</StatTitle>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
                 {IconFix(AiOutlineCheckSquare, { size: 20 })}
                 <StatValue>{completionRate.toFixed(0)}%</StatValue>
               </div>
@@ -1077,7 +1132,9 @@ const BusinessDashboard: React.FC = () => {
                       </span>
                     </ProgressRow>
                     <ProgressBar
-                      percent={(service.bookings / maxPopularBookings) * 100}
+                      percent={
+                        (service.bookings / maxPopularBookings) * 100
+                      }
                     />
                   </ProgressBarWrapper>
                 ))
@@ -1257,8 +1314,7 @@ const BusinessDashboard: React.FC = () => {
                         fontSize: 13,
                         fontWeight: 600,
                         color: "#27374d",
-                        marginTop: 18,
-                        marginBottom: 6,
+                        margin: "12px 0 6px",
                       }}
                     >
                       Past Offers
@@ -1284,27 +1340,7 @@ const BusinessDashboard: React.FC = () => {
                                 {formatDate(offer.validTo)}
                               </OfferMeta>
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: 8,
-                                alignItems: "center",
-                              }}
-                            >
-                              <Chip variant="past">Ended</Chip>
-                              <OfferActions>
-                                <SmallButton
-                                  onClick={() => handleEditOffer(offer)}
-                                >
-                                  Duplicate / Edit
-                                </SmallButton>
-                                <SmallButton
-                                  onClick={() => handleDeleteOffer(offer)}
-                                >
-                                  Delete
-                                </SmallButton>
-                              </OfferActions>
-                            </div>
+                            <Chip variant="past">Ended</Chip>
                           </OfferHeaderRow>
                           <OfferServicesText>
                             Services: {getOfferServiceNames(offer)}

@@ -1,3 +1,4 @@
+// src/pages/business/Bookings.tsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
@@ -12,7 +13,7 @@ type CalendarValue = Date | Date[] | [Date | null, Date | null] | null;
 /* ---------------------- Styled Components ---------------------- */
 const PageContainer = styled.div`
   min-height: 100vh;
-  background-color: #FAF6EA;
+  background-color: #faf6ea;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -65,6 +66,11 @@ const PageContainer = styled.div`
   .react-calendar__tile--now {
     background: #fff6c3;
     border: 1px solid #d2c66e;
+  }
+
+  /* 🔹 Remove red color for weekend days (Sat & Sun) */
+  .react-calendar__month-view__days__day--weekend {
+    color: #0c1b33; /* same as normal weekday text */
   }
 
   .booking-count {
@@ -137,10 +143,10 @@ const BookingCard = styled.div<{ status: string }>`
   border-left: 5px solid
     ${(p) =>
       p.status === "confirmed" || p.status === "completed"
-        ? "#4CAF50"
+        ? "#4caf50"
         : p.status === "pending"
-        ? "#FFD700"
-        : "#E57373"};
+        ? "#ffd700"
+        : "#e57373"};
   transition: 0.2s;
 
   &:hover {
@@ -158,10 +164,10 @@ const BookingCard = styled.div<{ status: string }>`
     font-size: 13px;
     color: ${(p) =>
       p.status === "confirmed" || p.status === "completed"
-        ? "#4CAF50"
+        ? "#4caf50"
         : p.status === "pending"
-        ? "#FFD700"
-        : "#E57373"};
+        ? "#ffd700"
+        : "#e57373"};
   }
 `;
 
@@ -434,7 +440,7 @@ const BusinessBookings: React.FC = () => {
             style={{
               fontSize: "24px",
               fontWeight: "700",
-              color: "#0C1B33",
+              color: "#0c1b33",
               marginBottom: "12px",
             }}
           >
@@ -520,7 +526,7 @@ const BusinessBookings: React.FC = () => {
                         padding: "6px 14px",
                         fontSize: "14px",
                         borderRadius: "6px",
-                        backgroundColor: "#4A5174",
+                        backgroundColor: "#4a5174",
                         color: "#fff",
                       }}
                       onClick={() => handleEditClick(b)}
@@ -541,7 +547,7 @@ const BusinessBookings: React.FC = () => {
       {showModal && editingBooking && (
         <Overlay>
           <Modal>
-            <h3 style={{ color: "#0C1B33" }}>Edit Booking</h3>
+            <h3 style={{ color: "#0c1b33" }}>Edit Booking</h3>
 
             <label>Client Name</label>
             <Input value={editingBooking.client} disabled />
