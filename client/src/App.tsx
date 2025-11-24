@@ -47,6 +47,8 @@ const App: React.FC = () => {
 <Route path="/profile" element={<CustomerProfile />} />
         <Route path="/search" element={<SearchMapPage />} />
         <Route path="/book/receipt/:id" element={<BookingReceiptPage />} />
+        <Route path="/bookings/:id" element={<BookingReceiptPage />} />
+
 
 
         {/* ===== BUSINESS ROUTES ===== */}

@@ -1,3 +1,4 @@
+// src/pages/business/Profile.tsx
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import TextBox from "../../components/common/TextBox";
@@ -8,7 +9,7 @@ import Popup from "../../components/common/Popup";
 import { FiEdit2 } from "react-icons/fi";
 import placeholderImage from "../../images/errorLoading.png";
 import AlertPopup from "../../components/common/AlertPopup";
-
+import api from "../../utils/api";
 
 /* ---- Styled Components ---- */
 const PageContainer = styled.div`
@@ -195,7 +196,7 @@ const LogoutButton = styled.button`
   }
 `;
 
-/* Working hours UI (for business + staff, same style as registration) */
+/* Working hours UI */
 const HoursGrid = styled.div`
   display: flex;
   flex-direction: column;
@@ -218,12 +219,6 @@ const DayLabel = styled.span`
   font-size: 0.9rem;
   font-weight: 600;
   color: #444;
-`;
-
-const HoursRow = styled.div`
-  display: flex;
-  gap: 8px;
-  align-items: center;
 `;
 
 const HoursSelect = styled.select`
@@ -285,7 +280,7 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
-/* ---------- Types copied to match registration ---------- */
+/* ---------- Types ---------- */
 
 type DayKey =
   | "monday"
@@ -374,7 +369,8 @@ type StaffMember = {
 
 /* -------- Component -------- */
 const BusinessProfile: React.FC = () => {
-  const [business, setBusiness] = useState<any>(null);
+  const [business, setBusiness] = useState<any | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
@@ -384,10 +380,9 @@ const BusinessProfile: React.FC = () => {
   const [city, setCity] = useState("");
   const [about, setAbout] = useState("");
 
-  // business operating hours are stored in DB as string map (same as registration payload)
-  const [operatingHours, setOperatingHours] = useState<{ [key: string]: string }>(
-    {}
-  );
+  const [operatingHours, setOperatingHours] = useState<{
+    [key: string]: string;
+  }>({});
 
   const [socialLinks, setSocialLinks] = useState<{
     instagram?: string;
@@ -395,18 +390,16 @@ const BusinessProfile: React.FC = () => {
   }>({});
 
   const [staff, setStaff] = useState<StaffMember[]>([]);
-
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   const [alertData, setAlertData] = useState<{
-  type: "error" | "success";
-  title?: string;
-  message: string;
-} | null>(null);
-
+    type: "error" | "success";
+    title?: string;
+    message: string;
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -425,7 +418,6 @@ const BusinessProfile: React.FC = () => {
     setCity(info?.city || b.city || "");
     setAbout(info?.about || b.description || "");
 
-    // always have all 7 days in state
     const dbHours = b.operatingHours || {};
     const initialHours: { [key in DayKey]: string } = {} as any;
     DAY_KEYS.forEach((dayKey) => {
@@ -465,56 +457,50 @@ const BusinessProfile: React.FC = () => {
 
   /* ---------------- Load Business Data ---------------- */
   useEffect(() => {
-    const storedStr =
-      localStorage.getItem("business") ||
-      localStorage.getItem("businessInfo");
-    if (storedStr) {
+    const loadBusiness = async () => {
       try {
-        const data = JSON.parse(storedStr);
-        hydrateFromBusiness(data);
-      } catch (e) {
-        console.error("Failed to parse stored business", e);
-      }
-    }
+        // 1) Try localStorage first
+        const storedStr =
+          localStorage.getItem("business") ||
+          localStorage.getItem("businessInfo");
+        if (storedStr) {
+          try {
+            const data = JSON.parse(storedStr);
+            hydrateFromBusiness(data);
+          } catch (e) {
+            console.error("Failed to parse stored business", e);
+          }
+        }
 
-    const token =
-      localStorage.getItem("businessToken") ||
-      localStorage.getItem("token");
-    if (token) {
-      fetch("http://localhost:5000/api/business/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          hydrateFromBusiness(data);
-          const payloadToStore = data.business || data;
+        // 2) Then try real API (protected: /api/business/me)
+        try {
+          const res = await api.get("/business/me");
+          hydrateFromBusiness(res.data);
+          const payloadToStore = res.data.business || res.data;
           localStorage.setItem("business", JSON.stringify(payloadToStore));
           localStorage.setItem("businessInfo", JSON.stringify(payloadToStore));
-        })
-        .catch((err) => {
-          console.error("Failed to fetch business /me", err);
-        });
-    }
+        } catch (err) {
+          console.error("Failed to fetch /business/me", err);
+          // don't block UI on error
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBusiness();
   }, []);
 
-  if (!business) {
-    return <div style={{ padding: 40 }}>Loading...</div>;
-  }
-
   /* ---------------- Business hours helpers ---------------- */
-
-  // supports "Closed", "HH:MM - HH:MM", and partial values
   const parseHours = (value?: string): DayHours => {
     if (!value) return { open: "", close: "", closed: false };
 
     const normalized = value.trim();
 
-    // closed (any casing)
     if (normalized.toLowerCase() === "closed") {
       return { open: "", close: "", closed: true };
     }
 
-    // full "HH:MM - HH:MM"
     if (normalized.includes("-")) {
       const [openPart, closePart] = normalized.split("-").map((s) => s.trim());
       return {
@@ -524,7 +510,6 @@ const BusinessProfile: React.FC = () => {
       };
     }
 
-    // partial value while editing (just "HH:MM")
     return {
       open: normalized,
       close: "",
@@ -534,13 +519,9 @@ const BusinessProfile: React.FC = () => {
 
   const buildHours = (open: string, close: string, closed: boolean): string => {
     if (closed) return "Closed";
-
     if (open && close) return `${open} - ${close}`;
-
-    // while editing, keep partial so next change can see it
     if (open) return open;
     if (close) return close;
-
     return "";
   };
 
@@ -562,7 +543,6 @@ const BusinessProfile: React.FC = () => {
       if (field === "closed") {
         updated.closed = value as boolean;
         if (updated.closed) {
-          // when marking as closed, clear times
           updated.open = "";
           updated.close = "";
         }
@@ -623,73 +603,47 @@ const BusinessProfile: React.FC = () => {
 
   /* ---------------- Save Edited Profile ---------------- */
   const handleSave = async () => {
-    const token =
-      localStorage.getItem("businessToken") ||
-      localStorage.getItem("token");
-    if (!token) {
-      setAlertData({
-  type: "error",
-  message: "Not logged in as business."
-});
-
-      return;
-    }
-
-    const payload = {
-      businessInfo: {
-        name,
-        type,
-        email,
-        phone,
-        address,
-        city,
-        about,
-        imageUrl: imagePreview || business?.imageUrl || null,
-      },
-      operatingHours,
-      socialLinks,
-      staff: staff.map((m) => ({
-        name: m.name,
-        role: m.role,
-        schedule: m.schedule,
-      })),
-      imageUrl: imagePreview || business?.imageUrl || null,
-    };
-
     try {
-      const res = await fetch("http://localhost:5000/api/business/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const payload = {
+        businessInfo: {
+          name,
+          type,
+          email,
+          phone,
+          address,
+          city,
+          about,
+          imageUrl: imagePreview || business?.imageUrl || null,
         },
-        body: JSON.stringify(payload),
+        operatingHours,
+        socialLinks,
+        staff: staff.map((m) => ({
+          name: m.name,
+          role: m.role,
+          schedule: m.schedule,
+        })),
+        imageUrl: imagePreview || business?.imageUrl || null,
+      };
+
+      const res = await api.put("/business/me", payload);
+      const data = res.data;
+      const updatedBusiness = data.business || data;
+
+      hydrateFromBusiness(updatedBusiness);
+      localStorage.setItem("business", JSON.stringify(updatedBusiness));
+      localStorage.setItem("businessInfo", JSON.stringify(updatedBusiness));
+      setIsEditing(false);
+      setAlertData({
+        type: "success",
+        message: "Profile updated successfully.",
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        const updatedBusiness = data.business || data;
-        setBusiness(updatedBusiness);
-        hydrateFromBusiness(updatedBusiness);
-        localStorage.setItem("business", JSON.stringify(updatedBusiness));
-        localStorage.setItem("businessInfo", JSON.stringify(updatedBusiness));
-        setIsEditing(false);
-      } else {
-        console.error("Update failed:", data);
-        setAlertData({
-  type: "error",
-  message: data.message || "Failed to update profile"
-});
-
-      }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setAlertData({
-  type: "error",
-  message: "Error saving profile"
-});
-
+        type: "error",
+        message:
+          err?.response?.data?.message || "Failed to update profile",
+      });
     }
   };
 
@@ -704,33 +658,19 @@ const BusinessProfile: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const token =
-      localStorage.getItem("businessToken") ||
-      localStorage.getItem("token");
-
-    // local preview first
     const localUrl = URL.createObjectURL(file);
     setImagePreview(localUrl);
-
-    if (!token) return;
 
     const formData = new FormData();
     formData.append("image", file);
 
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/business/profile-image",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      // backend: PUT /api/business/me/profile-image  :contentReference[oaicite:2]{index=2}
+      const res = await api.put("/business/me/profile-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      const data = await res.json();
-
+      const data = res.data;
       const finalUrl = data.imageUrl || data.url || localUrl;
       setImagePreview(finalUrl);
 
@@ -774,6 +714,36 @@ const BusinessProfile: React.FC = () => {
     business?.businessInfo?.imageUrl ||
     business?.businessInfo?.image ||
     placeholderImage;
+
+  /* ---------------- RENDER ---------------- */
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <TabBar type="business" />
+        <div style={{ padding: 40 }}>Loading profile...</div>
+      </PageContainer>
+    );
+  }
+
+  if (!business) {
+    return (
+      <PageContainer>
+        <TabBar type="business" />
+        <ContentWrapper>
+          <TitleRow>
+            <Title>Your Profile</Title>
+          </TitleRow>
+          <Wrapper>
+            <p style={{ fontSize: 14, color: "#777" }}>
+              No business profile found. Make sure you are logged in as a
+              business account or complete your business registration.
+            </p>
+          </Wrapper>
+        </ContentWrapper>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -900,7 +870,7 @@ const BusinessProfile: React.FC = () => {
             />
           </Section>
 
-          {/* OPERATING HOURS (same pattern as registration) */}
+          {/* OPERATING HOURS */}
           <Section>
             <SectionHeader>
               <SectionTitle>Operating Hours</SectionTitle>
@@ -989,7 +959,7 @@ const BusinessProfile: React.FC = () => {
             </HoursGrid>
           </Section>
 
-          {/* STAFF MEMBERS – same schedule style as registration */}
+          {/* STAFF MEMBERS */}
           <Section>
             <SectionHeader>
               <SectionTitle>Staff Members</SectionTitle>
@@ -1214,15 +1184,15 @@ const BusinessProfile: React.FC = () => {
             onSecondary={() => setShowLogoutPopup(false)}
           />
         )}
-        {alertData && (
-  <AlertPopup
-    type={alertData.type}
-    title={alertData.type === "error" ? "ERROR" : ""}
-    message={alertData.message}
-    onClose={() => setAlertData(null)}
-  />
-)}
 
+        {alertData && (
+          <AlertPopup
+            type={alertData.type}
+            title={alertData.type === "error" ? "ERROR" : ""}
+            message={alertData.message}
+            onClose={() => setAlertData(null)}
+          />
+        )}
       </ContentWrapper>
     </PageContainer>
   );

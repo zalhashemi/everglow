@@ -1,93 +1,84 @@
+// server/routes/businessRoutes.js
 const express = require("express");
 const router = express.Router();
-
-const upload = require("../middleware/upload");
-const { protectBusiness } = require("../middleware/authMiddleware");
+const multer = require("multer");
 
 const {
   registerBusiness,
   loginBusiness,
   getMyBusinessProfile,
   updateMyBusinessProfile,
-  getNearbyBusinesses,
   updateBusinessProfileImage,
+  getNearbyBusinesses,
   getBusinessDashboardStats,
 } = require("../controllers/businessController");
 
-const { getMyBusinessReviews } = require("../controllers/reviewController");
+const { protectBusiness } = require("../middleware/authMiddleware");
 
-const {
-  createOffer,
-  getMyOffers,
-  updateOffer,
-  deleteOffer,
-} = require("../controllers/offerController");
-
-const Business = require("../models/Business");
-const Service = require("../models/Service");
-
-// REGISTER BUSINESS (with image)
-router.post("/register", upload.single("image"), registerBusiness);
-
-// LOGIN BUSINESS
-router.post("/login", loginBusiness);
-
-// GET NEARBY BUSINESSES (public)
-router.get("/near", getNearbyBusinesses);
-
-// GET BUSINESS PROFILE (protected)
-router.get("/me", protectBusiness, getMyBusinessProfile);
-
-// DASHBOARD STATS (protected)
-router.get("/dashboard-stats", protectBusiness, getBusinessDashboardStats);
-
-// REVIEWS FOR LOGGED-IN BUSINESS (protected)
-router.get("/reviews", protectBusiness, getMyBusinessReviews);
-
-// UPDATE BUSINESS PROFILE (protected)
-router.put("/me", protectBusiness, updateMyBusinessProfile);
-
-// UPDATE ONLY PROFILE IMAGE (protected)
-router.put(
-  "/me/profile-image",
-  protectBusiness,
-  upload.single("image"),
-  updateBusinessProfileImage
-);
-
-/**
- * SERVICES FOR LOGGED-IN BUSINESS
- * Used by dashboard "Add Offer" popup to show list of services to attach.
- */
-router.get("/me/services", protectBusiness, async (req, res) => {
-  try {
-    const services = await Service.find({ business: req.business._id }).sort({
-      createdAt: 1,
-    });
-    res.json(services);
-  } catch (err) {
-    console.error("Error fetching services for business:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+// ---------- Multer for image uploads ----------
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
 });
 
-/**
- * OFFER ROUTES (BUSINESS-ONLY)
- */
-router.post("/offers", protectBusiness, createOffer);
-router.get("/offers", protectBusiness, getMyOffers);
-router.put("/offers/:id", protectBusiness, updateOffer);
-router.delete("/offers/:id", protectBusiness, deleteOffer);
+const upload = multer({ storage });
 
-// OPTIONAL: get all businesses (debug/admin)
+/* ============================================================
+   PUBLIC ROUTES
+============================================================ */
+
+// ✔ GET all businesses (used by homepage + map)
 router.get("/", async (req, res) => {
   try {
-    const businesses = await Business.find({});
+    const Business = require("../models/Business");
+
+    const businesses = await Business.find().select(
+      "businessName businessType address city description imageUrl location genderTag"
+    );
+
     res.json(businesses);
   } catch (err) {
     console.error("Error fetching businesses:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// ✔ Nearby search
+router.get("/nearby", getNearbyBusinesses);
+
+/* ============================================================
+   AUTH ROUTES
+============================================================ */
+
+// Register
+router.post("/register", upload.single("image"), registerBusiness);
+
+// Login
+router.post("/login", loginBusiness);
+
+/* ============================================================
+   BUSINESS (AUTH REQUIRED)
+============================================================ */
+
+// Get profile
+router.get("/me", protectBusiness, getMyBusinessProfile);
+
+// Update profile
+router.put("/me", protectBusiness, upload.single("image"), updateMyBusinessProfile);
+
+// Update ONLY profile image
+router.put(
+  "/me/image",
+  protectBusiness,
+  upload.single("image"),
+  updateBusinessProfileImage
+);
+
+// Dashboard stats
+router.get("/me/stats", protectBusiness, getBusinessDashboardStats);
 
 module.exports = router;

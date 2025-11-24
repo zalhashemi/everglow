@@ -1,19 +1,17 @@
+// src/pages/business/Services.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import TabBar from "../../components/common/TabBar";
 import { AiFillStar } from "react-icons/ai";
-import { FiMapPin, FiEdit2 } from "react-icons/fi";
+import { FiMapPin, FiEdit2, FiTrash2 } from "react-icons/fi";
 import ServiceTile from "../../components/common/ServiceTile";
 import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
 import errorImage from "../../images/errorLoading.png";
 import oliviaSalon from "../../images/oliviaSalon.jpg";
 import api from "../../utils/api";
-import { FiTrash2 } from "react-icons/fi";
 import AlertPopup from "../../components/common/AlertPopup";
 
-
-
-// --- Types that match your backend ---
+/* ------------ Types that match your backend ------------ */
 interface Service {
   _id: string;
   name: string;
@@ -31,19 +29,29 @@ interface BusinessHeader {
   imageUrl?: string | null;
 }
 
-// For the modal form
 interface ServiceFormData {
   name: string;
-  durationMinutes: string; // keep as string in form, convert to number on submit
+  durationMinutes: string;
   priceBHD: string;
   category: string;
   description: string;
+}
+
+interface DashboardStats {
+  staffMembers: number;
+  totalClients: number;
+  avgRating: number;
+  reviewCount: number;
 }
 
 const BusinessServices: React.FC = () => {
   // ------------ BUSINESS HEADER ------------
   const [business, setBusiness] = useState<BusinessHeader | null>(null);
   const [imgSrc, setImgSrc] = useState<string>(oliviaSalon);
+
+  // Ratings / reviews
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState<number>(0);
 
   // ------------ SERVICES ------------
   const [services, setServices] = useState<Service[]>([]);
@@ -52,10 +60,10 @@ const BusinessServices: React.FC = () => {
 
   // ------------ UI STATE ------------
   const [alertData, setAlertData] = useState<{
-  type: "error" | "success";
-  title?: string;
-  message: string;
-} | null>(null);
+    type: "error" | "success";
+    title?: string;
+    message: string;
+  } | null>(null);
 
   const [activeTab, setActiveTab] = useState<string>("All");
   const [showModal, setShowModal] = useState(false);
@@ -69,7 +77,7 @@ const BusinessServices: React.FC = () => {
     description: "",
   });
 
-  // --- Derive categories from services ---
+  // --- Derive categories from services (for tabs + quick-select) ---
   const categories = useMemo(() => {
     const set = new Set<string>();
     services.forEach((s) => {
@@ -78,19 +86,24 @@ const BusinessServices: React.FC = () => {
     return ["All", ...Array.from(set)];
   }, [services]);
 
+  const categoryOptions = useMemo(
+    () => categories.filter((c) => c !== "All"),
+    [categories]
+  );
+
   const filteredServices = useMemo(() => {
     if (activeTab === "All") return services;
     return services.filter((s) => s.category === activeTab);
   }, [services, activeTab]);
 
-  // ------------ LOAD BUSINESS + SERVICES ------------
+  // ------------ LOAD BUSINESS + SERVICES + STATS ------------
   useEffect(() => {
     const fetchEverything = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // 1) Try to get business profile from backend
+        // 1) Business profile
         try {
           const res = await api.get<BusinessHeader>("/business/me");
           const b = res.data;
@@ -103,7 +116,7 @@ const BusinessServices: React.FC = () => {
             setImgSrc(oliviaSalon);
           }
         } catch (e) {
-          // fallback: maybe you stored business info in localStorage after registration
+          // fallback: maybe stored in localStorage after registration
           const stored = localStorage.getItem("business");
           if (stored) {
             const b = JSON.parse(stored);
@@ -133,9 +146,27 @@ const BusinessServices: React.FC = () => {
           }
         }
 
-        // 2) Get services for this business
+        // 2) Services for this business
         const svcRes = await api.get<Service[]>("/services");
         setServices(svcRes.data);
+
+        // 3) Dashboard stats -> ratings & reviews
+        try {
+          const statsRes = await api.get<DashboardStats>(
+            "/business/dashboard/stats"
+          );
+          const stats = statsRes.data;
+          setAvgRating(
+            typeof stats.avgRating === "number" ? stats.avgRating : 0
+          );
+          setReviewCount(
+            typeof stats.reviewCount === "number" ? stats.reviewCount : 0
+          );
+        } catch (statsErr) {
+          console.error("Failed to load dashboard stats", statsErr);
+          // don't block page if stats fail
+        }
+
         setError(null);
       } catch (err: any) {
         console.error(err);
@@ -176,27 +207,67 @@ const BusinessServices: React.FC = () => {
     setShowModal(true);
   };
 
+  // ------------ VALIDATION + SUBMIT ------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const trimmedName = formData.name.trim();
     const durationMinutesNum = Number(formData.durationMinutes);
     const priceBHDNum = Number(formData.priceBHD);
+    const trimmedCategory = formData.category.trim();
+    const trimmedDescription = formData.description.trim();
 
-    if (!formData.name || !durationMinutesNum || !priceBHDNum) {
+    if (!trimmedName) {
       setAlertData({
-  type: "error",
-  message: "Please fill at least name, duration and price."
-});
+        type: "error",
+        title: "ERROR",
+        message: "Service name is required.",
+      });
+      return;
+    }
 
+    if (!formData.durationMinutes.trim()) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Duration (in minutes) is required.",
+      });
+      return;
+    }
+
+    if (Number.isNaN(durationMinutesNum) || durationMinutesNum <= 0) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Duration must be a positive number of minutes.",
+      });
+      return;
+    }
+
+    if (!formData.priceBHD.trim()) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Price (BHD) is required.",
+      });
+      return;
+    }
+
+    if (Number.isNaN(priceBHDNum) || priceBHDNum <= 0) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Price must be a positive number.",
+      });
       return;
     }
 
     const payload = {
-      name: formData.name.trim(),
+      name: trimmedName,
       durationMinutes: durationMinutesNum,
       priceBHD: priceBHDNum,
-      category: formData.category.trim() || undefined,
-      description: formData.description.trim() || undefined,
+      category: trimmedCategory || undefined,
+      description: trimmedDescription || undefined,
     };
 
     try {
@@ -211,6 +282,10 @@ const BusinessServices: React.FC = () => {
         setServices((prev) =>
           prev.map((s) => (s._id === updated._id ? updated : s))
         );
+
+        if (payload.category) {
+          setActiveTab(payload.category);
+        }
       } else {
         // CREATE
         const res = await api.post<{ message: string; service: Service }>(
@@ -219,24 +294,23 @@ const BusinessServices: React.FC = () => {
         );
         const created = res.data.service;
         setServices((prev) => [...prev, created]);
+
+        if (payload.category) {
+          setActiveTab(payload.category);
+        }
       }
 
       setError(null);
-
-      if (payload.category && !categories.includes(payload.category)) {
-        setActiveTab("All");
-      }
-
       setShowModal(false);
     } catch (err: any) {
       console.error(err);
       setAlertData({
-  type: "error",
-  message:
-    err?.response?.data?.message ||
-    "Failed to save service. Please try again."
-});
-
+        type: "error",
+        title: "ERROR",
+        message:
+          err?.response?.data?.message ||
+          "Failed to save service. Please try again.",
+      });
     }
   };
 
@@ -254,25 +328,28 @@ const BusinessServices: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       setAlertData({
-  type: "error",
-  message:
-    err?.response?.data?.message ||
-    "Failed to delete service. Please try again."
-});
-
+        type: "error",
+        title: "ERROR",
+        message:
+          err?.response?.data?.message ||
+          "Failed to delete service. Please try again.",
+      });
     }
   };
 
-  // ------------ RENDER ------------
+  // ------------ HEADER TEXT FROM BUSINESS ------------
   const headerName = business?.businessName || "Glamour Beauty Salon";
   const headerLocation = business
-    ? `${business.city || ""}`.trim()
+    ? [business.address, business.city].filter(Boolean).join(", ") ||
+      "Location not set"
     : "Seef, Bahrain";
   const headerDescription =
     business?.description ||
     "We offer professional hair, nail, and beauty services using premium products.";
 
-  
+  const hasRating = avgRating !== null && avgRating > 0;
+
+  // ------------ RENDER ------------
   return (
     <div
       style={{
@@ -337,7 +414,7 @@ const BusinessServices: React.FC = () => {
             Opening hours not set
           </div>
 
-          {/* Rating – static */}
+          {/* Rating – dynamic */}
           <div
             style={{
               display: "flex",
@@ -351,8 +428,22 @@ const BusinessServices: React.FC = () => {
               size: 16,
               style: { marginRight: "4px" },
             })}
-            <span>4.8</span>
-            <span style={{ color: "#7A7A7A", marginLeft: "4px" }}>(312)</span>
+
+            {hasRating ? (
+              <>
+                <span>{avgRating!.toFixed(1)}</span>
+                <span
+                  style={{
+                    color: "#7A7A7A",
+                    marginLeft: "4px",
+                  }}
+                >
+                  ({reviewCount})
+                </span>
+              </>
+            ) : (
+              <span style={{ color: "#7A7A7A" }}>No reviews yet</span>
+            )}
           </div>
 
           {/* Description */}
@@ -414,35 +505,27 @@ const BusinessServices: React.FC = () => {
                   marginBottom: "12px",
                 }}
               >
-   <ServiceTile
-  name={service.name}
-  price={service.priceBHD}
-  duration={`${service.durationMinutes} min`}
-  description={service.description}
-  actions={
-    <>
-      <FiEdit2
-        size={18}
-        style={{ cursor: "pointer" }}
-        onClick={() => openEditModal(service)}
-      />
-
-      {/* DELETE ICON */}
-     <FiTrash2
-  size={18}
-  color="#b00020"
-  style={{ cursor: "pointer" }}
-  onClick={() => handleDelete(service._id)}
-/>
-
-    </>
-  }
-/>
-
-
-
-                {/* Delete button under each service */}
-                
+                <ServiceTile
+                  name={service.name}
+                  price={service.priceBHD}
+                  duration={`${service.durationMinutes} min`}
+                  description={service.description}
+                  actions={
+                    <>
+                      <FiEdit2
+                        size={18}
+                        style={{ cursor: "pointer", marginRight: "10px" }}
+                        onClick={() => openEditModal(service)}
+                      />
+                      <FiTrash2
+                        size={18}
+                        color="#b00020"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleDelete(service._id)}
+                      />
+                    </>
+                  }
+                />
               </div>
             ))}
 
@@ -539,13 +622,60 @@ const BusinessServices: React.FC = () => {
                   setFormData((p) => ({ ...p, priceBHD: e.target.value }))
                 }
               />
-              <TextBox
-                placeholder="Category (e.g. Hair, Nails)"
-                value={formData.category}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData((p) => ({ ...p, category: e.target.value }))
-                }
-              />
+              <div>
+                <TextBox
+                  placeholder="Category (e.g. Hair, Nails)"
+                  value={formData.category}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData((p) => ({ ...p, category: e.target.value }))
+                  }
+                />
+                {categoryOptions.length > 0 && (
+                  <div style={{ marginTop: "6px" }}>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#777",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Quick select category:
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                      }}
+                    >
+                      {categoryOptions.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() =>
+                            setFormData((p) => ({ ...p, category: cat }))
+                          }
+                          style={{
+                            borderRadius: "999px",
+                            border: "1px solid #ddd",
+                            padding: "4px 10px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            background:
+                              formData.category === cat
+                                ? "#4A5074"
+                                : "#f7f7f7",
+                            color:
+                              formData.category === cat ? "#fff" : "#333",
+                          }}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <TextBox
                 placeholder="Description"
                 value={formData.description}
@@ -582,15 +712,15 @@ const BusinessServices: React.FC = () => {
           </div>
         </div>
       )}
-      {alertData && (
-  <AlertPopup
-    type={alertData.type}
-    title={alertData.type === "error" ? "ERROR" : ""}
-    message={alertData.message}
-    onClose={() => setAlertData(null)}
-  />
-)}
 
+      {alertData && (
+        <AlertPopup
+          type={alertData.type}
+          title={alertData.type === "error" ? "ERROR" : ""}
+          message={alertData.message}
+          onClose={() => setAlertData(null)}
+        />
+      )}
     </div>
   );
 };

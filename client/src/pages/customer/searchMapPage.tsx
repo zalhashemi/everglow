@@ -1,3 +1,4 @@
+// src/pages/customer/searchMapPage.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -23,7 +24,7 @@ interface Business {
 }
 
 const PageWrapper = styled.div`
-  background-color: #FAF6EA;
+  background-color: #faf6ea;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -187,18 +188,21 @@ const SearchMapPage: React.FC = () => {
     zoom: DEFAULT_CENTER.zoom,
   });
 
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(
     null
   );
-
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const businessLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Initialize map
+  /* -------------------- Init map -------------------- */
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
       const map = L.map(mapContainerRef.current).setView(
@@ -220,9 +224,10 @@ const SearchMapPage: React.FC = () => {
         mapRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Get user location
+  /* -------------------- User location -------------------- */
   useEffect(() => {
     if (!navigator.geolocation) return;
 
@@ -240,14 +245,17 @@ const SearchMapPage: React.FC = () => {
     );
   }, []);
 
-  // Fetch businesses
+  /* -------------------- Fetch businesses -------------------- */
   useEffect(() => {
     const fetchAll = async () => {
       try {
         setLoading(true);
+        setError(null); // reset previous error
         const res = await api.get<Business[]>("/business");
         setBusinesses(res.data || []);
       } catch (err) {
+        console.error("Error loading salons:", err);
+        setBusinesses([]);
         setError("Couldn't load salons. Please try again.");
       } finally {
         setLoading(false);
@@ -272,23 +280,26 @@ const SearchMapPage: React.FC = () => {
       const name = b.businessName?.toLowerCase() || "";
       const city = b.city?.toLowerCase() || "";
       const type = b.businessType?.toLowerCase() || "";
-      return name.includes(term) || city.includes(term) || type.includes(term);
+      return (
+        name.includes(term) || city.includes(term) || type.includes(term)
+      );
     });
   }, [businessesWithCoords, searchTerm]);
 
-  // Update map center
+  /* -------------------- Update map center -------------------- */
   useEffect(() => {
     if (mapRef.current)
       mapRef.current.setView([mapCenter.lat, mapCenter.lng], mapCenter.zoom);
   }, [mapCenter]);
 
-  // Add user marker
+  /* -------------------- User marker -------------------- */
   useEffect(() => {
     if (!mapRef.current) return;
 
     if (!userLocation) {
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
+        userMarkerRef.current = null;
       }
       return;
     }
@@ -304,21 +315,23 @@ const SearchMapPage: React.FC = () => {
     }
   }, [userLocation]);
 
-  // Add business markers with SAFE popup button
+  /* -------------------- Business markers -------------------- */
   useEffect(() => {
     if (!mapRef.current || !businessLayerRef.current) return;
 
     businessLayerRef.current.clearLayers();
 
     filteredBusinesses.forEach((b) => {
-      const [lng, lat] = b.location!.coordinates;
+      if (!b.location) return;
+      const [lng, lat] = b.location.coordinates;
 
       const popupHtml = `
         <div style="max-width:220px;">
           <strong>${b.businessName}</strong><br/>
           <span style="font-size:12px;color:#666">${b.businessType}</span><br/>
-          <span style="font-size:12px;color:#666">${b.address ?? ""} ${b.city}</span><br/>
-
+          <span style="font-size:12px;color:#666">${b.address ?? ""} ${
+        b.city
+      }</span><br/>
           <button 
             class="popup-view-btn"
             style="
@@ -339,20 +352,24 @@ const SearchMapPage: React.FC = () => {
 
       const marker = L.marker([lat, lng]).addTo(businessLayerRef.current!);
 
-
       marker.bindPopup(popupHtml);
 
-      marker.on("popupopen", () => {
-        const btn = document.querySelector(".popup-view-btn");
-        if (btn)
-          btn.addEventListener("click", () => navigate(`/business/${b._id}`));
+      marker.on("popupopen", (e: any) => {
+        const container: HTMLElement | null = e.popup?.getElement?.() ?? null;
+        if (!container) return;
+        const btn = container.querySelector<HTMLButtonElement>(
+          ".popup-view-btn"
+        );
+        if (btn) {
+          btn.onclick = () => navigate(`/business/${b._id}`);
+        }
       });
 
       marker.on("click", () => {
         setSelectedBusinessId(b._id);
       });
     });
-  }, [filteredBusinesses]);
+  }, [filteredBusinesses, navigate]);
 
   return (
     <PageWrapper>
@@ -363,7 +380,7 @@ const SearchMapPage: React.FC = () => {
       />
 
       <ContentWrapper>
-        <Heading>Search Salons & Barbers</Heading>
+        <Heading>Search Salons &amp; Barbers</Heading>
         <Subheading>
           Explore salons on the map or search by name/city using the bar above.
         </Subheading>
@@ -380,11 +397,15 @@ const SearchMapPage: React.FC = () => {
             <ResultsHeader>
               <ResultsTitle>Results</ResultsTitle>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <ResultsCount>
-                  {filteredBusinesses.length} salon
-                  {filteredBusinesses.length === 1 ? "" : "s"} found
-                </ResultsCount>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                {!error && (
+                  <ResultsCount>
+                    {filteredBusinesses.length} salon
+                    {filteredBusinesses.length === 1 ? "" : "s"} found
+                  </ResultsCount>
+                )}
 
                 {searchTerm && (
                   <button
@@ -414,7 +435,8 @@ const SearchMapPage: React.FC = () => {
             {!loading &&
               !error &&
               filteredBusinesses.map((b) => {
-                const [lng, lat] = b.location!.coordinates;
+                if (!b.location) return null;
+                const [lng, lat] = b.location.coordinates;
 
                 return (
                   <ResultCard
@@ -434,7 +456,9 @@ const SearchMapPage: React.FC = () => {
                       {b.description ? `• ${b.description}` : ""}
                     </ResultDescription>
 
-                    <div style={{ marginTop: "10px", textAlign: "right" }}>
+                    <div
+                      style={{ marginTop: "10px", textAlign: "right" }}
+                    >
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

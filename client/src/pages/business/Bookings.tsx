@@ -1,5 +1,5 @@
 // src/pages/business/Bookings.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -286,7 +286,7 @@ const BusinessBookings: React.FC = () => {
   const [staffFilter, setStaffFilter] = useState<string>("all");
 
   /* ------- Load bookings from API ------- */
-  const loadBookings = async () => {
+  const loadBookings = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get<RawBooking[]>("/bookings/business");
@@ -333,11 +333,19 @@ const BusinessBookings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // initial load
     loadBookings();
-  }, []);
+
+    // 🔁 Poll every 10 seconds so customer changes reflect on business side
+    const id = setInterval(() => {
+      loadBookings();
+    }, 10000);
+
+    return () => clearInterval(id);
+  }, [loadBookings]);
 
   /* ------- Calendar handler ------- */
   const handleDateChange = (value: CalendarValue) => {

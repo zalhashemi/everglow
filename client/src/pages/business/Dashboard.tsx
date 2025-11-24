@@ -1,5 +1,5 @@
 // src/pages/business/Dashboard.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
@@ -776,7 +776,7 @@ const BusinessDashboard: React.FC = () => {
   });
 
   // 1) BOOKINGS
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoadingBookings(true);
       const res = await api.get("/bookings/business");
@@ -788,7 +788,7 @@ const BusinessDashboard: React.FC = () => {
     } finally {
       setLoadingBookings(false);
     }
-  };
+  }, []);
 
   const todaysBookings = useMemo(() => {
     if (!bookings.length) return [];
@@ -915,7 +915,16 @@ const BusinessDashboard: React.FC = () => {
     fetchBookings();
     fetchQuickStats();
     fetchReviews();
-  }, []);
+  }, [fetchBookings]);
+
+  // 🔁 Poll bookings so today's section reflects customer changes
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetchBookings();
+    }, 10000);
+
+    return () => clearInterval(id);
+  }, [fetchBookings]);
 
   const handleNewOffer = () => {
     setEditingOffer(null);

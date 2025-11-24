@@ -1,5 +1,5 @@
 // src/pages/customer/BookingsPage.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
@@ -248,10 +248,11 @@ const BookingsPage: React.FC = () => {
   const [staffIndex, setStaffIndex] = useState<number | null>(null);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
-  useEffect(() => {
-    const loadBookings = async () => {
+  /* ---------------- Load bookings (shared helper) ---------------- */
+  const loadBookings = useCallback(
+    async (withSpinner: boolean = true) => {
       try {
-        setLoading(true);
+        if (withSpinner) setLoading(true);
         setError(null);
 
         const res = await api.get<BookingApi[]>("/bookings/me");
@@ -306,12 +307,23 @@ const BookingsPage: React.FC = () => {
           err?.response?.data?.message || "Failed to load bookings."
         );
       } finally {
-        setLoading(false);
+        if (withSpinner) setLoading(false);
       }
-    };
+    },
+    []
+  );
 
-    loadBookings();
-  }, []);
+  useEffect(() => {
+    // initial load
+    loadBookings(true);
+
+    // 🔁 Poll every 10 seconds so business changes reflect on customer side
+    const id = setInterval(() => {
+      loadBookings(false);
+    }, 10000);
+
+    return () => clearInterval(id);
+  }, [loadBookings]);
 
   /* ============================================================
      Handlers: Cancel & Reschedule
@@ -328,9 +340,8 @@ const BookingsPage: React.FC = () => {
 
       await api.patch(`/bookings/${booking.id}/cancel`);
 
-      // Move it from upcoming → past with status "cancelled"
-      setUpcoming((prev) => prev.filter((b) => b.id !== booking.id));
-      setPast((prev) => [{ ...booking, status: "cancelled" }, ...prev]);
+      // ✅ Re-sync from server instead of manually editing arrays
+      await loadBookings(false);
     } catch (err: any) {
       console.error("Error cancelling booking", err);
       setError(
@@ -492,27 +503,8 @@ const BookingsPage: React.FC = () => {
         staffIndex,
       });
 
-      // Update in upcoming list
-      setUpcoming((prev) =>
-        prev.map((b) => {
-          if (b.id !== editBooking.id) return b;
-
-          const formatted = newStart.toLocaleString(undefined, {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          });
-
-          return {
-            ...b,
-            startTime: newStartISO,
-            date: formatted,
-            status: "pending",
-          };
-        })
-      );
+      // ✅ Re-sync from server so business + customer see the same thing
+      await loadBookings(false);
 
       handleCloseEdit();
     } catch (err: any) {
@@ -597,7 +589,7 @@ const BookingsPage: React.FC = () => {
             </PopupSubtitle>
 
             <PopupRow>
-              <Label>New date & time</Label>
+              <Label>New date &amp; time</Label>
               <InputRow>
                 <Input
                   type="date"

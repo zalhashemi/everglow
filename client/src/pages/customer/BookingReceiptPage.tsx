@@ -15,16 +15,22 @@ const BookingReceiptPage: React.FC = () => {
   useEffect(() => {
     const loadBooking = async () => {
       try {
-        const res = await api.get(`/bookings/${id}`);
+        // 🔥 use the new backend route
+        const res = await api.get(`/bookings/by-id/${id}`);
         setBooking(res.data);
       } catch (err) {
         console.error("Error loading booking:", err);
+        setBooking(null);
       } finally {
         setLoading(false);
       }
     };
 
-    loadBooking();
+    if (id) {
+      loadBooking();
+    } else {
+      setLoading(false);
+    }
   }, [id]);
 
   if (loading)
@@ -45,17 +51,18 @@ const BookingReceiptPage: React.FC = () => {
     minute: "numeric",
   });
 
-  const totalPrice = booking.services.reduce(
-    (sum: number, s: any) => sum + s.priceBHD,
+  const totalPrice = (booking.services || []).reduce(
+    (sum: number, s: any) => sum + (s.priceBHD || 0),
     0
   );
 
-  const totalMinutes = booking.services.reduce(
-    (sum: number, s: any) => sum + s.durationMinutes,
+  const totalMinutes = (booking.services || []).reduce(
+    (sum: number, s: any) => sum + (s.durationMinutes || 0),
     0
   );
 
-  const staffName: string | undefined = booking.staff?.name;
+  const staffName: string | undefined =
+    booking.staff?.name || booking.staffName;
 
   return (
     <div
@@ -83,14 +90,17 @@ const BookingReceiptPage: React.FC = () => {
         </h2>
 
         <p style={{ marginTop: 4, color: "#555", fontSize: "14px" }}>
-          {booking.business.businessName}
+          {booking.business?.businessName || "Unknown Salon"}
         </p>
 
         {/* Image */}
         <img
           src={
-            booking.business.imageUrl
-              ? `http://localhost:5000${booking.business.imageUrl}`
+            booking.business?.imageUrl || booking.business?.profileImageUrl
+              ? `http://localhost:5000${
+                  booking.business.imageUrl ||
+                  booking.business.profileImageUrl
+                }`
               : errorImage
           }
           alt="Business"
@@ -128,9 +138,9 @@ const BookingReceiptPage: React.FC = () => {
         {/* Services */}
         <div style={{ marginTop: "24px" }}>
           <h4 style={{ marginBottom: "10px" }}>Services</h4>
-          {booking.services.map((s: any) => (
+          {(booking.services || []).map((s: any) => (
             <div
-              key={s._id}
+              key={s._id || s.name}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -144,7 +154,7 @@ const BookingReceiptPage: React.FC = () => {
                   {s.durationMinutes} min
                 </div>
               </div>
-              <div>{s.priceBHD.toFixed(2)} BD</div>
+              <div>{(s.priceBHD || 0).toFixed(2)} BD</div>
             </div>
           ))}
         </div>
@@ -168,7 +178,6 @@ const BookingReceiptPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Note */}
           <div
             style={{
               marginTop: "26px",
