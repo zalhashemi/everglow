@@ -9,7 +9,7 @@ import TermsPopup from "../../components/common/TermsPopup";
 const PageWrapper = styled.div`
   width: 100vw;
   min-height: 125vh;
-  background: #FAF6EA;
+  background: #faf6ea;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -24,7 +24,7 @@ const FormContainer = styled.div`
 `;
 
 const Title = styled.h2`
-  color: #4A5174;
+  color: #4a5174;
   font-family: "Inter", sans-serif;
   font-size: 36px;
   font-weight: 600;
@@ -101,7 +101,7 @@ const Subtitle = styled.div`
 const TogglePassword = styled.span`
   cursor: pointer;
   font-size: 13px;
-  color: #4A5174;
+  color: #4a5174;
   display: inline-block;
   margin-top: 4px;
 `;
@@ -131,12 +131,16 @@ const Signup: React.FC = () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
     if (!nameRegex.test(firstName)) {
-      setError("First name must contain only letters with no spaces or special characters.");
+      setError(
+        "First name must contain only letters with no spaces or special characters."
+      );
       return false;
     }
 
     if (!nameRegex.test(lastName)) {
-      setError("Last name must contain only letters with no spaces or special characters.");
+      setError(
+        "Last name must contain only letters with no spaces or special characters."
+      );
       return false;
     }
 
@@ -177,14 +181,14 @@ const Signup: React.FC = () => {
       const res = await fetch("/api/customers/register", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           firstName,
           lastName,
           email,
-          password
-        })
+          password,
+        }),
       });
 
       const data = await res.json();
@@ -212,10 +216,10 @@ const Signup: React.FC = () => {
 
   // ===================== BUSINESS SIGNUP =======================
   const handleBusinessSignup = () => {
+    // For businesses we don't reuse these customer fields anymore,
+    // so no need to validate them here. They will enter their
+    // business email + password directly in the business registration form.
     setError(null);
-
-    if (!validateFields()) return;
-
     navigate("/register/business-details");
   };
 
@@ -265,9 +269,13 @@ const Signup: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
 
-            <Subtitle>• At least 8 characters • 1 uppercase • 1 lowercase • 1 number</Subtitle>
+            <Subtitle>
+              • At least 8 characters • 1 uppercase • 1 lowercase • 1 number
+            </Subtitle>
 
-            <TogglePassword onClick={() => setShowPassword(!showPassword)}>
+            <TogglePassword
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
               {showPassword ? "Hide Password" : "Show Password"}
             </TogglePassword>
           </FullWidth>
@@ -281,7 +289,9 @@ const Signup: React.FC = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
 
-            <TogglePassword onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <TogglePassword
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+            >
               {showConfirmPassword ? "Hide Password" : "Show Password"}
             </TogglePassword>
           </FullWidth>

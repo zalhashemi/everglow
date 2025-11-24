@@ -1,3 +1,4 @@
+// src/pages/auth/BusinessDetailsRegistration.tsx
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +7,9 @@ import type { LeafletMouseEvent } from "leaflet";
 import AlertPopup from "../../components/common/AlertPopup";
 import TextBox from "../../components/common/TextBox";
 
+/* ===========================
+   Styled Components
+=========================== */
 const PageContainer = styled.div`
   background: ${(p) => p.theme.colors.background};
   min-height: 100vh;
@@ -55,10 +59,11 @@ const SectionHeader = styled.h2`
   margin-bottom: ${(p) => p.theme.spacing.md};
 `;
 
-const TwoColumnGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${(p) => p.theme.spacing.md};
+/** Stack fields vertically */
+const FieldStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${(p) => p.theme.spacing.sm};
 `;
 
 const TextArea = styled.textarea`
@@ -248,7 +253,7 @@ const ClosedToggle = styled.label`
   }
 `;
 
-/* --------- Pretty file input --------- */
+/* --------- File Input --------- */
 
 const FileInputWrapper = styled.div`
   margin-top: ${(p) => p.theme.spacing.sm};
@@ -277,7 +282,39 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
-/* ------------------------------------- */
+const PasswordToggle = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: #4a5174;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 4px;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+/** Salon type select (women/men/mixed) */
+const SalonTypeSelect = styled.select`
+  width: 100%;
+  padding: ${(p) => p.theme.spacing.sm};
+  border-radius: ${(p) => p.theme.borderRadius.small};
+  border: 1px solid ${(p) => p.theme.colors.gray.medium};
+  font-size: ${(p) => p.theme.typography.fontSizes.small};
+  background: ${(p) => p.theme.colors.white};
+
+  &:focus {
+    outline: none;
+    border-color: ${(p) => p.theme.colors.primary};
+  }
+`;
+
+/* ===========================
+   Types & Constants
+=========================== */
 
 const DEFAULT_CENTER = {
   lat: 26.2285,
@@ -370,20 +407,28 @@ type StaffMember = {
   schedule: Record<DayKey, DayHours>;
 };
 
+/* ===========================
+   Component
+=========================== */
+
 const BusinessRegistration: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
   const [businessInfo, setBusinessInfo] = useState({
     name: "",
-    // kept for backend validation but hidden in UI
     type: "Salon",
     email: "",
     phone: "",
-    address: "",
-    city: "",
+    address: "", // added back
+    city: "", // added back
     about: "",
+    genderTag: "", // women / men / mixed
   });
+
+  const [accountPassword, setAccountPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [hoursSelection, setHoursSelection] = useState<
     Record<DayKey, DayHours>
@@ -407,6 +452,11 @@ const BusinessRegistration: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [popup, setPopup] = useState<{
+    type: "error" | "success";
+    message: string;
+  } | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -444,6 +494,8 @@ const BusinessRegistration: React.FC = () => {
       }
     };
   }, []);
+
+  /* ==== Staff helpers ==== */
 
   const handleStaffFieldChange = (
     index: number,
@@ -497,9 +549,90 @@ const BusinessRegistration: React.FC = () => {
     });
   };
 
-  /** ✅ Validate that working hours are fully set (mandatory) */
+  /* ==== Validation ==== */
+
+  const validateAccountSection = (): boolean => {
+    const name = businessInfo.name.trim();
+    const email = businessInfo.email.trim();
+    const phone = businessInfo.phone.trim();
+    const address = businessInfo.address.trim();
+    const city = businessInfo.city.trim();
+
+    if (!name) {
+      setError("Business Name: Please enter your business name.");
+      return false;
+    }
+
+    if (!email) {
+      setError("Business Email: Please enter your business email.");
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Business Email: Please enter a valid email address.");
+      return false;
+    }
+
+    if (!phone) {
+      setError("Phone Number: Please enter a phone number.");
+      return false;
+    }
+
+    const phoneRegex = /^\+?\d{7,15}$/;
+    if (!phoneRegex.test(phone)) {
+      setError(
+        "Phone Number: Please enter a valid phone number (digits only, 7–15, optional +)."
+      );
+      return false;
+    }
+
+    if (!address) {
+      setError("Address: Please enter your salon address.");
+      return false;
+    }
+
+    if (!city) {
+      setError("City: Please enter the city of the salon.");
+      return false;
+    }
+
+    if (!businessInfo.genderTag) {
+      setError(
+        "Salon Type: Please select if your salon is for women, men, or mixed."
+      );
+      return false;
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (!accountPassword) {
+      setError("Password: Please enter a password for your business login.");
+      return false;
+    }
+
+    if (!passwordRegex.test(accountPassword)) {
+      setError(
+        "Password: Must be at least 8 characters and include 1 uppercase, 1 lowercase, and 1 number."
+      );
+      return false;
+    }
+
+    if (accountPassword !== confirmPassword) {
+      setError("Confirm Password: Passwords do not match.");
+      return false;
+    }
+
+    // Location must be chosen
+    if (!manualLocation) {
+      setError("Location on Map: Please select your salon location.");
+      return false;
+    }
+
+    return true;
+  };
+
   const validateOperatingHours = (): boolean => {
-    // every day must either be Closed OR have both open & close
     const invalidDay = DAY_KEYS.find((dayKey) => {
       const d = hoursSelection[dayKey];
       if (d.closed) return false;
@@ -508,7 +641,7 @@ const BusinessRegistration: React.FC = () => {
 
     if (invalidDay) {
       setError(
-        "Please set working hours for all days (From & To) or mark them as Closed before continuing."
+        "Operating Hours: Please set working hours for all days (From & To) or mark them as Closed."
       );
       return false;
     }
@@ -516,21 +649,28 @@ const BusinessRegistration: React.FC = () => {
     return true;
   };
 
+  /* ==== Submit ==== */
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Step 1 → go to Step 2 but only if hours are valid
     if (currentStep !== 2) {
-      const ok = validateOperatingHours();
-      if (!ok) return;
+      const okAccount = validateAccountSection();
+      if (!okAccount) return;
+
+      const okHours = validateOperatingHours();
+      if (!okHours) return;
+
       setCurrentStep(2);
       return;
     }
 
-    // On final submit, validate again
-    const ok = validateOperatingHours();
-    if (!ok) return;
+    const okAccount = validateAccountSection();
+    if (!okAccount) return;
+
+    const okHours = validateOperatingHours();
+    if (!okHours) return;
 
     setIsSubmitting(true);
 
@@ -554,8 +694,6 @@ const BusinessRegistration: React.FC = () => {
         } else if (d.open && d.close) {
           operatingHoursPayload[dayKey] = `${d.open} - ${d.close}`;
         } else {
-          // this should no longer happen because of validation,
-          // but we keep it safe:
           operatingHoursPayload[dayKey] = "";
         }
       });
@@ -567,6 +705,10 @@ const BusinessRegistration: React.FC = () => {
       );
       formData.append("socialLinks", JSON.stringify(socialLinks));
       formData.append("staff", JSON.stringify(staffList));
+
+      // login credentials for business
+      formData.append("email", businessInfo.email);
+      formData.append("password", accountPassword);
 
       if (imageFile) {
         formData.append("image", imageFile);
@@ -586,35 +728,33 @@ const BusinessRegistration: React.FC = () => {
       if (data.token) {
         localStorage.setItem("businessToken", data.token);
         localStorage.setItem("businessInfo", JSON.stringify(data.business));
+        if (data.business && data.business._id) {
+          localStorage.setItem("businessId", data.business._id);
+        }
       }
 
       setPopup({
-  type: "success",
-  message: "Business registered successfully!",
-});
+        type: "success",
+        message: "Business registered successfully!",
+      });
 
-// Auto redirect after popup closes
-setTimeout(() => {
-  navigate("/business/dashboard");
-}, 5200);
-
+      setTimeout(() => {
+        navigate("/business/dashboard");
+      }, 5200);
     } catch (err: any) {
       console.error("Error registering business:", err);
       setPopup({
-  type: "error",
-  message: err.message || "Something went wrong",
-});
-
+        type: "error",
+        message: err.message || "Something went wrong",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const [popup, setPopup] = useState<{
-  type: "error" | "success";
-  message: string;
-} | null>(null);
-
+  /* ===========================
+     Render
+  ============================ */
 
   return (
     <PageContainer>
@@ -630,8 +770,9 @@ setTimeout(() => {
           {currentStep === 1 && (
             <>
               <Section>
-                <SectionHeader>Business Information</SectionHeader>
-                <TwoColumnGrid>
+                <SectionHeader>Business Information & Login</SectionHeader>
+
+                <FieldStack>
                   <TextBox
                     placeholder="Business Name"
                     value={businessInfo.name}
@@ -642,8 +783,9 @@ setTimeout(() => {
                       }))
                     }
                   />
+
                   <TextBox
-                    placeholder="Email Address"
+                    placeholder="Business Email (used for login)"
                     value={businessInfo.email}
                     onChange={(e: any) =>
                       setBusinessInfo((prev) => ({
@@ -652,6 +794,7 @@ setTimeout(() => {
                       }))
                     }
                   />
+
                   <TextBox
                     placeholder="Phone Number"
                     value={businessInfo.phone}
@@ -662,6 +805,7 @@ setTimeout(() => {
                       }))
                     }
                   />
+
                   <TextBox
                     placeholder="Address"
                     value={businessInfo.address}
@@ -672,6 +816,7 @@ setTimeout(() => {
                       }))
                     }
                   />
+
                   <TextBox
                     placeholder="City"
                     value={businessInfo.city}
@@ -682,17 +827,65 @@ setTimeout(() => {
                       }))
                     }
                   />
-                </TwoColumnGrid>
-                <TextArea
-                  placeholder="About your business."
-                  value={businessInfo.about}
-                  onChange={(e) =>
-                    setBusinessInfo((prev) => ({
-                      ...prev,
-                      about: e.target.value,
-                    }))
-                  }
-                />
+
+                  <SalonTypeSelect
+                    value={businessInfo.genderTag}
+                    onChange={(e) =>
+                      setBusinessInfo((prev) => ({
+                        ...prev,
+                        genderTag: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Salon type</option>
+                    <option value="women">Women</option>
+                    <option value="men">Men</option>
+                    <option value="mixed">Mixed</option>
+                  </SalonTypeSelect>
+
+                  <div>
+                    <TextBox
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Business Account Password"
+                      value={accountPassword}
+                      onChange={(e: any) => setAccountPassword(e.target.value)}
+                    />
+                    <PasswordToggle
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                    >
+                      {showPassword ? "Hide password" : "Show password"}
+                    </PasswordToggle>
+                    <div
+                      style={{
+                        marginTop: "4px",
+                        fontSize: "0.85rem",
+                        color: "#555",
+                      }}
+                    >
+                      Password must be at least 8 characters and include 1
+                      uppercase, 1 lowercase, and 1 number.
+                    </div>
+                  </div>
+
+                  <TextBox
+                    type="password"
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e: any) => setConfirmPassword(e.target.value)}
+                  />
+
+                  <TextArea
+                    placeholder="About your business."
+                    value={businessInfo.about}
+                    onChange={(e) =>
+                      setBusinessInfo((prev) => ({
+                        ...prev,
+                        about: e.target.value,
+                      }))
+                    }
+                  />
+                </FieldStack>
               </Section>
 
               <Section>
@@ -783,7 +976,7 @@ setTimeout(() => {
 
               <Section>
                 <SectionHeader>Social Media & Website</SectionHeader>
-                <TwoColumnGrid>
+                <FieldStack>
                   <TextBox
                     placeholder="Instagram"
                     value={socialLinks.instagram}
@@ -804,7 +997,7 @@ setTimeout(() => {
                       }))
                     }
                   />
-                </TwoColumnGrid>
+                </FieldStack>
               </Section>
 
               <Section>
@@ -974,14 +1167,14 @@ setTimeout(() => {
           {error && <ErrorText>{error}</ErrorText>}
         </form>
       </FormWrapper>
-      {popup && (
-  <AlertPopup
-    type={popup.type}
-    message={popup.message}
-    onClose={() => setPopup(null)}
-  />
-)}
 
+      {popup && (
+        <AlertPopup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup(null)}
+        />
+      )}
     </PageContainer>
   );
 };

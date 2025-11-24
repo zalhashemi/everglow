@@ -115,17 +115,18 @@ const registerBusiness = async (req, res) => {
     // ---------- NEW WIZARD FLOW ----------
     if (isWizardPayload) {
       const {
-  name,
-  type,
-  email,
-  phone,
-  address,
-  city,
-  about,
-  locationLat,
-  locationLng,
-} = businessInfo;
-
+        name,
+        type,
+        email,
+        phone,
+        about,
+        locationLat,
+        locationLng,
+        genderTag,
+        // address & city may not be sent from the new UI; keep optional
+        address,
+        city,
+      } = businessInfo;
 
       const mappedStaff = (wizardStaffRaw || [])
         .filter((m) => m?.name || m?.email || m?.role)
@@ -136,10 +137,24 @@ const registerBusiness = async (req, res) => {
           phone: m.phone || "",
         }));
 
-      if (!email || !name || !type || !address || !city) {
+      // New required fields match the new UI
+      if (!email || !name || !type || !phone || !genderTag) {
         return res.status(400).json({
           message: "Missing required fields",
         });
+      }
+
+      // Make sure we have a location (you already validate on frontend, this is just double-safety)
+      const hasLocation =
+        typeof locationLat === "number" &&
+        typeof locationLng === "number" &&
+        !Number.isNaN(locationLat) &&
+        !Number.isNaN(locationLng);
+
+      if (!hasLocation) {
+        return res
+          .status(400)
+          .json({ message: "Location is required for business registration" });
       }
 
       const existing = await Business.findOne({ email });
@@ -147,49 +162,58 @@ const registerBusiness = async (req, res) => {
         return res.status(400).json({ message: "Email already registered" });
       }
 
-const businessData = {
-  email,
-  phone,
-  businessName: name,
-  businessType: type,
-  address,
-  city,
-  description: about,
-  operatingHours: wizardOperatingHours,
-  staff: mappedStaff,
-  socialLinks: wizardSocialLinks,
-  imageUrl,
-};
+      // 🔐 NEW: take password from multipart body (set in BusinessDetailsRegistration.tsx)
+      const rawPassword = req.body.password;
+      if (!rawPassword) {
+        return res
+          .status(400)
+          .json({ message: "Password is required for business login" });
+      }
 
-let coords = null;
+      const passwordHash = await bcryptjs.hash(rawPassword, 10);
 
-// 1) If owner picked a point on the map, use that
-if (
-  typeof locationLat === "number" &&
-  typeof locationLng === "number" &&
-  !Number.isNaN(locationLat) &&
-  !Number.isNaN(locationLng)
-) {
-  coords = { lat: locationLat, lng: locationLng };
-} else if (address && city) {
-  // 2) Otherwise, try to geocode address+city (will log if MAPBOX_ACCESS_TOKEN missing)
-  const fullAddress = `${address}, ${city}`;
-  try {
-    coords = await geocodeAddressWithMapbox(fullAddress);
-  } catch (err) {
-    console.error("Geocode error:", err);
-  }
-}
+      const businessData = {
+        email,
+        phone,
+        businessName: name,
+        businessType: type,
+        // address/city kept for schema compatibility; use "N/A" if not provided
+        address: address || "N/A",
+        city: city || "N/A",
+        description: about,
+        operatingHours: wizardOperatingHours,
+        staff: mappedStaff,
+        socialLinks: wizardSocialLinks,
+        imageUrl,
+        passwordHash,
+        genderTag, // store the tag so you can use it later
+      };
 
-if (coords && typeof coords.lng === "number" && typeof coords.lat === "number") {
-  businessData.location = {
-    type: "Point",
-    coordinates: [coords.lng, coords.lat],
-  };
-}
+      let coords = null;
 
+      // 1) Use map location chosen in the wizard (required by new UI)
+      if (hasLocation) {
+        coords = { lat: locationLat, lng: locationLng };
+      } else if (address && city) {
+        // 2) Fallback: try to geocode address+city if ever provided
+        const fullAddress = `${address}, ${city}`;
+        try {
+          coords = await geocodeAddressWithMapbox(fullAddress);
+        } catch (err) {
+          console.error("Geocode error:", err);
+        }
+      }
 
-      
+      if (
+        coords &&
+        typeof coords.lng === "number" &&
+        typeof coords.lat === "number"
+      ) {
+        businessData.location = {
+          type: "Point",
+          coordinates: [coords.lng, coords.lat],
+        };
+      }
 
       const business = await Business.create(businessData);
       await createDefaultLoyaltyForBusiness(business._id);
@@ -223,7 +247,9 @@ if (coords && typeof coords.lng === "number" && typeof coords.lat === "number") 
     }
 
     if (!ownerFirstName || !ownerLastName || !password) {
-      return res.status(400).json({ message: "Owner name and password required" });
+      return res
+        .status(400)
+        .json({ message: "Owner name and password required" });
     }
 
     const existing = await Business.findOne({ email });
@@ -256,7 +282,11 @@ if (coords && typeof coords.lng === "number" && typeof coords.lat === "number") 
       coords = await geocodeAddressWithMapbox(fullAddress);
     } catch {}
 
-    if (coords && typeof coords.lng === "number" && typeof coords.lat === "number") {
+    if (
+      coords &&
+      typeof coords.lng === "number" &&
+      typeof coords.lat === "number"
+    ) {
       businessData.location = {
         type: "Point",
         coordinates: [coords.lng, coords.lat],
@@ -352,6 +382,7 @@ const updateMyBusinessProfile = async (req, res) => {
         city,
         about,
         imageUrl,
+        genderTag,
       } = businessInfo;
 
       if (email !== undefined) updates.email = email;
@@ -362,6 +393,7 @@ const updateMyBusinessProfile = async (req, res) => {
       if (city !== undefined) updates.city = city;
       if (about !== undefined) updates.description = about;
       if (imageUrl !== undefined) updates.imageUrl = imageUrl;
+      if (genderTag !== undefined) updates.genderTag = genderTag;
     }
 
     if (wizardOperatingHours) {
@@ -402,6 +434,9 @@ const updateMyBusinessProfile = async (req, res) => {
     if (body.imageUrl !== undefined) {
       updates.imageUrl = body.imageUrl;
     }
+    if (body.genderTag !== undefined) {
+      updates.genderTag = body.genderTag;
+    }
 
     // 3) If an image is uploaded with multer on this route, use it too
     if (req.file) {
@@ -428,7 +463,6 @@ const updateMyBusinessProfile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 // NEARBY SEARCH
 const getNearbyBusinesses = async (req, res) => {
@@ -475,7 +509,7 @@ const getNearbyBusinesses = async (req, res) => {
       ...textFilter,
       ...geoFilter,
     }).select(
-      "businessName businessType address city description imageUrl location"
+      "businessName businessType address city description imageUrl location genderTag"
     );
 
     res.json(businesses);
@@ -514,8 +548,6 @@ const updateBusinessProfileImage = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 // DASHBOARD QUICK STATS FOR LOGGED-IN BUSINESS
 const getBusinessDashboardStats = async (req, res) => {
@@ -567,7 +599,7 @@ const getBusinessDashboardStats = async (req, res) => {
 };
 
 module.exports = {
- registerBusiness,
+  registerBusiness,
   loginBusiness,
   getMyBusinessProfile,
   updateMyBusinessProfile,
@@ -575,5 +607,3 @@ module.exports = {
   updateBusinessProfileImage,
   getBusinessDashboardStats,
 };
-
-

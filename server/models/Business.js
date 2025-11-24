@@ -127,6 +127,13 @@ const businessSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    // 🌸 For Her / For Him tag
+    genderTag: {
+      type: String,
+      enum: ["women", "men", "mixed"],
+      default: "mixed",
+    },
   },
   { timestamps: true }
 );

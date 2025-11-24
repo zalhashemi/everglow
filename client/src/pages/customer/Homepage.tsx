@@ -8,12 +8,11 @@ import PromoBanner from "../../components/common/PromoBanner";
 import errorLoading from "../../images/errorLoading.png";
 import Footer from "../../components/common/Footer";
 
-
 /* ============================================================
    Styled Components
 ============================================================ */
 const PageWrapper = styled.div`
-  background-color: #FAF6EA;
+  background-color: #faf6ea;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -157,14 +156,24 @@ const CARD_WIDTH = 310 + 18; // card + gap
 const SCROLL_CARDS = 4;
 const SCROLL_AMOUNT = CARD_WIDTH * SCROLL_CARDS;
 
+type Salon = {
+  _id: string;
+  businessName: string;
+  address: string;
+  city: string;
+  imageUrl?: string | null;
+  averageRating?: number;
+  reviewCount?: number;
+  genderTag?: string; // "women" | "men" | "mixed" | undefined
+};
+
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
-  // All salons (used for For Her / For Him – same as current behavior)
-  const [allSalons, setAllSalons] = useState<any[]>([]);
-  // New datasets
-  const [trendingSalons, setTrendingSalons] = useState<any[]>([]);
-  const [highestRatedSalons, setHighestRatedSalons] = useState<any[]>([]);
+  // All salons (used for all categories)
+  const [allSalons, setAllSalons] = useState<Salon[]>([]);
+  const [trendingSalons, setTrendingSalons] = useState<Salon[]>([]);
+  const [highestRatedSalons, setHighestRatedSalons] = useState<Salon[]>([]);
   const [loadingSalons, setLoadingSalons] = useState(true);
 
   const [offers, setOffers] = useState<any[]>([]);
@@ -173,32 +182,38 @@ const HomePage: React.FC = () => {
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
 
   const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
-
   const [scrollInfo, setScrollInfo] = useState(
     CATEGORIES.map(() => ({ atStart: true, atEnd: false }))
   );
 
   /* ============================================================
-     Fetch salons (all + trending + highest rated)
-  ============================================================ */
+     Fetch salons from public businesses API
+============================================================ */
   useEffect(() => {
     const fetchSalons = async () => {
       try {
-        const [allRes, trendingRes, highestRes] = await Promise.all([
-          fetch("http://localhost:5000/api/public/businesses"),
-          fetch("http://localhost:5000/api/public/businesses/trending"),
-          fetch("http://localhost:5000/api/public/businesses/highest-rated"),
-        ]);
+        // Using public business routes :contentReference[oaicite:0]{index=0}
+        const res = await fetch("http://localhost:5000/api/public/businesses");
+        if (!res.ok) {
+          throw new Error(`Failed /api/public/businesses: ${res.status}`);
+        }
+        const data = await res.json();
+        const list: Salon[] = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any).businesses)
+          ? (data as any).businesses
+          : [];
 
-        const [allData, trendingData, highestData] = await Promise.all([
-          allRes.json(),
-          trendingRes.json(),
-          highestRes.json(),
-        ]);
+        setAllSalons(list);
 
-        setAllSalons(allData || []);
-        setTrendingSalons(trendingData || []);
-        setHighestRatedSalons(highestData || []);
+        // Highest rated derived here
+        const highest = [...list].sort(
+          (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
+        );
+        setHighestRatedSalons(highest);
+
+        // Simple trending: use full list (you can change later)
+        setTrendingSalons(list);
       } catch (err) {
         console.error("Error fetching salons:", err);
       } finally {
@@ -211,13 +226,16 @@ const HomePage: React.FC = () => {
 
   /* ============================================================
      Fetch offers
-  ============================================================ */
+============================================================ */
   useEffect(() => {
     const fetchOffers = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/public/offers");
+        if (!res.ok) {
+          throw new Error(`Failed offers: ${res.status}`);
+        }
         const data = await res.json();
-        setOffers(data);
+        setOffers(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching offers:", err);
       } finally {
@@ -230,7 +248,7 @@ const HomePage: React.FC = () => {
 
   /* ============================================================
      Auto-slide carousel
-  ============================================================ */
+============================================================ */
   useEffect(() => {
     if (offers.length === 0) return;
 
@@ -242,8 +260,8 @@ const HomePage: React.FC = () => {
   }, [offers.length]);
 
   /* ============================================================
-     Scroll handling (max 4 cards)
-  ============================================================ */
+     Scroll handling (max 4 cards at a time)
+============================================================ */
   const handleScroll = (index: number, direction: "left" | "right") => {
     const container = scrollRefs.current[index];
     if (!container) return;
@@ -267,11 +285,10 @@ const HomePage: React.FC = () => {
   };
 
   /* ============================================================
-     Attach scroll listeners (same behavior as before)
-  ============================================================ */
+     Attach scroll listeners
+============================================================ */
   useEffect(() => {
     const elements = scrollRefs.current;
-
     const listeners: Array<() => void> = [];
 
     elements.forEach((el, index) => {
@@ -296,28 +313,35 @@ const HomePage: React.FC = () => {
     return () => {
       listeners.forEach((cleanup) => cleanup());
     };
-  }, [allSalons, trendingSalons, highestRatedSalons]);
+  }, [allSalons]);
 
   /* ============================================================
      Helper: which salons to show for each category
-  ============================================================ */
-  const getSalonsForCategory = (key: CategoryKey) => {
+============================================================ */
+  const getSalonsForCategory = (key: CategoryKey): Salon[] => {
     switch (key) {
       case "trending":
         return trendingSalons;
       case "highestRated":
         return highestRatedSalons;
       case "forHer":
+        // ✅ ONLY salons explicitly tagged women
+        return allSalons.filter(
+          (salon) => salon.genderTag?.toLowerCase() === "women"
+        );
       case "forHis":
+        // ✅ ONLY salons explicitly tagged men
+        return allSalons.filter(
+          (salon) => salon.genderTag?.toLowerCase() === "men"
+        );
       default:
-        // For now: same behavior as before = show all salons
         return allSalons;
     }
   };
 
   /* ============================================================
      Loading Screen
-  ============================================================ */
+============================================================ */
   if (loadingSalons) {
     return (
       <PageWrapper>
@@ -331,7 +355,7 @@ const HomePage: React.FC = () => {
 
   /* ============================================================
      Page UI
-  ============================================================ */
+============================================================ */
   return (
     <PageWrapper>
       <TabBar type="customer" />
@@ -380,7 +404,15 @@ const HomePage: React.FC = () => {
 
         {/* ===== SALON CATEGORIES ===== */}
         {CATEGORIES.map((category, index) => {
-          const salonsForCategory = getSalonsForCategory(category.key);
+          const salonsForCategory = getSalonsForCategory(category.key).slice(
+            0,
+            13
+          );
+
+          // If there are no salons for this category, skip rendering it
+          if (salonsForCategory.length === 0) {
+            return null;
+          }
 
           return (
             <div key={category.title}>
@@ -404,8 +436,7 @@ const HomePage: React.FC = () => {
                     scrollRefs.current[index] = el;
                   }}
                 >
-                  {salonsForCategory.slice(0, 13).map((salon: any) => (
-
+                  {salonsForCategory.map((salon) => (
                     <SalonCard
                       key={`${category.title}-${salon._id}`}
                       id={salon._id}
@@ -438,12 +469,10 @@ const HomePage: React.FC = () => {
           );
         })}
       </ContentWrapper>
-      <Footer />
 
+      <Footer />
     </PageWrapper>
   );
 };
-
-
 
 export default HomePage;

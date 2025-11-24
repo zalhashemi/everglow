@@ -1,10 +1,11 @@
+// src/pages/auth/Login.tsx
 import React, { useState } from "react";
 import styled from "styled-components";
 
 const PageWrapper = styled.div`
   width: 100vw;
   height: 100vh;
-  background: #FAF6EA;
+  background: #faf6ea;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -28,15 +29,6 @@ const Label = styled.label`
   font-size: 14px;
   font-family: "Inter", sans-serif;
   font-weight: 500;
-`;
-
-
-const SmallLink = styled.span`
-  color: #6b868f;
-  cursor: pointer;
-  &:hover {
-    text-decoration: underline;
-  }
 `;
 
 const BottomText = styled.div`
@@ -95,6 +87,7 @@ const RoleToggle = styled.div`
   gap: 8px;
   margin-bottom: 8px;
   font-size: 14px;
+  align-items: center;
 `;
 
 const RoleButton = styled.button<{ active?: boolean }>`
@@ -165,11 +158,12 @@ const LoginPage: React.FC = () => {
         if (data.token) localStorage.setItem("businessToken", data.token);
         if (data.business) {
           localStorage.setItem("businessInfo", JSON.stringify(data.business));
-          // ✅ this is what loyalty & dashboard should use
+          // used by loyalty & dashboard
           localStorage.setItem("businessId", data.business._id);
         }
 
-        window.location.href = "/business";
+        // 🔁 match where business registration sends them
+        window.location.href = "/business/dashboard";
       }
     } catch (err) {
       console.error(err);
@@ -184,7 +178,6 @@ const LoginPage: React.FC = () => {
       <FormContainer>
         <Title>Log In</Title>
 
-        {/* toggle between customer / business */}
         <RoleToggle>
           <span>Login as:</span>
           <RoleButton
@@ -233,7 +226,7 @@ const LoginPage: React.FC = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <span style={{ fontSize: "12px", color: "#666" }}>
+        <span style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
           It must be a combination of minimum 8 letters, numbers, and symbols.
         </span>
 
