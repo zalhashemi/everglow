@@ -167,6 +167,39 @@ const SelectDatePage: React.FC = () => {
     }
   }, [businessId, selectedServices, navigate]);
 
+  // ✅ Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().slice(0, 10);
+  };
+
+  // ✅ Check if selected date is today
+  const isToday = (dateString: string) => {
+    return dateString === getTodayDate();
+  };
+
+  // ✅ Filter out past times if date is today
+  const getFilteredSlots = (slots: string[]): string[] => {
+    if (!isToday(selectedDate)) {
+      return slots;
+    }
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    return slots.filter((slot) => {
+      const [hourStr, minuteStr] = slot.split(":");
+      const slotHour = parseInt(hourStr, 10);
+      const slotMinute = parseInt(minuteStr, 10);
+
+      // Only show times after current time
+      if (slotHour > currentHour) return true;
+      if (slotHour === currentHour && slotMinute > currentMinute) return true;
+      return false;
+    });
+  };
+
   // Load available time slots
   useEffect(() => {
     if (!businessId || !totalDurationMinutes || !selectedDate) return;
@@ -186,7 +219,11 @@ const SelectDatePage: React.FC = () => {
           }
         );
 
-        setAvailableSlots(res.data || []);
+        // ✅ Filter slots to remove past times if today
+        const rawSlots = res.data || [];
+        const filteredSlots = getFilteredSlots(rawSlots);
+
+        setAvailableSlots(filteredSlots);
         setSelectedSlot("");
         setAvailableStaff([]);
         setSelectedStaffIndex("");
@@ -256,6 +293,12 @@ const SelectDatePage: React.FC = () => {
       return;
     }
 
+    // ✅ Additional validation: ensure date is not in the past
+    if (selectedDate < getTodayDate()) {
+      setError("Cannot book appointments in the past.");
+      return;
+    }
+
     if (!selectedStaffIndex) {
       setError("Please select a staff member.");
       return;
@@ -309,6 +352,7 @@ const SelectDatePage: React.FC = () => {
               <DateInput
                 type="date"
                 value={selectedDate}
+                min={getTodayDate()}
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
             </Label>

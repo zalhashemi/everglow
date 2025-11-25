@@ -25,6 +25,7 @@ const Header = styled.header`
   align-items: center;
   padding: ${(p) => p.theme.spacing.md} 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  height: 100px;
 `;
 
 const Logo = styled.div`
@@ -36,10 +37,11 @@ const Logo = styled.div`
   font-size: ${(p) => p.theme.typography.fontSizes.xxlarge};
   color: ${(p) => p.theme.colors.secondary};
   width: 100%;
+  cursor: pointer;
 
   img {
-    width: 30%;
-    height: 30%;
+    max-height: 167px;
+    width: auto;
     object-fit: contain;
   }
 `;
@@ -143,7 +145,7 @@ const LandingPage: React.FC = () => {
   return (
     <Container>
       <Header>
-        <Logo>
+        <Logo onClick={() => navigate("/")}>
           {/* Replace with your logo file if available */}
           <img src={everglowLogo} alt="EverGlow" />
         </Logo>

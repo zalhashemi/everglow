@@ -5,6 +5,7 @@ import Button from "../../components/common/Button";
 import SecondaryButton from "../../components/common/SecondaryButton";
 import TextBox from "../../components/common/TextBox";
 import TermsPopup from "../../components/common/TermsPopup";
+import everglowLogo from "../../images/everglowLogo.png";
 
 const PageWrapper = styled.div`
   width: 100vw;
@@ -59,6 +60,51 @@ const TermsRow = styled.div`
     }
   }
 `;
+const ButtonRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  width: 990px;
+  margin-top: 10px; /* increased the space under the title */
+`;
+const Header = styled.header`
+  width: 100%;
+  background: ${(p) => p.theme.colors.white};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: ${(p) => p.theme.spacing.md} 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  height: 100px;
+`;
+
+const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${(p) => p.theme.spacing.sm};
+  font-family: "Playfair Display", serif;
+  font-size: ${(p) => p.theme.typography.fontSizes.xxlarge};
+  color: ${(p) => p.theme.colors.secondary};
+  width: 100%;
+  cursor: pointer;
+
+  img {
+    max-height: 167px;
+    width: auto;
+    object-fit: contain;
+  }
+`;
+const SquareButton = styled(Button)`
+  width: 48%;
+  height: 80px; /* makes them square-ish tiles */
+  font-size: 20px;
+  font-weight: 600;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
 
 const BottomText = styled.div`
   margin-top: 24px;
@@ -108,6 +154,9 @@ const TogglePassword = styled.span`
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
+
+  // NEW: Controls whether the customer form is shown
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -180,9 +229,7 @@ const Signup: React.FC = () => {
 
       const res = await fetch("/api/customers/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName,
           lastName,
@@ -216,112 +263,149 @@ const Signup: React.FC = () => {
 
   // ===================== BUSINESS SIGNUP =======================
   const handleBusinessSignup = () => {
-    // For businesses we don't reuse these customer fields anymore,
-    // so no need to validate them here. They will enter their
-    // business email + password directly in the business registration form.
-    setError(null);
     navigate("/register/business-details");
   };
 
   return (
     <>
+      {/* Added header with logo */}
+      <Header>
+        <Logo onClick={() => (window.location.href = "/")}>
+          {/* Replace with your logo file if available */}
+          <img src={everglowLogo} alt="EverGlow" />
+        </Logo>
+      </Header>
+
       <PageWrapper>
         <FormContainer>
           <Title>Sign Up</Title>
+<p style={{
+  fontFamily: "Inter, sans-serif",
+  color: "#6b6b6b",
+  marginTop: "-10px",
+  marginBottom: "20px",
+  fontSize: "16px"
+}}>
+  Create your Everglow account to start booking your beauty services instantly.
+</p>
 
-          {error && <ErrorText>{error}</ErrorText>}
 
-          <Row>
-            <HalfWidth>
-              <Label>First Name</Label>
-              <TextBox
-                placeholder="Placeholder"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-            </HalfWidth>
+          {/* Always show both buttons */}
+         <ButtonRow>
+  <SquareButton 
+    backgroundColor="#4a5174"
+    onClick={() => setShowCustomerForm(true)}
+  >
+    I am a Customer
+  </SquareButton>
 
-            <HalfWidth>
-              <Label>Last Name</Label>
-              <TextBox
-                placeholder="Placeholder"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </HalfWidth>
-          </Row>
+  <SquareButton
+    backgroundColor="#0B1C36"
+    onClick={handleBusinessSignup}
+  >
+    I am a Business
+  </SquareButton>
+</ButtonRow>
 
-          <FullWidth>
-            <Label>Email</Label>
-            <TextBox
-              placeholder="Placeholder"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </FullWidth>
 
-          <FullWidth>
-            <Label>Password</Label>
-            <TextBox
-              type={showPassword ? "text" : "password"}
-              placeholder="Placeholder"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          {/* Show customer form only AFTER user clicks "I am a Customer" */}
+          {showCustomerForm && (
+            <>
+              {error && <ErrorText>{error}</ErrorText>}
 
-            <Subtitle>
-              • At least 8 characters • 1 uppercase • 1 lowercase • 1 number
-            </Subtitle>
+              <Row>
+                <HalfWidth>
+                  <Label>First Name</Label>
+                  <TextBox
+                    placeholder="Placeholder"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </HalfWidth>
 
-            <TogglePassword
-              onClick={() => setShowPassword((prev) => !prev)}
-            >
-              {showPassword ? "Hide Password" : "Show Password"}
-            </TogglePassword>
-          </FullWidth>
+                <HalfWidth>
+                  <Label>Last Name</Label>
+                  <TextBox
+                    placeholder="Placeholder"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </HalfWidth>
+              </Row>
 
-          <FullWidth>
-            <Label>Confirm Password</Label>
-            <TextBox
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Placeholder"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+              <FullWidth>
+                <Label>Email</Label>
+                <TextBox
+                  placeholder="Placeholder"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </FullWidth>
 
-            <TogglePassword
-              onClick={() => setShowConfirmPassword((prev) => !prev)}
-            >
-              {showConfirmPassword ? "Hide Password" : "Show Password"}
-            </TogglePassword>
-          </FullWidth>
+              <FullWidth>
+                <Label>Password</Label>
+                <TextBox
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Placeholder"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
 
-          <TermsRow>
-            <input
-              type="checkbox"
-              checked={acceptedTerms}
-              onChange={(e) => setAcceptedTerms(e.target.checked)}
-            />
-            Agree to{" "}
-            <span onClick={() => setShowTerms(true)}>terms & conditions</span>
-          </TermsRow>
+                <Subtitle>
+                  • At least 8 characters • 1 uppercase • 1 lowercase • 1 number
+                </Subtitle>
 
-          <Button fullWidth onClick={handleCustomerSignup} disabled={loading}>
-            {loading ? "Signing you up..." : "I am a Customer"}
-          </Button>
+                <TogglePassword
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? "Hide Password" : "Show Password"}
+                </TogglePassword>
+              </FullWidth>
 
-          <Button
-            fullWidth
-            backgroundColor="#0B1C36"
-            onClick={handleBusinessSignup}
-          >
-            I am a Business
-          </Button>
+              <FullWidth>
+                <Label>Confirm Password</Label>
+                <TextBox
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Placeholder"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
 
-          <BottomText>
-            Already have an account?{" "}
-            <span onClick={() => navigate("/login")}>Login</span>
-          </BottomText>
+                <TogglePassword
+                  onClick={() =>
+                    setShowConfirmPassword((prev) => !prev)
+                  }
+                >
+                  {showConfirmPassword ? "Hide Password" : "Show Password"}
+                </TogglePassword>
+              </FullWidth>
+
+              <TermsRow>
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                />
+                Agree to{" "}
+                <span onClick={() => setShowTerms(true)}>
+                  terms & conditions
+                </span>
+              </TermsRow>
+
+              <Button
+                fullWidth
+                onClick={handleCustomerSignup}
+                disabled={loading}
+              >
+                {loading ? "Signing you up..." : "Create Account"}
+              </Button>
+
+              <BottomText>
+                Already have an account?{" "}
+                <span onClick={() => navigate("/login")}>Login</span>
+              </BottomText>
+            </>
+          )}
         </FormContainer>
       </PageWrapper>
 

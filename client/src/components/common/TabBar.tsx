@@ -16,19 +16,46 @@ const Bar = styled.div`
   width: 100%;
   padding: 0 20px;
   box-sizing: border-box;
+
+  @media (max-width: 1024px) {
+    height: 70px;
+    padding: 0 16px;
+  }
+
+  @media (max-width: 768px) {
+    height: 60px;
+    padding: 0 12px;
+    flex-wrap: wrap;
+  }
 `;
 
 const LeftSection = styled.div`
   display: flex;
   align-items: center;
   gap: 3px;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+    flex: 1;
+  }
 `;
 
 const Logo = styled.img`
-  
   height: 140px;
   object-fit: contain;
   cursor: pointer;
+
+  @media (max-width: 1024px) {
+    height: 120px;
+  }
+
+  @media (max-width: 768px) {
+    height: 90px;
+  }
+
+  @media (max-width: 480px) {
+    height: 70px;
+  }
 `;
 
 const SearchBox = styled.div`
@@ -37,8 +64,24 @@ const SearchBox = styled.div`
   background-color: #f5f5f5;
   border-radius: 6px;
   padding: 0 12px;
-  width: 700px;
+  width: 580px;
   height: 40px;
+
+  @media (max-width: 1200px) {
+    width: 500px;
+  }
+
+  @media (max-width: 1024px) {
+    width: 400px;
+    height: 36px;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    order: 3;
+    margin-top: 8px;
+    height: 34px;
+  }
 
   input {
     border: none;
@@ -48,11 +91,19 @@ const SearchBox = styled.div`
     font-family: "Inter", sans-serif;
     font-size: 14px;
     color: #333;
+
+    @media (max-width: 768px) {
+      font-size: 13px;
+    }
   }
 
   svg {
     color: #888;
     margin-right: 4px;
+
+    @media (max-width: 768px) {
+      margin-right: 6px;
+    }
   }
 `;
 
@@ -60,6 +111,18 @@ const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 36px;
+
+  @media (max-width: 1024px) {
+    gap: 24px;
+  }
+
+  @media (max-width: 768px) {
+    gap: 16px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
 `;
 
 const TabButton = styled.button<{ active?: boolean }>`
@@ -71,9 +134,22 @@ const TabButton = styled.button<{ active?: boolean }>`
   font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease-in-out;
+  white-space: nowrap;
 
   &:hover {
     color: #76949f;
+  }
+
+  @media (max-width: 1024px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
   }
 `;
 
@@ -150,7 +226,7 @@ const TabBar: React.FC<TabBarProps> = ({
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onKeyDown={handleSearchKeyDown}
-              onFocus={handleSearchFocus} // 👈 open map immediately
+              onFocus={handleSearchFocus}
             />
           </SearchBox>
         )}

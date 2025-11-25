@@ -19,12 +19,27 @@ const PageWrapper = styled.div`
 `;
 
 const ContentWrapper = styled.div`
-  width: 1300px;
+  width: 100%;
   max-width: 1300px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 60px 0;
+  padding: 60px 3%;
+
+  @media (max-width: 1024px) {
+    padding: 48px 4%;
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 40px 5%;
+    gap: 18px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 32px 5%;
+    gap: 16px;
+  }
 `;
 
 const Card = styled.div`
@@ -32,6 +47,16 @@ const Card = styled.div`
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 768px) {
+    padding: 24px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px;
+    border-radius: 10px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -39,6 +64,16 @@ const SectionTitle = styled.h2`
   font-weight: 700;
   color: #2d2d2d;
   margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
 `;
 
 const HeaderRow = styled.div`
@@ -46,12 +81,32 @@ const HeaderRow = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
 `;
 
 const LoyaltyList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    gap: 14px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
 `;
 
 /* 🔥 LOGOUT BUTTON STYLES */
@@ -71,6 +126,38 @@ const LogoutButton = styled.button`
 
   &:hover {
     background: #a30000;
+  }
+
+  @media (max-width: 768px) {
+    width: 180px;
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    align-self: stretch;
+  }
+`;
+
+const PersonalInfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+`;
+
+const FullWidthField = styled.div`
+  grid-column: 1 / span 2;
+
+  @media (max-width: 640px) {
+    grid-column: 1;
   }
 `;
 
@@ -103,11 +190,10 @@ const ProfilePage: React.FC = () => {
   const [visitedSalons, setVisitedSalons] = useState(0);
 
   const [alertData, setAlertData] = useState<{
-  type: "error" | "success";
-  title?: string;
-  message: string;
-} | null>(null);
-
+    type: "error" | "success";
+    title?: string;
+    message: string;
+  } | null>(null);
 
   /* ---------------- Load User Data + Stats + Loyalty ---------------- */
   useEffect(() => {
@@ -163,12 +249,84 @@ const ProfilePage: React.FC = () => {
 
   if (!customer) return <div style={{ padding: 40 }}>Loading...</div>;
 
+  /* ---------------- Validation Functions ---------------- */
+  const validateName = (name: string): boolean => {
+    // Only letters and spaces allowed, must not be empty
+    const nameRegex = /^[A-Za-z\s]+$/;
+    return name.trim().length > 0 && nameRegex.test(name.trim());
+  };
+
+  const validateEmail = (email: string): boolean => {
+    // Standard email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return email.trim().length > 0 && emailRegex.test(email.trim());
+  };
+
   /* ---------------- Save Edited Profile ---------------- */
   const handleSave = async () => {
+    // Validation checks
+    if (!firstName.trim()) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "First name cannot be empty.",
+      });
+      return;
+    }
+
+    if (!validateName(firstName)) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "First name can only contain letters and spaces.",
+      });
+      return;
+    }
+
+    if (!lastName.trim()) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Last name cannot be empty.",
+      });
+      return;
+    }
+
+    if (!validateName(lastName)) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Last name can only contain letters and spaces.",
+      });
+      return;
+    }
+
+    if (!email.trim()) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Email cannot be empty.",
+      });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "Please enter a valid email address.",
+      });
+      return;
+    }
+
     const token = localStorage.getItem("customerToken");
     if (!token) return;
 
-    const updates = { firstName, lastName, email };
+    const updates = { 
+      firstName: firstName.trim(), 
+      lastName: lastName.trim(), 
+      email: email.trim() 
+    };
 
     const res = await fetch("http://localhost:5000/api/customers/me", {
       method: "PUT",
@@ -185,12 +343,16 @@ const ProfilePage: React.FC = () => {
       setCustomer(data.customer);
       localStorage.setItem("customer", JSON.stringify(data.customer));
       setIsEditing(false);
+      setAlertData({
+        type: "success",
+        message: "Profile updated successfully.",
+      });
     } else {
       setAlertData({
-  type: "error",
-  message: data.message || "Failed to update profile",
-});
-
+        type: "error",
+        title: "ERROR",
+        message: data.message || "Failed to update profile",
+      });
     }
   };
 
@@ -232,13 +394,7 @@ const ProfilePage: React.FC = () => {
             </Button>
           </HeaderRow>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "16px",
-            }}
-          >
+          <PersonalInfoGrid>
             <TextBox
               label="First Name"
               value={firstName}
@@ -253,7 +409,7 @@ const ProfilePage: React.FC = () => {
               onChange={(e: any) => setLastName(e.target.value)}
             />
 
-            <div style={{ gridColumn: "1 / span 2" }}>
+            <FullWidthField>
               <TextBox
                 label="Email"
                 value={email}
@@ -261,8 +417,8 @@ const ProfilePage: React.FC = () => {
                 onChange={(e: any) => setEmail(e.target.value)}
                 style={{ width: "100%" }}
               />
-            </div>
-          </div>
+            </FullWidthField>
+          </PersonalInfoGrid>
         </Card>
 
         {/* ---------- Loyalty Programs (DB-linked) ---------- */}
@@ -289,14 +445,13 @@ const ProfilePage: React.FC = () => {
                 const tileOffer = parsed.offer || "Reward";
 
                 return (
-                <LoyaltyTile
-  salon={entry.business?.businessName}   // NEW
-  name={tileName}
-  offer={tileOffer}
-  filledCircles={entry.points}
-  totalCircles={entry.business?.loyalty?.rewardThreshold || 5}
-/>
-
+                  <LoyaltyTile
+                    salon={entry.business?.businessName}
+                    name={tileName}
+                    offer={tileOffer}
+                    filledCircles={entry.points}
+                    totalCircles={entry.business?.loyalty?.rewardThreshold || 5}
+                  />
                 );
               })
             )}

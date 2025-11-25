@@ -14,8 +14,10 @@ import AlertPopup from "../../components/common/AlertPopup";
 interface Service {
   _id: string;
   name: string;
-  price?: number;
-  durationMinutes?: number;
+  durationMinutes: number;
+  priceBHD: number;
+  category?: string;
+  description?: string;
 }
 
 interface Offer {
@@ -354,13 +356,13 @@ const Chip = styled.span<{ variant?: "active" | "past" }>`
   border: 1px solid
     ${(p) =>
       p.variant === "active"
-        ? "#3FAE57"
+        ? "#3fae57"
         : p.variant === "past"
         ? "#aaa"
         : "#ddd"};
   color: ${(p) =>
     p.variant === "active"
-      ? "#3FAE57"
+      ? "#3fae57"
       : p.variant === "past"
       ? "#666"
       : "#555"};
@@ -536,7 +538,6 @@ const SaveButton = styled.button`
   }
 `;
 
-
 const CancelButton = styled.button`
   background: #ffffff;
   border: 1px solid #dcdcdc;
@@ -609,6 +610,15 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
       return;
     }
 
+    // ✅ Validate that end date is after start date
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    if (endDate <= startDate) {
+      setValidationError("End date must be after the start date.");
+      return;
+    }
+
     setValidationError("");
 
     const payload = {
@@ -622,9 +632,11 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
     try {
       setSaving(true);
       if (existingOffer?._id) {
-        await api.put(`/business/offers/${existingOffer._id}`, payload);
+        // ✅ UPDATE OFFER -> /api/offers/:id
+        await api.put(`/offers/${existingOffer._id}`, payload);
       } else {
-        await api.post("/business/offers", payload);
+        // ✅ CREATE OFFER -> /api/offers
+        await api.post("/offers", payload);
       }
       onSaved();
       onClose();
@@ -686,6 +698,7 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
               <PopupInput
                 type="date"
                 value={end}
+                min={start || undefined}
                 onChange={(e) => setEnd(e.target.value)}
               />
             </div>
@@ -849,7 +862,8 @@ const BusinessDashboard: React.FC = () => {
   const fetchServices = async () => {
     try {
       setLoadingServices(true);
-      const res = await api.get("/business/me/services");
+      // ✅ business services -> /api/services (protected, "my services")
+      const res = await api.get("/services");
       setServices(res.data || []);
     } catch (err) {
       console.error("Error fetching services:", err);
@@ -862,7 +876,8 @@ const BusinessDashboard: React.FC = () => {
   const fetchOffers = async () => {
     try {
       setLoadingOffers(true);
-      const res = await api.get("/business/offers");
+      // ✅ business offers -> /api/offers/my
+      const res = await api.get("/offers/my");
       setOffers(res.data || []);
     } catch (err) {
       console.error("Error fetching offers:", err);
@@ -941,7 +956,8 @@ const BusinessDashboard: React.FC = () => {
     if (!ok) return;
 
     try {
-      await api.delete(`/business/offers/${offer._id}`);
+      // ✅ delete offer -> /api/offers/:id
+      await api.delete(`/offers/${offer._id}`);
       await fetchOffers();
       setPopup({
         type: "success",
@@ -971,9 +987,29 @@ const BusinessDashboard: React.FC = () => {
     });
   };
 
+  // ✅ Names for services attached to offers,
+  // using populated servicesAppliedOn from backend first,
+  // then falling back to the local services list.
   const getOfferServiceNames = (offer: Offer) => {
+    // 1) Use populated docs if available
+    const populatedNames =
+      offer.servicesAppliedOn
+        ?.filter(
+          (s): s is Service => typeof s === "object" && !!(s as any).name
+        )
+        .map((s) => s.name) || [];
+
+    if (populatedNames.length) {
+      if (populatedNames.length <= 3) return populatedNames.join(", ");
+      return `${populatedNames.slice(0, 3).join(", ")} +${
+        populatedNames.length - 3
+      } more`;
+    }
+
+    // 2) Fallback: use IDs with local services list
     if (!offer.servicesAppliedOn || !services.length)
       return "All included services";
+
     const ids = offer.servicesAppliedOn.map((s) =>
       typeof s === "string" ? s : s._id
     );
@@ -981,6 +1017,7 @@ const BusinessDashboard: React.FC = () => {
       .filter((s) => ids.includes(s._id))
       .map((s) => s.name)
       .filter(Boolean);
+
     if (!names.length) return "All included services";
     if (names.length <= 3) return names.join(", ");
     return `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;

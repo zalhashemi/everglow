@@ -1,11 +1,37 @@
 // src/pages/auth/Login.tsx
 import React, { useState } from "react";
 import styled from "styled-components";
+import everglowLogo from "../../images/everglowLogo.png";
 
 const PageWrapper = styled.div`
   width: 100vw;
-  height: 100vh;
   background: #faf6ea;
+  display: flex;
+  flex-direction: column;
+`;
+
+const Header = styled.header`
+  width: 100%;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  height: 100px;
+  margin-bottom: 24px;
+`;
+
+const Logo = styled.div`
+  img {
+    height: 140px;
+    object-fit: contain;
+    cursor: pointer;
+  }
+`;
+
+const ContentWrapper = styled.div`
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -19,7 +45,7 @@ const FormContainer = styled.div`
 `;
 
 const Title = styled.h2`
-  color: #6b868f;
+  color: #4a5174;
   font-family: "Inter", sans-serif;
   font-size: 28px;
   margin-bottom: 8px;
@@ -33,6 +59,9 @@ const Label = styled.label`
 
 const BottomText = styled.div`
   margin-top: 24px;
+  padding: 16px;
+  background: #faf6ea;
+  border-radius: 8px;
   font-size: 14px;
   color: #333;
   text-align: left;
@@ -51,7 +80,7 @@ const Spacer = styled.div`
 `;
 
 const Button = styled.button<{ fullWidth?: boolean }>`
-  background: #6b868f;
+  background: #4a5174;
   color: #fff;
   font-family: "Inter", sans-serif;
   font-weight: 600;
@@ -82,6 +111,41 @@ const ErrorText = styled.div`
   margin-top: -4px;
 `;
 
+const ButtonRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+  margin-bottom: 16px;
+`;
+
+const RoleToggleButton = styled.button<{ active?: boolean; businessButton?: boolean }>`
+  flex: 1;
+  height: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border: none;
+  background: ${(p) => 
+    p.active
+      ? p.businessButton 
+        ? "#0B1C36" 
+        : "#4a5174"
+      : "#e5e5e5"
+  };
+  color: ${(p) => (p.active ? "#fff" : "#333")};
+  font-family: "Inter", sans-serif;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
 const RoleToggle = styled.div`
   display: flex;
   gap: 8px;
@@ -93,8 +157,8 @@ const RoleToggle = styled.div`
 const RoleButton = styled.button<{ active?: boolean }>`
   border-radius: 999px;
   padding: 6px 12px;
-  border: 1px solid ${(p) => (p.active ? "#6b868f" : "#ccc")};
-  background: ${(p) => (p.active ? "#6b868f" : "transparent")};
+  border: 1px solid ${(p) => (p.active ? "#4a5174" : "#ccc")};
+  background: ${(p) => (p.active ? "#4a5174" : "transparent")};
   color: ${(p) => (p.active ? "#fff" : "#333")};
   cursor: pointer;
   font-size: 13px;
@@ -175,83 +239,86 @@ const LoginPage: React.FC = () => {
 
   return (
     <PageWrapper>
-      <FormContainer>
-        <Title>Log In</Title>
+      <Header>
+        <Logo onClick={() => (window.location.href = "/")}>
+          <img src={everglowLogo} alt="EverGlow" />
+        </Logo>
+      </Header>
 
-        <RoleToggle>
-          <span>Login as:</span>
-          <RoleButton
-            type="button"
-            active={mode === "customer"}
-            onClick={() => setMode("customer")}
-          >
-            Customer
-          </RoleButton>
-          <RoleButton
-            type="button"
-            active={mode === "business"}
-            onClick={() => setMode("business")}
-          >
-            Business
-          </RoleButton>
-        </RoleToggle>
+      <ContentWrapper>
+        <FormContainer>
+          <Title>Log In</Title>
 
-        {error && <ErrorText>{error}</ErrorText>}
+          <ButtonRow>
+            <RoleToggleButton
+              type="button"
+              active={mode === "customer"}
+              onClick={() => setMode("customer")}
+            >
+              I am a Customer
+            </RoleToggleButton>
 
-        <Label>Email Address</Label>
-        <input
-          style={{
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            fontSize: "16px",
-          }}
-          placeholder="Placeholder"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+            <RoleToggleButton
+              type="button"
+              active={mode === "business"}
+              businessButton
+              onClick={() => setMode("business")}
+            >
+              I am a Business
+            </RoleToggleButton>
+          </ButtonRow>
 
-        <Spacer />
-        <Label>Password</Label>
-        <input
-          type="password"
-          style={{
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            fontSize: "16px",
-          }}
-          placeholder="Placeholder"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          {error && <ErrorText>{error}</ErrorText>}
 
-        <span style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
-          It must be a combination of minimum 8 letters, numbers, and symbols.
-        </span>
+          <Label>{mode === "business" ? "Business Email Address" : "Email Address"}</Label>
+          <input
+            style={{
+              padding: "10px",
+              borderRadius: "6px",
+              border: "1px solid #ccc",
+              fontSize: "16px",
+            }}
+            placeholder="Placeholder"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-        <Button fullWidth disabled={loading} onClick={handleLogin}>
-          {loading
-            ? mode === "customer"
-              ? "Logging in..."
-              : "Logging in as business..."
-            : mode === "customer"
-            ? "Log In"
-            : "Log In as Business"}
-        </Button>
+          <Spacer />
+          <Label>Password</Label>
+          <input
+            type="password"
+            style={{
+              padding: "10px",
+              borderRadius: "6px",
+              border: "1px solid #ccc",
+              fontSize: "16px",
+            }}
+            placeholder="Placeholder"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        <BottomText>
-          No account yet?{" "}
-          <span
-            onClick={() =>
-              (window.location.href =
-                mode === "customer" ? "/signup" : "/signup")
-            }
-          >
-            {mode === "customer" ? "Sign Up" : "Register your business"}
+          <span style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
+            It must be a combination of minimum 8 letters, numbers, and symbols.
           </span>
-        </BottomText>
-      </FormContainer>
+
+          <Button fullWidth disabled={loading} onClick={handleLogin}>
+            {loading ? "Logging in..." : "Log In"}
+          </Button>
+
+          <BottomText>
+            No account yet?{" "}
+            <span
+              onClick={() =>
+                (window.location.href =
+                  mode === "customer" ? "/signup" : "/signup")
+              }
+            >
+              {mode === "customer" ? "Sign Up" : "Register your business"}
+            </span>
+          </BottomText>
+        </FormContainer>
+      </ContentWrapper>
     </PageWrapper>
   );
 };

@@ -34,6 +34,21 @@ const Tile = styled.div`
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   text-align: left;
+
+  @media (max-width: 1280px) {
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 20px 24px;
+    gap: 18px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px 20px;
+    gap: 16px;
+  }
 `;
 
 const DateText = styled.div`
@@ -42,6 +57,14 @@ const DateText = styled.div`
   color: #555;
   text-align: left;
   width: 100%;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
 `;
 
 const InfoRow = styled.div`
@@ -50,6 +73,11 @@ const InfoRow = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+  }
 `;
 
 const SalonImage = styled.img`
@@ -57,12 +85,27 @@ const SalonImage = styled.img`
   height: 96px;
   border-radius: 14px;
   object-fit: cover;
+
+  @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+  }
+
+  @media (max-width: 480px) {
+    width: 70px;
+    height: 70px;
+  }
 `;
 
 const Details = styled.div`
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
+
+  @media (max-width: 480px) {
+    gap: 4px;
+  }
 `;
 
 const SalonName = styled.div`
@@ -70,18 +113,42 @@ const SalonName = styled.div`
   font-weight: 700;
   color: #0b1c36;
   text-align: left;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const LocationText = styled.div`
   font-size: 17px;
   color: #7a7a7a;
   text-align: left;
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const ServiceText = styled.div`
   font-size: 16px;
   color: #9aa0a6;
   text-align: left;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const ButtonRow = styled.div`
@@ -89,6 +156,11 @@ const ButtonRow = styled.div`
   gap: 20px;
   justify-content: flex-start;
   width: 100%;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 const ReceiptButton = styled(Button)`
@@ -101,6 +173,23 @@ const LeftSection = styled.div`
   gap: 20px;
   align-items: flex-start;
   justify-content: flex-start;
+  flex: 1;
+
+  @media (max-width: 768px) {
+    gap: 16px;
+    width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
+`;
+
+const RatingButton = styled(SecondaryButton)`
+  @media (max-width: 768px) {
+    width: 100% !important;
+    max-width: 100%;
+  }
 `;
 
 /* ---- COMPONENT ---- */
@@ -160,9 +249,9 @@ const BookingTile: React.FC<BookingTileProps> = ({
         </LeftSection>
 
         {isPast && (
-          <SecondaryButton width="180px" onClick={onLeaveRating}>
+          <RatingButton width="180px" onClick={onLeaveRating}>
             {hasReview ? "Edit Rating" : "Leave a Rating"}
-          </SecondaryButton>
+          </RatingButton>
         )}
       </InfoRow>
 

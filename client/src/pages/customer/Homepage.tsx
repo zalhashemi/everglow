@@ -24,6 +24,14 @@ const ContentWrapper = styled.div`
   max-width: 1600px;
   padding: 20px 3%;
   box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 16px 4%;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 3%;
+  }
 `;
 
 const WelcomeText = styled.h1`
@@ -32,6 +40,21 @@ const WelcomeText = styled.h1`
   font-weight: 700;
   color: #4a5074;
   margin: 40px 0 30px;
+
+  @media (max-width: 1024px) {
+    font-size: 40px;
+    margin: 32px 0 24px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 32px;
+    margin: 24px 0 20px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin: 20px 0 16px;
+  }
 `;
 
 /* ===== Offers Carousel ===== */
@@ -41,6 +64,10 @@ const OfferCarouselWrapper = styled.div`
   overflow: hidden;
   margin-bottom: 20px;
   position: relative;
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const OfferTrack = styled.div`
@@ -48,6 +75,18 @@ const OfferTrack = styled.div`
   width: 100%;
   height: 220px;
   transition: transform 0.5s ease;
+
+  @media (max-width: 1024px) {
+    height: 200px;
+  }
+
+  @media (max-width: 768px) {
+    height: 180px;
+  }
+
+  @media (max-width: 480px) {
+    height: 160px;
+  }
 `;
 
 const DotsWrapper = styled.div`
@@ -55,6 +94,11 @@ const DotsWrapper = styled.div`
   justify-content: center;
   gap: 8px;
   margin-top: 10px;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+    margin-top: 8px;
+  }
 `;
 
 const Dot = styled.button<{ active: boolean }>`
@@ -64,6 +108,11 @@ const Dot = styled.button<{ active: boolean }>`
   border: none;
   background-color: ${(p) => (p.active ? "#0b1c36" : "#d3d3d3")};
   cursor: pointer;
+
+  @media (max-width: 480px) {
+    width: 8px;
+    height: 8px;
+  }
 `;
 
 /* ===== Salon Category Styling ===== */
@@ -74,6 +123,16 @@ const CategoryHeader = styled.div`
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   margin-bottom: 16px;
+
+  @media (max-width: 768px) {
+    padding: 6px 14px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 5px 12px;
+    margin-bottom: 10px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -81,6 +140,18 @@ const SectionTitle = styled.h2`
   font-weight: 700;
   color: #4a5074;
   margin: 0;
+
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const ScrollWrapper = styled.div`
@@ -89,6 +160,14 @@ const ScrollWrapper = styled.div`
   align-items: center;
   width: 100%;
   margin-bottom: 40px;
+
+  @media (max-width: 1024px) {
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 768px) {
+    margin-bottom: 24px;
+  }
 `;
 
 const HorizontalScroll = styled.div`
@@ -98,6 +177,19 @@ const HorizontalScroll = styled.div`
   scroll-behavior: smooth;
   width: 100%;
   padding-bottom: 10px;
+
+  @media (max-width: 768px) {
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 `;
 
 const ScrollButton = styled.div<{ side: "left" | "right" }>`
@@ -118,6 +210,16 @@ const ScrollButton = styled.div<{ side: "left" | "right" }>`
   &:hover {
     transform: scale(1.05);
     background-color: #f8f8f8;
+  }
+
+  @media (max-width: 1024px) {
+    width: 40px;
+    height: 40px;
+    ${(p) => (p.side === "left" ? "left: -20px;" : "right: -20px;")}
+  }
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 

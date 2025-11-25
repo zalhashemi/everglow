@@ -7,7 +7,7 @@ import api from "../../utils/api";
 
 const PageWrapper = styled.div`
   min-height: 100vh;
-  background: #f7f7fb;
+  background: #FAF6EA;
 `;
 
 const Content = styled.div`
@@ -24,7 +24,7 @@ const Title = styled.h1`
   font-size: 32px;
   font-weight: 700;
   margin: 0 0 4px;
-  color: #1f1f2b;
+  color: ${(p) => p.theme.colors.primary};
 `;
 
 const Subtitle = styled.p`
@@ -214,6 +214,14 @@ const LoyaltyPage: React.FC = () => {
   };
 
   const handleToggleEnabled = (checked: boolean) => {
+    // ✅ Prevent enabling if no reward name
+    if (checked) {
+      const singleRow = form.rewards[0] || { name: "", offer: "" };
+      if (!singleRow.name.trim()) {
+        setError("Please add a reward name before enabling the loyalty program.");
+        return;
+      }
+    }
     setForm((prev) => ({ ...prev, enabled: checked }));
     setError("");
     setSuccess("");
@@ -284,6 +292,7 @@ const LoyaltyPage: React.FC = () => {
   };
 
   const singleReward = form.rewards[0] || { name: "", offer: "" };
+  const hasRewardName = singleReward.name.trim().length > 0;
 
   return (
     <PageWrapper>
@@ -310,12 +319,13 @@ const LoyaltyPage: React.FC = () => {
                     type="checkbox"
                     checked={form.enabled}
                     onChange={(e) => handleToggleEnabled(e.target.checked)}
+                    disabled={!hasRewardName}
                   />
                   <span>Enable loyalty program for this business</span>
                 </ToggleRow>
                 <HelperText>
                   When disabled, customers won&apos;t see a loyalty tile for
-                  your salon.
+                  your salon. {!hasRewardName && "(Add a reward name first)"}
                 </HelperText>
               </FormSection>
 

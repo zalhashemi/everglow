@@ -525,6 +525,14 @@ const BusinessProfile: React.FC = () => {
     return "";
   };
 
+  // ✅ Helper to get filtered closing time options based on opening time
+  const getValidClosingTimes = (openTime: string): string[] => {
+    if (!openTime) return TIME_OPTIONS;
+    const openIndex = TIME_OPTIONS.indexOf(openTime);
+    if (openIndex === -1) return TIME_OPTIONS;
+    return TIME_OPTIONS.slice(openIndex + 1);
+  };
+
   const handleBusinessDayChange = (
     dayKey: DayKey,
     field: "open" | "close" | "closed",
@@ -538,7 +546,17 @@ const BusinessProfile: React.FC = () => {
         closed: current.closed,
       };
 
-      if (field === "open") updated.open = value as string;
+      if (field === "open") {
+        updated.open = value as string;
+        // ✅ Reset close time if it's now before the new open time
+        if (updated.close && updated.open) {
+          const openIndex = TIME_OPTIONS.indexOf(updated.open);
+          const closeIndex = TIME_OPTIONS.indexOf(updated.close);
+          if (closeIndex <= openIndex) {
+            updated.close = "";
+          }
+        }
+      }
       if (field === "close") updated.close = value as string;
       if (field === "closed") {
         updated.closed = value as boolean;
@@ -583,7 +601,33 @@ const BusinessProfile: React.FC = () => {
       const updated = [...prev];
       const staffMember = { ...updated[staffIndex] };
       const schedule = { ...staffMember.schedule };
-      schedule[day] = { ...schedule[day], ...changes };
+      const currentDay = { ...schedule[day] };
+
+      // ✅ If changing open time, reset close if it's now invalid
+      if (changes.open !== undefined) {
+        currentDay.open = changes.open;
+        if (currentDay.close && currentDay.open) {
+          const openIndex = TIME_OPTIONS.indexOf(currentDay.open);
+          const closeIndex = TIME_OPTIONS.indexOf(currentDay.close);
+          if (closeIndex <= openIndex) {
+            currentDay.close = "";
+          }
+        }
+      }
+
+      if (changes.close !== undefined) {
+        currentDay.close = changes.close;
+      }
+
+      if (changes.closed !== undefined) {
+        currentDay.closed = changes.closed;
+        if (currentDay.closed) {
+          currentDay.open = "";
+          currentDay.close = "";
+        }
+      }
+
+      schedule[day] = currentDay;
       staffMember.schedule = schedule;
       updated[staffIndex] = staffMember;
       return updated;
@@ -900,6 +944,8 @@ const BusinessProfile: React.FC = () => {
                   );
                 }
 
+                const validClosingTimes = getValidClosingTimes(parsed.open);
+
                 return (
                   <DayRow key={dayKey}>
                     <DayLabel>{DAY_LABELS[dayKey]}</DayLabel>
@@ -933,7 +979,7 @@ const BusinessProfile: React.FC = () => {
                       }
                     >
                       <option value="">To</option>
-                      {TIME_OPTIONS.map((time) => (
+                      {validClosingTimes.map((time) => (
                         <option key={time} value={time}>
                           {time}
                         </option>
@@ -1051,6 +1097,8 @@ const BusinessProfile: React.FC = () => {
                               close: "",
                               closed: false,
                             };
+                            const validStaffClosingTimes = getValidClosingTimes(day.open);
+
                             return (
                               <DayRow key={dayKey}>
                                 <DayLabel>{DAY_LABELS[dayKey]}</DayLabel>
@@ -1080,7 +1128,7 @@ const BusinessProfile: React.FC = () => {
                                   }
                                 >
                                   <option value="">To</option>
-                                  {TIME_OPTIONS.map((time) => (
+                                  {validStaffClosingTimes.map((time) => (
                                     <option key={time} value={time}>
                                       {time}
                                     </option>

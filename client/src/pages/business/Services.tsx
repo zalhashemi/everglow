@@ -207,6 +207,12 @@ const BusinessServices: React.FC = () => {
     setShowModal(true);
   };
 
+  // ------------ HELPER FUNCTION FOR CAPITALIZATION ------------
+  const capitalizeFirst = (text: string): string => {
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
+
   // ------------ VALIDATION + SUBMIT ------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,6 +228,22 @@ const BusinessServices: React.FC = () => {
         type: "error",
         title: "ERROR",
         message: "Service name is required.",
+      });
+      return;
+    }
+
+    // Check for duplicate service name (case-insensitive)
+    const isDuplicateName = services.some(
+      (s) =>
+        s.name.toLowerCase() === trimmedName.toLowerCase() &&
+        s._id !== selectedService?._id
+    );
+
+    if (isDuplicateName) {
+      setAlertData({
+        type: "error",
+        title: "ERROR",
+        message: "A service with this name already exists.",
       });
       return;
     }
@@ -263,10 +285,10 @@ const BusinessServices: React.FC = () => {
     }
 
     const payload = {
-      name: trimmedName,
+      name: capitalizeFirst(trimmedName),
       durationMinutes: durationMinutesNum,
       priceBHD: priceBHDNum,
-      category: trimmedCategory || undefined,
+      category: trimmedCategory ? capitalizeFirst(trimmedCategory) : undefined,
       description: trimmedDescription || undefined,
     };
 
@@ -602,7 +624,10 @@ const BusinessServices: React.FC = () => {
                 placeholder="Service Name"
                 value={formData.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData((p) => ({ ...p, name: e.target.value }))
+                  setFormData((p) => ({ 
+                    ...p, 
+                    name: capitalizeFirst(e.target.value) 
+                  }))
                 }
               />
               <TextBox
@@ -627,7 +652,10 @@ const BusinessServices: React.FC = () => {
                   placeholder="Category (e.g. Hair, Nails)"
                   value={formData.category}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormData((p) => ({ ...p, category: e.target.value }))
+                    setFormData((p) => ({ 
+                      ...p, 
+                      category: capitalizeFirst(e.target.value) 
+                    }))
                   }
                 />
                 {categoryOptions.length > 0 && (

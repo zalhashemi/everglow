@@ -36,6 +36,14 @@ const ContentWrapper = styled.div`
   margin: 0 auto;
   padding: 20px 3% 40px;
   box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 16px 4% 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 5% 24px;
+  }
 `;
 
 const Heading = styled.h1`
@@ -44,6 +52,21 @@ const Heading = styled.h1`
   font-weight: 700;
   color: #4a5074;
   margin: 30px 0 16px;
+
+  @media (max-width: 1024px) {
+    font-size: 28px;
+    margin: 24px 0 12px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+    margin: 20px 0 10px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+    margin: 16px 0 8px;
+  }
 `;
 
 const Subheading = styled.p`
@@ -51,6 +74,16 @@ const Subheading = styled.p`
   font-size: 14px;
   color: #555;
   margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
 `;
 
 const Layout = styled.div`
@@ -60,6 +93,11 @@ const Layout = styled.div`
 
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 768px) {
+    gap: 16px;
   }
 `;
 
@@ -69,6 +107,21 @@ const MapWrapper = styled.div`
   border-radius: 16px;
   overflow: hidden;
   background-color: #e5e5e5;
+
+  @media (max-width: 1100px) {
+    height: 450px;
+    order: 2;
+  }
+
+  @media (max-width: 768px) {
+    height: 400px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 480px) {
+    height: 350px;
+    border-radius: 10px;
+  }
 `;
 
 const ResultsPanel = styled.div`
@@ -78,6 +131,23 @@ const ResultsPanel = styled.div`
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   max-height: 550px;
   overflow-y: auto;
+
+  @media (max-width: 1100px) {
+    order: 1;
+    max-height: 400px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 14px;
+    border-radius: 12px;
+    max-height: 350px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-radius: 10px;
+    max-height: 300px;
+  }
 `;
 
 const ResultsHeader = styled.div`
@@ -85,6 +155,12 @@ const ResultsHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  gap: 8px;
+
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
 `;
 
 const ResultsTitle = styled.h2`
@@ -92,11 +168,27 @@ const ResultsTitle = styled.h2`
   font-weight: 700;
   margin: 0;
   color: #4a5074;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
 `;
 
 const ResultsCount = styled.span`
   font-size: 13px;
   color: #777;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
 `;
 
 const ResultCard = styled.button<{ selected?: boolean }>`
@@ -114,6 +206,17 @@ const ResultCard = styled.button<{ selected?: boolean }>`
   &:hover {
     background-color: #f7f7f7;
   }
+
+  @media (max-width: 768px) {
+    padding: 10px 8px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 6px;
+    margin-bottom: 6px;
+  }
 `;
 
 const ResultName = styled.div`
@@ -121,33 +224,83 @@ const ResultName = styled.div`
   font-weight: 700;
   color: #0b1c36;
   margin-bottom: 4px;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
 `;
 
 const ResultMeta = styled.div`
   font-size: 13px;
   color: #666;
   margin-bottom: 4px;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+    margin-bottom: 3px;
+  }
 `;
 
 const ResultDescription = styled.div`
   font-size: 12px;
   color: #888;
+
+  @media (max-width: 768px) {
+    font-size: 11px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
 `;
 
 const Placeholder = styled.div`
   font-size: 14px;
   color: #777;
   margin-top: 8px;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;
 
 const LoadingText = styled.div`
   font-size: 14px;
   color: #777;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;
 
 const ErrorText = styled.div`
   font-size: 14px;
   color: #b3261e;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;
 
 const DEFAULT_CENTER = {
@@ -398,7 +551,12 @@ const SearchMapPage: React.FC = () => {
               <ResultsTitle>Results</ResultsTitle>
 
               <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "10px",
+                  flexWrap: "wrap"
+                }}
               >
                 {!error && (
                   <ResultsCount>
