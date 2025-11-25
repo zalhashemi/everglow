@@ -2,13 +2,14 @@ import React, { useEffect } from "react";
 import styled from "styled-components";
 
 interface AlertPopupProps {
-  type?: "error" | "success";
+  type: "success" | "error";
   title?: string;
-  message: string;
-  onClose: () => void;
-  onConfirm?: () => void; // ✅ NEW: Optional confirm handler
-  confirmLabel?: string;   // ✅ NEW: Optional confirm button label
-  cancelLabel?: string;    // ✅ NEW: Optional cancel button label
+  message: string | React.ReactNode; // ✅ Allow ReactNode
+  onClose?: () => void;
+  onConfirm?: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  confirmDisabled?: boolean;
 }
 
 const Overlay = styled.div`
@@ -97,6 +98,7 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
   onConfirm,
   confirmLabel = "OK",
   cancelLabel = "Cancel",
+  confirmDisabled = false,
 }) => {
 
   const isError = type === "error";
@@ -104,7 +106,7 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
 
   // Auto-close in 5 sec (only for non-confirmation alerts)
   useEffect(() => {
-    if (isConfirmation) return; // Don't auto-close confirmation dialogs
+    if (isConfirmation || !onClose) return; // ✅ Check if onClose exists
 
     const timer = setTimeout(() => {
       onClose();
@@ -117,7 +119,15 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
     if (onConfirm) {
       onConfirm();
     }
-    onClose();
+    if (onClose) { // ✅ Check before calling
+      onClose();
+    }
+  };
+
+  const handleClose = () => {
+    if (onClose) { // ✅ Check before calling
+      onClose();
+    }
   };
 
   return (
@@ -132,15 +142,15 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
 
         {isConfirmation ? (
           <ButtonRow>
-            <CancelButton onClick={onClose}>
+            <CancelButton onClick={handleClose} disabled={confirmDisabled}>
               {cancelLabel}
             </CancelButton>
-            <OkButton isError={isError} onClick={handleConfirm}>
+            <OkButton isError={isError} onClick={handleConfirm} disabled={confirmDisabled}>
               {confirmLabel}
             </OkButton>
           </ButtonRow>
         ) : (
-          <OkButton isError={isError} onClick={onClose}>
+          <OkButton isError={isError} onClick={handleClose}>
             OK
           </OkButton>
         )}

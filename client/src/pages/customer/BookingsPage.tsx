@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
 import BookingTile from "../../components/common/BookingTile";
+import AlertPopup from "../../components/common/AlertPopup";
 import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
 
@@ -45,6 +46,9 @@ const ContentWrapper = styled.div`
 const Section = styled.div`
   width: 100%;
   padding: 0 3%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   @media (max-width: 768px) {
     padding: 0 4%;
@@ -59,8 +63,11 @@ const SectionTitle = styled.h2`
   font-family: "Inter", sans-serif;
   font-size: 36px;
   font-weight: 800;
-  color: #27374d;
+  color: #4A5074;
   margin-bottom: 25px;
+  width: 1200px;
+  max-width: 100%;
+  text-align: left;
 
   @media (max-width: 1024px) {
     font-size: 32px;
@@ -119,110 +126,58 @@ const ErrorText = styled.p`
   }
 `;
 
-/* ===== Shared Popup Styles ===== */
-
-const Overlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+const StarRatingContainer = styled.div`
   display: flex;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  z-index: 999;
-  padding: 20px;
+`;
+
+const Star = styled.button<{ filled: boolean }>`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 32px;
+  color: ${(p) => (p.filled ? "#FFD700" : "#E0E0E0")};
+  transition: color 0.2s ease, transform 0.1s ease;
+  padding: 0;
+  line-height: 1;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
 
   @media (max-width: 480px) {
-    padding: 16px;
+    font-size: 24px;
   }
 `;
 
-const PopupBox = styled.div`
-  width: 420px;
-  max-width: 90%;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 28px 24px;
+const RescheduleContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-  max-height: 90vh;
-  overflow-y: auto;
-
-  @media (max-width: 768px) {
-    padding: 24px 20px;
-    gap: 16px;
-  }
-
-  @media (max-width: 480px) {
-    width: 100%;
-    max-width: 100%;
-    padding: 20px 16px;
-    gap: 14px;
-    border-radius: 12px;
-  }
+  gap: 16px;
+  padding: 8px 0;
 `;
 
-const PopupTitle = styled.h3`
-  margin: 0;
-  font-size: 22px;
-  font-weight: 800;
-  color: #27374d;
-
-  @media (max-width: 768px) {
-    font-size: 20px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 18px;
-  }
-`;
-
-const PopupSubtitle = styled.p`
-  margin: 0;
-  font-size: 14px;
-  color: #555;
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 12px;
-  }
-`;
-
-const PopupRow = styled.div`
+const FormRow = styled.div`
   display: flex;
   flex-direction: column;
   gap: 6px;
-
-  @media (max-width: 480px) {
-    gap: 4px;
-  }
 `;
 
-const Label = styled.label`
-  font-size: 14px;
+const FormLabel = styled.label`
+  font-size: 13px;
   color: #27374d;
   font-weight: 600;
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 12px;
-  }
 `;
 
-const InputRow = styled.div`
+const FormInputRow = styled.div`
   display: flex;
   gap: 12px;
-
-  @media (max-width: 768px) {
-    gap: 10px;
-  }
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -230,7 +185,7 @@ const InputRow = styled.div`
   }
 `;
 
-const Input = styled.input`
+const FormInput = styled.input`
   flex: 1;
   padding: 10px 12px;
   border-radius: 10px;
@@ -240,20 +195,9 @@ const Input = styled.input`
   &:focus {
     border-color: #4a5174;
   }
-
-  @media (max-width: 768px) {
-    padding: 9px 11px;
-    font-size: 13px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 10px;
-    font-size: 14px;
-    width: 100%;
-  }
 `;
 
-const Select = styled.select`
+const FormSelect = styled.select`
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
@@ -264,19 +208,22 @@ const Select = styled.select`
   &:focus {
     border-color: #4a5174;
   }
-
-  @media (max-width: 768px) {
-    padding: 9px 11px;
-    font-size: 13px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 10px;
-    font-size: 14px;
-  }
 `;
 
-const TextArea = styled.textarea`
+const FormSubtext = styled.p`
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+`;
+
+const ReviewContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+`;
+
+const ReviewTextArea = styled.textarea`
   width: 100%;
   min-height: 80px;
   padding: 10px 12px;
@@ -287,82 +234,6 @@ const TextArea = styled.textarea`
   resize: vertical;
   &:focus {
     border-color: #4a5174;
-  }
-
-  @media (max-width: 768px) {
-    padding: 9px 11px;
-    font-size: 13px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 10px;
-    font-size: 14px;
-  }
-`;
-
-const PopupButtonsRow = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 6px;
-
-  @media (max-width: 480px) {
-    flex-direction: column-reverse;
-    gap: 8px;
-    margin-top: 4px;
-  }
-`;
-
-const PopupButton = styled.button<{ variant?: "primary" | "ghost" }>`
-  min-width: 90px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: ${(p) =>
-    p.variant === "primary" ? "none" : "1px solid #d0d4e4"};
-  background: ${(p) => (p.variant === "primary" ? "#4a5174" : "#ffffff")};
-  color: ${(p) => (p.variant === "primary" ? "#ffffff" : "#27374d")};
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: default;
-    transform: none;
-    box-shadow: none;
-  }
-
-  @media (max-width: 768px) {
-    min-width: 80px;
-    padding: 8px 12px;
-    font-size: 13px;
-  }
-
-  @media (max-width: 480px) {
-    width: 100%;
-    min-width: unset;
-    padding: 10px 14px;
-    font-size: 14px;
-  }
-`;
-
-const PopupError = styled.p`
-  margin: 0;
-  font-size: 13px;
-  color: red;
-
-  @media (max-width: 768px) {
-    font-size: 12px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 11px;
   }
 `;
 
@@ -376,8 +247,10 @@ type BookingApiBusiness = {
   businessName: string;
   address?: string;
   city?: string;
-  profileImageUrl?: string;
+  imageUrl?: string;          // ⭐ backend field
+  profileImageUrl?: string;   // legacy fallback
 };
+
 
 type BookingApiService = {
   name: string;
@@ -424,7 +297,6 @@ const BookingsPage: React.FC = () => {
   const [cancelled, setCancelled] = useState<BookingCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   // Edit popup state
   const [editBooking, setEditBooking] = useState<BookingCard | null>(null);
@@ -445,6 +317,15 @@ const BookingsPage: React.FC = () => {
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+
+  // Alert popup for success/error messages
+  const [alertPopup, setAlertPopup] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // ✅ Cancel confirmation state
+  const [cancelBooking, setCancelBooking] = useState<BookingCard | null>(null);
 
   /* ---------------- Load bookings (shared helper) ---------------- */
   const loadBookings = useCallback(async (withSpinner: boolean = true) => {
@@ -483,7 +364,12 @@ const BookingsPage: React.FC = () => {
           businessId: b.business?._id || "",
           startTime: b.startTime,
           date: formattedDate,
-          image: b.business?.profileImageUrl || errorImage,
+          image: b.business?.imageUrl
+  ? `http://localhost:5000${b.business.imageUrl}`
+  : b.business?.profileImageUrl
+  ? `http://localhost:5000${b.business.profileImageUrl}`
+  : errorImage,
+
           salonName: b.business?.businessName || "Unknown Salon",
           location: `${b.business?.city || ""}${
             b.business?.city && b.business?.address ? " · " : ""
@@ -536,24 +422,30 @@ const BookingsPage: React.FC = () => {
      Handlers: Cancel & Reschedule
   ============================================================ */
 
-  const handleCancel = async (booking: BookingCard) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) {
-      return;
-    }
+  const handleCancel = (booking: BookingCard) => {
+    // ✅ Show confirmation popup instead of window.confirm
+    setCancelBooking(booking);
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelBooking) return;
 
     try {
-      setActionLoadingId(booking.id);
       setError(null);
-
-      await api.patch(`/bookings/${booking.id}/cancel`);
-
-      // re-sync from server
+      await api.patch(`/bookings/${cancelBooking.id}/cancel`);
       await loadBookings(false);
+      setCancelBooking(null); // ✅ Close confirmation popup
+      setAlertPopup({
+        type: "success",
+        message: "Booking cancelled successfully.",
+      });
     } catch (err: any) {
       console.error("Error cancelling booking", err);
-      setError(err?.response?.data?.message || "Failed to cancel booking.");
-    } finally {
-      setActionLoadingId(null);
+      setCancelBooking(null); // ✅ Close confirmation popup
+      setAlertPopup({
+        type: "error",
+        message: err?.response?.data?.message || "Failed to cancel booking.",
+      });
     }
   };
 
@@ -639,6 +531,7 @@ const BookingsPage: React.FC = () => {
     }
   };
 
+  // 🔧 MAKE THIS MATCH SelectDatePage EXACTLY
   const fetchAvailableStaff = async (
     booking: BookingCard,
     dateStr: string,
@@ -654,7 +547,12 @@ const BookingsPage: React.FC = () => {
       setLoadingStaff(true);
       setEditError(null);
 
-      const start = new Date(`${dateStr}T${timeStr}:00`);
+      // 🔹 Exactly the same format used in SelectDatePage:
+      // const startTimeIso = `${selectedDate}T${selectedSlot}:00`;
+      const rawStart = `${dateStr}T${timeStr}:00`;
+
+      // optional: validate date
+      const start = new Date(rawStart);
       if (isNaN(start.getTime())) {
         setAvailableStaff([]);
         setStaffIndex(null);
@@ -662,12 +560,10 @@ const BookingsPage: React.FC = () => {
         return;
       }
 
-      const startISO = start.toISOString();
-
       const res = await api.get("/bookings/available-staff", {
         params: {
           businessId: booking.businessId,
-          startTime: startISO,
+          startTime: rawStart, // ✅ no .toISOString(), same as SelectDatePage
         },
       });
 
@@ -818,6 +714,10 @@ const BookingsPage: React.FC = () => {
 
       await loadBookings(false);
       handleCloseEdit();
+      setAlertPopup({
+        type: "success",
+        message: "Booking rescheduled successfully.",
+      });
     } catch (err: any) {
       console.error("Error rescheduling booking", err);
       setEditError(
@@ -848,6 +748,10 @@ const BookingsPage: React.FC = () => {
     setReviewError(null);
   };
 
+  const handleStarClick = (rating: number) => {
+    setReviewRating(rating);
+  };
+
   const handleSubmitReview = async () => {
     if (!reviewBooking) return;
 
@@ -867,6 +771,10 @@ const BookingsPage: React.FC = () => {
       });
 
       handleCloseReview();
+      setAlertPopup({
+        type: "success",
+        message: "Review submitted successfully. Thank you!",
+      });
     } catch (err: any) {
       console.error("Error submitting review", err);
       setReviewError(
@@ -934,8 +842,8 @@ const BookingsPage: React.FC = () => {
                 location={b.location}
                 services={b.services}
                 status={b.status}
-                onLeaveRating={() => handleOpenReview(b)}
                 onViewReceipt={() => navigate(`/bookings/${b.id}`)}
+                onLeaveRating={() => handleOpenReview(b)}
               />
             ))}
           </TilesContainer>
@@ -960,171 +868,181 @@ const BookingsPage: React.FC = () => {
                 location={b.location}
                 services={b.services}
                 status={b.status}
-                // usually just view receipt, no actions
-                onViewReceipt={() => navigate(`/bookings/${b.id}`)}
+                // No callbacks = no buttons shown for cancelled bookings
               />
             ))}
           </TilesContainer>
         </Section>
       </ContentWrapper>
 
-      {/* ===== Reschedule Popup ===== */}
-      {editBooking && (
-        <Overlay>
-          <PopupBox>
-            <PopupTitle>Edit Booking</PopupTitle>
-            <PopupSubtitle>
-              {editBooking.salonName} — {editBooking.services.join(", ")}
-              {editBooking.totalDuration && (
-                <span style={{ color: "#777", marginLeft: "8px" }}>
-                  ({editBooking.totalDuration} min)
-                </span>
-              )}
-            </PopupSubtitle>
-
-            <PopupRow>
-              <Label>New date &amp; time</Label>
-              <InputRow>
-                <Input
-                  type="date"
-                  value={editDate}
-                  min={getTodayDate()}
-                  onChange={(e) => handleChangeDate(e.target.value)}
-                />
-                <Select
-                  value={editTime}
-                  onChange={(e) => handleChangeTime(e.target.value)}
-                  disabled={loadingSlots || availableSlots.length === 0}
-                >
-                  <option value="">
-                    {loadingSlots
-                      ? "Loading available times..."
-                      : availableSlots.length === 0
-                      ? "No slots available"
-                      : "Select time"}
-                  </option>
-                  {availableSlots.map((slot) => (
-                    <option key={slot} value={slot}>
-                      {slot}
-                    </option>
-                  ))}
-                </Select>
-              </InputRow>
-            </PopupRow>
-
-            <PopupRow>
-              <Label>Staff Member</Label>
-              {loadingStaff && (
-                <PopupSubtitle>Checking staff availability...</PopupSubtitle>
-              )}
-              {!loadingStaff && availableStaff.length > 0 && (
-                <Select
-                  value={staffIndex !== null ? staffIndex : ""}
-                  onChange={(e) => setStaffIndex(Number(e.target.value))}
-                >
-                  {availableStaff.map((s) => (
-                    <option key={s.index} value={s.index}>
-                      {s.fullName}
-                      {s.role ? ` — ${s.role}` : ""}
-                    </option>
-                  ))}
-                </Select>
-              )}
-              {!loadingStaff && availableStaff.length === 0 && !editTime && (
-                <PopupSubtitle>
-                  Select a time first to see available staff.
-                </PopupSubtitle>
-              )}
-              {!loadingStaff && availableStaff.length === 0 && editTime && (
-                <PopupSubtitle>
-                  No staff available for this time. Try selecting a different
-                  time slot.
-                </PopupSubtitle>
-              )}
-            </PopupRow>
-
-            {editError && <PopupError>{editError}</PopupError>}
-
-            <PopupButtonsRow>
-              <PopupButton
-                variant="ghost"
-                onClick={handleCloseEdit}
-                disabled={savingEdit}
-              >
-                Close
-              </PopupButton>
-              <PopupButton
-                variant="primary"
-                onClick={handleSaveEdit}
-                disabled={
-                  savingEdit ||
-                  loadingSlots ||
-                  loadingStaff ||
-                  !editDate ||
-                  !editTime ||
-                  staffIndex === null
-                }
-              >
-                {savingEdit ? "Saving..." : "Save"}
-              </PopupButton>
-            </PopupButtonsRow>
-          </PopupBox>
-        </Overlay>
+      {/* ===== Cancel Confirmation Popup ===== */}
+      {cancelBooking && (
+        <AlertPopup
+          type="error"
+          title="Cancel Booking"
+          message={`Are you sure you want to cancel your booking at ${cancelBooking.salonName}?`}
+          onConfirm={confirmCancel}
+          onClose={() => setCancelBooking(null)}
+          confirmLabel="Yes, Cancel"
+          cancelLabel="No, Keep It"
+        />
       )}
 
-      {/* ===== Review Popup ===== */}
+      {/* ===== Reschedule Popup (using AlertPopup) ===== */}
+      {editBooking && (
+        <AlertPopup
+          type="success"
+          title="Edit Booking"
+          message={
+            <>
+              <FormSubtext>
+                {editBooking.salonName} — {editBooking.services.join(", ")}
+                {editBooking.totalDuration && (
+                  <span> ({editBooking.totalDuration} min)</span>
+                )}
+              </FormSubtext>
+
+              <RescheduleContent>
+                <FormRow>
+                  <FormLabel>New date &amp; time</FormLabel>
+                  <FormInputRow>
+                    <FormInput
+                      type="date"
+                      value={editDate}
+                      min={getTodayDate()}
+                      onChange={(e) => handleChangeDate(e.target.value)}
+                    />
+                    <FormSelect
+                      value={editTime}
+                      onChange={(e) => handleChangeTime(e.target.value)}
+                      disabled={loadingSlots || availableSlots.length === 0}
+                    >
+                      <option value="">
+                        {loadingSlots
+                          ? "Loading available times..."
+                          : availableSlots.length === 0
+                          ? "No slots available"
+                          : "Select time"}
+                      </option>
+                      {availableSlots.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </FormInputRow>
+                </FormRow>
+
+                <FormRow>
+                  <FormLabel>Staff Member</FormLabel>
+                  {loadingStaff && (
+                    <FormSubtext>Checking staff availability...</FormSubtext>
+                  )}
+                  {!loadingStaff && availableStaff.length > 0 && (
+                    <FormSelect
+                      value={staffIndex !== null ? staffIndex : ""}
+                      onChange={(e) => setStaffIndex(Number(e.target.value))}
+                    >
+                      {availableStaff.map((s) => (
+                        <option key={s.index} value={s.index}>
+                          {s.fullName}
+                          {s.role ? ` — ${s.role}` : ""}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  )}
+                  {!loadingStaff && availableStaff.length === 0 && !editTime && (
+                    <FormSubtext>
+                      Select a time first to see available staff.
+                    </FormSubtext>
+                  )}
+                  {!loadingStaff && availableStaff.length === 0 && editTime && (
+                    <FormSubtext>
+                      No staff available for this time. Try selecting a different
+                      time slot.
+                    </FormSubtext>
+                  )}
+                </FormRow>
+
+                {editError && (
+                  <FormSubtext style={{ color: "red" }}>{editError}</FormSubtext>
+                )}
+              </RescheduleContent>
+            </>
+          }
+          onConfirm={handleSaveEdit}
+          onClose={handleCloseEdit}
+          confirmLabel={savingEdit ? "Saving..." : "Save"}
+          cancelLabel="Cancel"
+          confirmDisabled={
+            savingEdit ||
+            loadingSlots ||
+            loadingStaff ||
+            !editDate ||
+            !editTime ||
+            staffIndex === null
+          }
+        />
+      )}
+
+      {/* ===== Review Popup (using AlertPopup) ===== */}
       {reviewBooking && (
-        <Overlay>
-          <PopupBox>
-            <PopupTitle>Rate Your Visit</PopupTitle>
-            <PopupSubtitle>
-              {reviewBooking.salonName} —{" "}
-              {reviewBooking.services.join(", ")}
-            </PopupSubtitle>
+        <AlertPopup
+          type="success"
+          title="Rate Your Visit"
+          message={
+            <>
+              <FormSubtext>
+                {reviewBooking.salonName} — {reviewBooking.services.join(", ")}
+              </FormSubtext>
 
-            <PopupRow>
-              <Label>Rating</Label>
-              <Select
-                value={reviewRating}
-                onChange={(e) => setReviewRating(Number(e.target.value))}
-              >
-                <option value={5}>★★★★★ (5)</option>
-                <option value={4}>★★★★☆ (4)</option>
-                <option value={3}>★★★☆☆ (3)</option>
-                <option value={2}>★★☆☆☆ (2)</option>
-                <option value={1}>★☆☆☆☆ (1)</option>
-              </Select>
-            </PopupRow>
+              <ReviewContent>
+                <FormRow>
+                  <FormLabel>Rating</FormLabel>
+                  <StarRatingContainer>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        filled={star <= reviewRating}
+                        onClick={() => handleStarClick(star)}
+                        type="button"
+                      >
+                        {star <= reviewRating ? "★" : "☆"}
+                      </Star>
+                    ))}
+                  </StarRatingContainer>
+                </FormRow>
 
-            <PopupRow>
-              <Label>Comment (optional)</Label>
-              <TextArea
-                placeholder="Tell others about your experience..."
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-              />
-            </PopupRow>
+                <FormRow>
+                  <FormLabel>Comment (optional)</FormLabel>
+                  <ReviewTextArea
+                    placeholder="Tell others about your experience..."
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                  />
+                </FormRow>
 
-            {reviewError && <PopupError>{reviewError}</PopupError>}
+                {reviewError && (
+                  <FormSubtext style={{ color: "red" }}>{reviewError}</FormSubtext>
+                )}
+              </ReviewContent>
+            </>
+          }
+          onConfirm={handleSubmitReview}
+          onClose={handleCloseReview}
+          confirmLabel={reviewSaving ? "Submitting..." : "Submit Review"}
+          cancelLabel="Cancel"
+          confirmDisabled={reviewSaving || !reviewRating}
+        />
+      )}
 
-            <PopupButtonsRow>
-              <PopupButton
-                variant="ghost"
-                onClick={handleCloseReview}
-                disabled={reviewSaving}
-              >
-                Close
-              </PopupButton>
-              <PopupButton
-                variant="primary"
-                onClick={handleSubmitReview}
-                disabled={reviewSaving || !reviewRating}
-              >
-                {reviewSaving ? "Submitting..." : "Submit Review"}
-              </PopupButton>
-            </PopupButtonsRow>
-          </PopupBox>
-        </Overlay>
+      {/* ===== Success/Error Alert ===== */}
+      {alertPopup && (
+        <AlertPopup
+          type={alertPopup.type}
+          message={alertPopup.message}
+          onClose={() => setAlertPopup(null)}
+        />
       )}
     </PageWrapper>
   );

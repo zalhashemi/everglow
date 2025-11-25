@@ -14,6 +14,8 @@ const {
 } = require("../controllers/businessController");
 
 const { protectBusiness } = require("../middleware/authMiddleware");
+const { getMyBusinessReviews } = require("../controllers/reviewController");
+
 
 // ---------- Multer for image uploads ----------
 const storage = multer.diskStorage({
@@ -46,6 +48,10 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Business: get their own reviews
+router.get("/reviews", protectBusiness, getMyBusinessReviews);
+
 
 // ✔ Nearby search
 router.get("/nearby", getNearbyBusinesses);

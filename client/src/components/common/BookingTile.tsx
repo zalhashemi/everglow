@@ -7,7 +7,9 @@ import errorImage from "../../images/errorLoading.png";
 interface BookingTileProps {
   id: number | string;
   date: Date | string;
-  image?: string;
+  image?: string;                // final computed image passed from parent
+  imageUrl?: string;             // backend field
+  profileImageUrl?: string;      // legacy field
   salonName?: string;
   businessName?: string;
   services?: string[] | string;
@@ -18,7 +20,7 @@ interface BookingTileProps {
   onViewReceipt?: () => void;
   onLeaveRating?: () => void;
   onReschedule?: () => void;
-  hasReview?: boolean; // ⭐ determines button label
+  hasReview?: boolean;
 }
 
 /* ---- STYLED COMPONENTS ---- */
@@ -57,14 +59,6 @@ const DateText = styled.div`
   color: #555;
   text-align: left;
   width: 100%;
-
-  @media (max-width: 768px) {
-    font-size: 16px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 15px;
-  }
 `;
 
 const InfoRow = styled.div`
@@ -73,11 +67,6 @@ const InfoRow = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-  }
 `;
 
 const SalonImage = styled.img`
@@ -102,100 +91,46 @@ const Details = styled.div`
   flex-direction: column;
   gap: 6px;
   flex: 1;
-
-  @media (max-width: 480px) {
-    gap: 4px;
-  }
 `;
 
 const SalonName = styled.div`
   font-size: 20px;
   font-weight: 700;
   color: #0b1c36;
-  text-align: left;
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 16px;
-  }
 `;
 
 const LocationText = styled.div`
   font-size: 17px;
   color: #7a7a7a;
-  text-align: left;
-
-  @media (max-width: 768px) {
-    font-size: 15px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-  }
 `;
 
 const ServiceText = styled.div`
   font-size: 16px;
   color: #9aa0a6;
-  text-align: left;
-
-  @media (max-width: 768px) {
-    font-size: 14px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 13px;
-  }
 `;
 
 const ButtonRow = styled.div`
   display: flex;
   gap: 20px;
-  justify-content: flex-start;
   width: 100%;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 12px;
-  }
 `;
 
 const ReceiptButton = styled(Button)`
-  width: 100%;
-  max-width: 100%;
-`;
-
-const LeftSection = styled.div`
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  justify-content: flex-start;
-  flex: 1;
-
-  @media (max-width: 768px) {
-    gap: 16px;
-    width: 100%;
-  }
-
-  @media (max-width: 480px) {
-    gap: 12px;
-  }
+  width: 90%;
+  max-width: 90%;
 `;
 
 const RatingButton = styled(SecondaryButton)`
-  @media (max-width: 768px) {
-    width: 100% !important;
-    max-width: 100%;
-  }
+  width: 90%;
+  max-width: 90%;
 `;
 
 /* ---- COMPONENT ---- */
 const BookingTile: React.FC<BookingTileProps> = ({
   date,
   image,
+  imageUrl,
+  profileImageUrl,
   salonName,
   businessName,
   location,
@@ -209,14 +144,25 @@ const BookingTile: React.FC<BookingTileProps> = ({
   hasReview,
 }) => {
   const displayName = salonName || businessName || "Salon";
+
+  // Final image decision
+  const computedImage =
+    imageUrl
+      ? `http://localhost:5000${imageUrl}`
+      : profileImageUrl
+      ? `http://localhost:5000${profileImageUrl}`
+      : image
+      ? image
+      : errorImage;
+
+  const [imgSrc, setImgSrc] = React.useState(computedImage);
+
+  const isUpcoming = status === "pending" || status === "confirmed";
+  const isPast = status === "completed";
+
   const serviceList = Array.isArray(services)
     ? services.join(", ")
     : services || serviceName || "";
-
-  const [imgSrc, setImgSrc] = React.useState(image || errorImage);
-
-  const isUpcoming = status === "pending" || status === "confirmed";
-  const isPast = status === "completed" || status === "cancelled";
 
   const displayDate =
     typeof date === "string"
@@ -235,46 +181,50 @@ const BookingTile: React.FC<BookingTileProps> = ({
       <DateText>{displayDate}</DateText>
 
       <InfoRow>
-        <LeftSection>
-          <SalonImage
-            src={imgSrc}
-            alt={displayName}
-            onError={() => setImgSrc(errorImage)}
-          />
-          <Details>
-            <SalonName>{displayName}</SalonName>
-            <LocationText>{location}</LocationText>
-            <ServiceText>Services: {serviceList}</ServiceText>
-          </Details>
-        </LeftSection>
+        <SalonImage
+          src={imgSrc}
+          alt={displayName}
+          onError={() => setImgSrc(errorImage)}
+        />
 
-        {isPast && (
-          <RatingButton width="180px" onClick={onLeaveRating}>
-            {hasReview ? "Edit Rating" : "Leave a Rating"}
-          </RatingButton>
-        )}
+        <Details>
+          <SalonName>{displayName}</SalonName>
+          <LocationText>{location}</LocationText>
+          <ServiceText>Services: {serviceList}</ServiceText>
+        </Details>
       </InfoRow>
 
-      {/* Upcoming Booking Buttons */}
       {isUpcoming && (
         <ButtonRow>
-          <SecondaryButton width="180px" onClick={onReschedule}>
-            Reschedule
-          </SecondaryButton>
-          <SecondaryButton width="180px" onClick={onCancel}>
-            Cancel
-          </SecondaryButton>
-          <Button width="180px" onClick={onViewReceipt}>
-            View Receipt
-          </Button>
+          {onReschedule && (
+            <SecondaryButton width="180px" onClick={onReschedule}>
+              Reschedule
+            </SecondaryButton>
+          )}
+          {onCancel && (
+            <SecondaryButton width="180px" onClick={onCancel}>
+              Cancel
+            </SecondaryButton>
+          )}
+          {onViewReceipt && (
+            <Button width="180px" onClick={onViewReceipt}>
+              View Receipt
+            </Button>
+          )}
         </ButtonRow>
       )}
 
-      {/* Past Booking Button */}
       {isPast && (
-        <ReceiptButton fullWidth onClick={onViewReceipt}>
-          View Receipt
-        </ReceiptButton>
+        <ButtonRow>
+          {onViewReceipt && (
+            <ReceiptButton onClick={onViewReceipt}>View Receipt</ReceiptButton>
+          )}
+          {onLeaveRating && (
+            <RatingButton onClick={onLeaveRating}>
+              {hasReview ? "Edit Rating" : "Leave a Rating"}
+            </RatingButton>
+          )}
+        </ButtonRow>
       )}
     </Tile>
   );

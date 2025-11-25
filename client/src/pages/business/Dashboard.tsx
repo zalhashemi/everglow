@@ -1098,7 +1098,7 @@ const BusinessDashboard: React.FC = () => {
   const fetchQuickStats = async () => {
     try {
       setLoadingStats(true);
-      const res = await api.get("/business/dashboard-stats");
+      const res = await api.get("/business/me/stats");
       const data = res.data || {};
 
       setAvgRating(typeof data.avgRating === "number" ? data.avgRating : 0);

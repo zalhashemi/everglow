@@ -125,7 +125,7 @@ const getBookingsForCustomer = async (req, res) => {
     const bookings = await Booking.find({ customer: req.customer._id })
       .populate({
         path: "business",
-        select: "businessName address city profileImageUrl",
+        select: "businessName address city imageUrl profileImageUrl",
       })
       .populate({
         path: "service",
