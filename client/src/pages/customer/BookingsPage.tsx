@@ -11,7 +11,7 @@ import errorImage from "../../images/errorLoading.png";
    Styled Components
 ============================================================ */
 const PageWrapper = styled.div`
-  background-color: #FAF6EA;
+  background-color: #faf6ea;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -119,7 +119,7 @@ const ErrorText = styled.p`
   }
 `;
 
-/* ===== Edit Popup ===== */
+/* ===== Shared Popup Styles ===== */
 
 const Overlay = styled.div`
   position: fixed;
@@ -276,6 +276,30 @@ const Select = styled.select`
   }
 `;
 
+const TextArea = styled.textarea`
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d0d4e4;
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  &:focus {
+    border-color: #4a5174;
+  }
+
+  @media (max-width: 768px) {
+    padding: 9px 11px;
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+`;
+
 const PopupButtonsRow = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -298,10 +322,8 @@ const PopupButton = styled.button<{ variant?: "primary" | "ghost" }>`
   cursor: pointer;
   border: ${(p) =>
     p.variant === "primary" ? "none" : "1px solid #d0d4e4"};
-  background: ${(p) =>
-    p.variant === "primary" ? "#4a5174" : "#ffffff"};
-  color: ${(p) =>
-    p.variant === "primary" ? "#ffffff" : "#27374d"};
+  background: ${(p) => (p.variant === "primary" ? "#4a5174" : "#ffffff")};
+  color: ${(p) => (p.variant === "primary" ? "#ffffff" : "#27374d")};
   transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
 
   &:hover {
@@ -382,7 +404,7 @@ type BookingCard = {
   location: string;
   services: string[];
   status: BookingStatus;
-  totalDuration?: number; // ✅ Add duration to card
+  totalDuration?: number;
 };
 
 type AvailableStaff = {
@@ -399,6 +421,7 @@ const BookingsPage: React.FC = () => {
 
   const [upcoming, setUpcoming] = useState<BookingCard[]>([]);
   const [past, setPast] = useState<BookingCard[]>([]);
+  const [cancelled, setCancelled] = useState<BookingCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -416,77 +439,86 @@ const BookingsPage: React.FC = () => {
   const [staffIndex, setStaffIndex] = useState<number | null>(null);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
+  // Review popup state
+  const [reviewBooking, setReviewBooking] = useState<BookingCard | null>(null);
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
   /* ---------------- Load bookings (shared helper) ---------------- */
-  const loadBookings = useCallback(
-    async (withSpinner: boolean = true) => {
-      try {
-        if (withSpinner) setLoading(true);
-        setError(null);
+  const loadBookings = useCallback(async (withSpinner: boolean = true) => {
+    try {
+      if (withSpinner) setLoading(true);
+      setError(null);
 
-        const res = await api.get<BookingApi[]>("/bookings/me");
-        const data = res.data || [];
+      const res = await api.get<BookingApi[]>("/bookings/me");
+      const data = res.data || [];
 
-        const now = new Date();
+      const now = new Date();
 
-        const upcomingTmp: BookingCard[] = [];
-        const pastTmp: BookingCard[] = [];
+      const upcomingTmp: BookingCard[] = [];
+      const pastTmp: BookingCard[] = [];
+      const cancelledTmp: BookingCard[] = [];
 
-        data.forEach((b) => {
-          const start = new Date(b.startTime);
-          const isFuture = start >= now;
+      data.forEach((b) => {
+        const start = new Date(b.startTime);
+        const isFuture = start >= now;
 
-          const formattedDate = start.toLocaleString(undefined, {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          });
-
-          // ✅ Calculate total duration from services
-          const totalDuration = (b.services || []).reduce(
-            (sum, service) => sum + (service.durationMinutes || 0),
-            0
-          );
-
-          const card: BookingCard = {
-            id: b._id,
-            businessId: b.business?._id || "",
-            startTime: b.startTime,
-            date: formattedDate,
-            image: b.business?.profileImageUrl || errorImage,
-            salonName: b.business?.businessName || "Unknown Salon",
-            location: `${b.business?.city || ""}${
-              b.business?.city && b.business?.address ? " · " : ""
-            }${b.business?.address || ""}`,
-            services: (b.services || []).map((s) => s.name),
-            status: b.status,
-            totalDuration, // ✅ Store duration
-          };
-
-          const isUpcoming =
-            isFuture && (b.status === "pending" || b.status === "confirmed");
-
-          if (isUpcoming) {
-            upcomingTmp.push(card);
-          } else {
-            pastTmp.push(card);
-          }
+        const formattedDate = start.toLocaleString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
         });
 
-        setUpcoming(upcomingTmp);
-        setPast(pastTmp);
-      } catch (err: any) {
-        console.error("Error loading bookings", err);
-        setError(
-          err?.response?.data?.message || "Failed to load bookings."
+        const totalDuration = (b.services || []).reduce(
+          (sum, service) => sum + (service.durationMinutes || 0),
+          0
         );
-      } finally {
-        if (withSpinner) setLoading(false);
-      }
-    },
-    []
-  );
+
+        const card: BookingCard = {
+          id: b._id,
+          businessId: b.business?._id || "",
+          startTime: b.startTime,
+          date: formattedDate,
+          image: b.business?.profileImageUrl || errorImage,
+          salonName: b.business?.businessName || "Unknown Salon",
+          location: `${b.business?.city || ""}${
+            b.business?.city && b.business?.address ? " · " : ""
+          }${b.business?.address || ""}`,
+          services: (b.services || []).map((s) => s.name),
+          status: b.status,
+          totalDuration,
+        };
+
+        // Separate cancelled bookings into their own list
+        if (b.status === "cancelled") {
+          cancelledTmp.push(card);
+          return;
+        }
+
+        const isUpcoming =
+          isFuture && (b.status === "pending" || b.status === "confirmed");
+
+        if (isUpcoming) {
+          upcomingTmp.push(card);
+        } else {
+          pastTmp.push(card);
+        }
+      });
+
+      setUpcoming(upcomingTmp);
+      setPast(pastTmp);
+      setCancelled(cancelledTmp);
+    } catch (err: any) {
+      console.error("Error loading bookings", err);
+      setError(err?.response?.data?.message || "Failed to load bookings.");
+    } finally {
+      if (withSpinner) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     // initial load
@@ -515,13 +547,11 @@ const BookingsPage: React.FC = () => {
 
       await api.patch(`/bookings/${booking.id}/cancel`);
 
-      // ✅ Re-sync from server instead of manually editing arrays
+      // re-sync from server
       await loadBookings(false);
     } catch (err: any) {
       console.error("Error cancelling booking", err);
-      setError(
-        err?.response?.data?.message || "Failed to cancel booking."
-      );
+      setError(err?.response?.data?.message || "Failed to cancel booking.");
     } finally {
       setActionLoadingId(null);
     }
@@ -553,7 +583,6 @@ const BookingsPage: React.FC = () => {
       const slotHour = parseInt(hourStr, 10);
       const slotMinute = parseInt(minuteStr, 10);
 
-      // Only show times after current time
       if (slotHour > currentHour) return true;
       if (slotHour === currentHour && slotMinute > currentMinute) return true;
       return false;
@@ -572,13 +601,8 @@ const BookingsPage: React.FC = () => {
       setLoadingSlots(true);
       setEditError(null);
 
-      // ✅ Use actual duration from booking
       const totalDuration = booking.totalDuration || 60;
 
-      // ✅ Backend will check:
-      // - Business operating hours for the selected day
-      // - Staff working schedules
-      // - Existing bookings to avoid conflicts
       const res = await api.get<string[]>(
         `/bookings/available-slots/${booking.businessId}`,
         {
@@ -593,7 +617,7 @@ const BookingsPage: React.FC = () => {
       const filteredSlots = getFilteredSlots(rawSlots, dateStr);
 
       setAvailableSlots(filteredSlots);
-      setEditTime(""); // Reset time when slots change
+      setEditTime("");
       setAvailableStaff([]);
       setStaffIndex(null);
 
@@ -607,8 +631,8 @@ const BookingsPage: React.FC = () => {
       setAvailableSlots([]);
       setEditTime("");
       setEditError(
-        err?.response?.data?.message || 
-        "Failed to load available time slots. The business may be closed on this date."
+        err?.response?.data?.message ||
+          "Failed to load available time slots. The business may be closed on this date."
       );
     } finally {
       setLoadingSlots(false);
@@ -640,10 +664,6 @@ const BookingsPage: React.FC = () => {
 
       const startISO = start.toISOString();
 
-      // ✅ Backend will check:
-      // - Staff members assigned to this business
-      // - Staff working schedule for the selected day/time
-      // - Staff availability (not already booked at this time)
       const res = await api.get("/bookings/available-staff", {
         params: {
           businessId: booking.businessId,
@@ -667,15 +687,15 @@ const BookingsPage: React.FC = () => {
       setAvailableStaff([]);
       setStaffIndex(null);
       setEditError(
-        err?.response?.data?.message || 
-        "Failed to load staff availability. Please try another time."
+        err?.response?.data?.message ||
+          "Failed to load staff availability. Please try another time."
       );
     } finally {
       setLoadingStaff(false);
     }
   };
 
-  // Open edit popup; keep original local time & load slots
+  // Open edit popup
   const handleOpenEdit = (booking: BookingCard) => {
     try {
       const d = new Date(booking.startTime);
@@ -683,7 +703,6 @@ const BookingsPage: React.FC = () => {
         throw new Error("Invalid date");
       }
 
-      // Use local time components (no UTC shift)
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, "0");
       const dd = String(d.getDate()).padStart(2, "0");
@@ -698,7 +717,6 @@ const BookingsPage: React.FC = () => {
       setEditError(null);
       setEditBooking(booking);
 
-      // Load available slots for that date
       fetchAvailableSlots(booking, dateStr);
     } catch {
       const now = new Date();
@@ -730,10 +748,10 @@ const BookingsPage: React.FC = () => {
 
   const handleChangeDate = (value: string) => {
     setEditDate(value);
-    setEditTime(""); // Reset time when date changes
+    setEditTime("");
     setAvailableStaff([]);
     setStaffIndex(null);
-    
+
     if (editBooking && value) {
       fetchAvailableSlots(editBooking, value);
     }
@@ -763,15 +781,15 @@ const BookingsPage: React.FC = () => {
       return;
     }
 
-    // ✅ Validate date is not in the past
     if (editDate < getTodayDate()) {
       setEditError("Cannot reschedule to a past date.");
       return;
     }
 
-    // ✅ Validate time is not in the past (if today)
     if (!isValidDateTime(editDate, editTime)) {
-      setEditError("Cannot reschedule to a past time. Please select a future date/time.");
+      setEditError(
+        "Cannot reschedule to a past time. Please select a future date/time."
+      );
       return;
     }
 
@@ -798,9 +816,7 @@ const BookingsPage: React.FC = () => {
         staffIndex,
       });
 
-      // ✅ Re-sync from server so business + customer see the same thing
       await loadBookings(false);
-
       handleCloseEdit();
     } catch (err: any) {
       console.error("Error rescheduling booking", err);
@@ -812,6 +828,58 @@ const BookingsPage: React.FC = () => {
       setSavingEdit(false);
     }
   };
+
+  /* ============================================================
+     Review Handlers
+  ============================================================ */
+
+  const handleOpenReview = (booking: BookingCard) => {
+    setReviewBooking(booking);
+    setReviewRating(5);
+    setReviewComment("");
+    setReviewError(null);
+  };
+
+  const handleCloseReview = () => {
+    if (reviewSaving) return;
+    setReviewBooking(null);
+    setReviewRating(5);
+    setReviewComment("");
+    setReviewError(null);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewBooking) return;
+
+    if (!reviewRating || reviewRating < 1 || reviewRating > 5) {
+      setReviewError("Please select a rating between 1 and 5.");
+      return;
+    }
+
+    try {
+      setReviewSaving(true);
+      setReviewError(null);
+
+      await api.post("/reviews", {
+        businessId: reviewBooking.businessId,
+        rating: reviewRating,
+        comment: reviewComment.trim() || undefined,
+      });
+
+      handleCloseReview();
+    } catch (err: any) {
+      console.error("Error submitting review", err);
+      setReviewError(
+        err?.response?.data?.message || "Failed to submit review."
+      );
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
+  /* ============================================================
+     Render
+  ============================================================ */
 
   return (
     <PageWrapper>
@@ -866,7 +934,33 @@ const BookingsPage: React.FC = () => {
                 location={b.location}
                 services={b.services}
                 status={b.status}
-                onLeaveRating={() => alert("Add rating coming soon")}
+                onLeaveRating={() => handleOpenReview(b)}
+                onViewReceipt={() => navigate(`/bookings/${b.id}`)}
+              />
+            ))}
+          </TilesContainer>
+        </Section>
+
+        {/* CANCELLED */}
+        <Section>
+          <SectionTitle>Cancelled Bookings</SectionTitle>
+
+          {!loading && !error && cancelled.length === 0 && (
+            <EmptyText>No cancelled bookings.</EmptyText>
+          )}
+
+          <TilesContainer>
+            {cancelled.map((b) => (
+              <BookingTile
+                key={b.id}
+                id={b.id}
+                date={b.date}
+                image={b.image}
+                salonName={b.salonName}
+                location={b.location}
+                services={b.services}
+                status={b.status}
+                // usually just view receipt, no actions
                 onViewReceipt={() => navigate(`/bookings/${b.id}`)}
               />
             ))}
@@ -943,7 +1037,8 @@ const BookingsPage: React.FC = () => {
               )}
               {!loadingStaff && availableStaff.length === 0 && editTime && (
                 <PopupSubtitle>
-                  No staff available for this time. Try selecting a different time slot.
+                  No staff available for this time. Try selecting a different
+                  time slot.
                 </PopupSubtitle>
               )}
             </PopupRow>
@@ -971,6 +1066,61 @@ const BookingsPage: React.FC = () => {
                 }
               >
                 {savingEdit ? "Saving..." : "Save"}
+              </PopupButton>
+            </PopupButtonsRow>
+          </PopupBox>
+        </Overlay>
+      )}
+
+      {/* ===== Review Popup ===== */}
+      {reviewBooking && (
+        <Overlay>
+          <PopupBox>
+            <PopupTitle>Rate Your Visit</PopupTitle>
+            <PopupSubtitle>
+              {reviewBooking.salonName} —{" "}
+              {reviewBooking.services.join(", ")}
+            </PopupSubtitle>
+
+            <PopupRow>
+              <Label>Rating</Label>
+              <Select
+                value={reviewRating}
+                onChange={(e) => setReviewRating(Number(e.target.value))}
+              >
+                <option value={5}>★★★★★ (5)</option>
+                <option value={4}>★★★★☆ (4)</option>
+                <option value={3}>★★★☆☆ (3)</option>
+                <option value={2}>★★☆☆☆ (2)</option>
+                <option value={1}>★☆☆☆☆ (1)</option>
+              </Select>
+            </PopupRow>
+
+            <PopupRow>
+              <Label>Comment (optional)</Label>
+              <TextArea
+                placeholder="Tell others about your experience..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+              />
+            </PopupRow>
+
+            {reviewError && <PopupError>{reviewError}</PopupError>}
+
+            <PopupButtonsRow>
+              <PopupButton
+                variant="ghost"
+                onClick={handleCloseReview}
+                disabled={reviewSaving}
+              >
+                Close
+              </PopupButton>
+              <PopupButton
+                variant="primary"
+                onClick={handleSubmitReview}
+                disabled={reviewSaving || !reviewRating}
+              >
+                {reviewSaving ? "Submitting..." : "Submit Review"}
               </PopupButton>
             </PopupButtonsRow>
           </PopupBox>

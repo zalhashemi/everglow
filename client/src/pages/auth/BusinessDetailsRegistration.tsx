@@ -518,7 +518,46 @@ const BusinessRegistration: React.FC = () => {
       const updated = [...prev];
       const staff = { ...updated[staffIndex] };
       const schedule = { ...staff.schedule };
-      schedule[day] = { ...schedule[day], ...changes };
+      const currentDay = { ...schedule[day] };
+      
+      // ✅ Check if business is operating on this day
+      const businessDay = hoursSelection[day];
+      if (businessDay.closed) {
+        // If business is closed, staff must be off
+        currentDay.closed = true;
+        currentDay.open = "";
+        currentDay.close = "";
+        schedule[day] = currentDay;
+        staff.schedule = schedule;
+        updated[staffIndex] = staff;
+        return updated;
+      }
+
+      // ✅ If opening time changed, reset close time if it's now invalid
+      if (changes.open !== undefined) {
+        currentDay.open = changes.open;
+        if (currentDay.close) {
+          const openIndex = TIME_OPTIONS.indexOf(currentDay.open);
+          const closeIndex = TIME_OPTIONS.indexOf(currentDay.close);
+          if (closeIndex <= openIndex) {
+            currentDay.close = "";
+          }
+        }
+      }
+      
+      if (changes.close !== undefined) {
+        currentDay.close = changes.close;
+      }
+      
+      if (changes.closed !== undefined) {
+        currentDay.closed = changes.closed;
+        if (currentDay.closed) {
+          currentDay.open = "";
+          currentDay.close = "";
+        }
+      }
+      
+      schedule[day] = currentDay;
       staff.schedule = schedule;
       updated[staffIndex] = staff;
       return updated;
@@ -542,11 +581,59 @@ const BusinessRegistration: React.FC = () => {
     }
   };
 
+  /* ==== Helper to get valid closing times based on opening time ==== */
+  const getValidClosingTimes = (openTime: string): string[] => {
+    if (!openTime) return TIME_OPTIONS;
+    const openIndex = TIME_OPTIONS.indexOf(openTime);
+    if (openIndex === -1) return TIME_OPTIONS;
+    // Return only times after the opening time
+    return TIME_OPTIONS.slice(openIndex + 1);
+  };
+
   const updateDayHours = (day: DayKey, changes: Partial<DayHours>) => {
     setHoursSelection((prev) => {
       const updatedDay: DayHours = { ...prev[day], ...changes };
+      
+      // ✅ If opening time changed, reset close time if it's now invalid
+      if (changes.open !== undefined && updatedDay.close) {
+        const openIndex = TIME_OPTIONS.indexOf(updatedDay.open);
+        const closeIndex = TIME_OPTIONS.indexOf(updatedDay.close);
+        if (closeIndex <= openIndex) {
+          updatedDay.close = "";
+        }
+      }
+      
       return { ...prev, [day]: updatedDay };
     });
+  };
+
+  /* ==== NEW: Helper to get valid staff times based on business hours ==== */
+  const getValidStaffTimes = (dayKey: DayKey, isClosing: boolean, staffOpenTime?: string): string[] => {
+    const businessDay = hoursSelection[dayKey];
+    
+    // If business is closed, staff can't work
+    if (businessDay.closed || !businessDay.open || !businessDay.close) {
+      return [];
+    }
+
+    const businessOpenIndex = TIME_OPTIONS.indexOf(businessDay.open);
+    const businessCloseIndex = TIME_OPTIONS.indexOf(businessDay.close);
+
+    if (businessOpenIndex === -1 || businessCloseIndex === -1) {
+      return TIME_OPTIONS;
+    }
+
+    if (isClosing) {
+      // For closing time: must be after staff opening time and not after business closing
+      if (!staffOpenTime) return TIME_OPTIONS.slice(businessOpenIndex + 1, businessCloseIndex + 1);
+      
+      const staffOpenIndex = TIME_OPTIONS.indexOf(staffOpenTime);
+      const startIndex = Math.max(staffOpenIndex + 1, businessOpenIndex);
+      return TIME_OPTIONS.slice(startIndex, businessCloseIndex + 1);
+    } else {
+      // For opening time: must be within business hours
+      return TIME_OPTIONS.slice(businessOpenIndex, businessCloseIndex);
+    }
   };
 
   /* ==== Validation ==== */
@@ -649,6 +736,55 @@ const BusinessRegistration: React.FC = () => {
     return true;
   };
 
+  /* ==== NEW: Validate staff schedules against business hours ==== */
+  const validateStaffSchedules = (): boolean => {
+    for (let i = 0; i < staffList.length; i++) {
+      const staff = staffList[i];
+      
+      for (const dayKey of DAY_KEYS) {
+        const staffDay = staff.schedule[dayKey];
+        const businessDay = hoursSelection[dayKey];
+
+        // Skip if staff is off
+        if (staffDay.closed) continue;
+
+        // If staff is working but business is closed, that's invalid
+        if (businessDay.closed && (staffDay.open || staffDay.close)) {
+          setError(
+            `Staff member ${i + 1} (${staff.name || 'unnamed'}): Cannot work on ${DAY_LABELS[dayKey]} - business is closed.`
+          );
+          return false;
+        }
+
+        // If staff has working hours
+        if (staffDay.open && staffDay.close) {
+          const businessOpenIndex = TIME_OPTIONS.indexOf(businessDay.open);
+          const businessCloseIndex = TIME_OPTIONS.indexOf(businessDay.close);
+          const staffOpenIndex = TIME_OPTIONS.indexOf(staffDay.open);
+          const staffCloseIndex = TIME_OPTIONS.indexOf(staffDay.close);
+
+          // Staff opening time must be >= business opening time
+          if (staffOpenIndex < businessOpenIndex) {
+            setError(
+              `Staff member ${i + 1} (${staff.name || 'unnamed'}), ${DAY_LABELS[dayKey]}: Cannot start before business opens (${businessDay.open}).`
+            );
+            return false;
+          }
+
+          // Staff closing time must be <= business closing time
+          if (staffCloseIndex > businessCloseIndex) {
+            setError(
+              `Staff member ${i + 1} (${staff.name || 'unnamed'}), ${DAY_LABELS[dayKey]}: Cannot work after business closes (${businessDay.close}).`
+            );
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  };
+
   /* ==== Submit ==== */
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -671,6 +807,10 @@ const BusinessRegistration: React.FC = () => {
 
     const okHours = validateOperatingHours();
     if (!okHours) return;
+
+    // ✅ NEW: Validate staff schedules
+    const okStaff = validateStaffSchedules();
+    if (!okStaff) return;
 
     setIsSubmitting(true);
 
@@ -925,6 +1065,8 @@ const BusinessRegistration: React.FC = () => {
                 <HoursGrid>
                   {DAY_KEYS.map((dayKey) => {
                     const day = hoursSelection[dayKey];
+                    const validClosingTimes = getValidClosingTimes(day.open);
+                    
                     return (
                       <DayRow key={dayKey}>
                         <DayLabel>{DAY_LABELS[dayKey]}</DayLabel>
@@ -950,7 +1092,7 @@ const BusinessRegistration: React.FC = () => {
                           disabled={day.closed}
                         >
                           <option value="">To</option>
-                          {TIME_OPTIONS.map((time) => (
+                          {validClosingTimes.map((time) => (
                             <option key={time} value={time}>
                               {time}
                             </option>
@@ -1089,11 +1231,17 @@ const BusinessRegistration: React.FC = () => {
                           marginBottom: "4px",
                         }}
                       >
-                        Work schedule
+                        Work schedule (must be within business operating hours)
                       </div>
                       <HoursGrid>
                         {DAY_KEYS.map((dayKey) => {
                           const day = staff.schedule[dayKey];
+                          const businessDay = hoursSelection[dayKey];
+                          const isBusinessClosed = businessDay.closed || !businessDay.open || !businessDay.close;
+                          
+                          const validStaffOpenTimes = getValidStaffTimes(dayKey, false);
+                          const validStaffCloseTimes = getValidStaffTimes(dayKey, true, day.open);
+                          
                           return (
                             <DayRow key={dayKey}>
                               <DayLabel>{DAY_LABELS[dayKey]}</DayLabel>
@@ -1104,10 +1252,12 @@ const BusinessRegistration: React.FC = () => {
                                     open: e.target.value,
                                   })
                                 }
-                                disabled={day.closed}
+                                disabled={day.closed || isBusinessClosed}
                               >
-                                <option value="">From</option>
-                                {TIME_OPTIONS.map((time) => (
+                                <option value="">
+                                  {isBusinessClosed ? "Closed" : "From"}
+                                </option>
+                                {validStaffOpenTimes.map((time) => (
                                   <option key={time} value={time}>
                                     {time}
                                   </option>
@@ -1120,10 +1270,12 @@ const BusinessRegistration: React.FC = () => {
                                     close: e.target.value,
                                   })
                                 }
-                                disabled={day.closed}
+                                disabled={day.closed || isBusinessClosed}
                               >
-                                <option value="">To</option>
-                                {TIME_OPTIONS.map((time) => (
+                                <option value="">
+                                  {isBusinessClosed ? "Closed" : "To"}
+                                </option>
+                                {validStaffCloseTimes.map((time) => (
                                   <option key={time} value={time}>
                                     {time}
                                   </option>
@@ -1132,12 +1284,13 @@ const BusinessRegistration: React.FC = () => {
                               <ClosedToggle>
                                 <input
                                   type="checkbox"
-                                  checked={day.closed}
+                                  checked={day.closed || isBusinessClosed}
                                   onChange={(e) =>
                                     updateStaffDayHours(index, dayKey, {
                                       closed: e.target.checked,
                                     })
                                   }
+                                  disabled={isBusinessClosed}
                                 />
                                 Off
                               </ClosedToggle>

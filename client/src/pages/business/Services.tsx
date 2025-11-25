@@ -77,6 +77,12 @@ const BusinessServices: React.FC = () => {
     description: "",
   });
 
+  // Delete confirmation state
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    serviceId: string;
+    serviceName: string;
+  } | null>(null);
+
   // --- Derive categories from services (for tabs + quick-select) ---
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -337,25 +343,34 @@ const BusinessServices: React.FC = () => {
   };
 
   // ------------ DELETE HANDLER ------------
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this service?"
-    );
-    if (!confirmed) return;
+  const handleDelete = (id: string) => {
+    const serviceToDelete = services.find((s) => s._id === id);
+    setDeleteConfirmation({
+      serviceId: id,
+      serviceName: serviceToDelete?.name || "this service",
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmation) return;
 
     try {
-      await api.delete(`/services/${id}`);
-      setServices((prev) => prev.filter((s) => s._id !== id));
-      setError(null);
+      await api.delete(`/services/${deleteConfirmation.serviceId}`);
+      setServices((prev) =>
+        prev.filter((s) => s._id !== deleteConfirmation.serviceId)
+      );
+      setAlertData({
+        type: "success",
+        message: "Service deleted successfully.",
+      });
     } catch (err: any) {
-      console.error(err);
       setAlertData({
         type: "error",
         title: "ERROR",
-        message:
-          err?.response?.data?.message ||
-          "Failed to delete service. Please try again.",
+        message: err?.response?.data?.message || "Failed to delete service.",
       });
+    } finally {
+      setDeleteConfirmation(null);
     }
   };
 
@@ -367,7 +382,7 @@ const BusinessServices: React.FC = () => {
     : "Seef, Bahrain";
   const headerDescription =
     business?.description ||
-    "We offer professional hair, nail, and beauty services using premium products.";
+    "";
 
   const hasRating = avgRating !== null && avgRating > 0;
 
@@ -425,16 +440,6 @@ const BusinessServices: React.FC = () => {
             {headerLocation || "Location not set"}
           </div>
 
-          {/* Hours – placeholder */}
-          <div
-            style={{
-              color: "#7A7A7A",
-              fontSize: "14px",
-              marginTop: "4px",
-            }}
-          >
-            Opening hours not set
-          </div>
 
           {/* Rating – dynamic */}
           <div
@@ -741,10 +746,22 @@ const BusinessServices: React.FC = () => {
         </div>
       )}
 
+      {deleteConfirmation && (
+        <AlertPopup
+          type="error"
+          title="Confirm Delete"
+          message={`Are you sure you want to delete "${deleteConfirmation.serviceName}"? This action cannot be undone.`}
+          onConfirm={confirmDelete}
+          onClose={() => setDeleteConfirmation(null)}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+        />
+      )}
+
       {alertData && (
         <AlertPopup
           type={alertData.type}
-          title={alertData.type === "error" ? "ERROR" : ""}
+          title={alertData.title}
           message={alertData.message}
           onClose={() => setAlertData(null)}
         />

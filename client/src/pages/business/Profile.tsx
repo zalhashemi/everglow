@@ -260,22 +260,6 @@ const ImageControlsWrapper = styled.div`
   margin-top: 8px;
 `;
 
-const ChangeImageButton = styled.button`
-  border: none;
-  background: #f9d2e2;
-  color: #c84679;
-  border-radius: 999px;
-  padding: 6px 16px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: 0.15s ease;
-
-  &:hover {
-    background: #f4c0d6;
-  }
-`;
-
 const HiddenFileInput = styled.input`
   display: none;
 `;
@@ -393,6 +377,13 @@ const BusinessProfile: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
+
+  // ✅ NEW: Individual section editing states
+  const [editingBusinessInfo, setEditingBusinessInfo] = useState(false);
+  const [editingOperatingHours, setEditingOperatingHours] = useState(false);
+  const [editingStaff, setEditingStaff] = useState(false);
+  const [editingSocial, setEditingSocial] = useState(false);
+
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   const [alertData, setAlertData] = useState<{
@@ -411,7 +402,6 @@ const BusinessProfile: React.FC = () => {
     setBusiness(b);
 
     setName(info?.name || info?.businessName || "");
-    setType(info?.type || info?.businessType || "Salon");
     setEmail(info?.email || b.email || "");
     setPhone(info?.phone || b.phone || "");
     setAddress(info?.address || b.address || "");
@@ -645,25 +635,170 @@ const BusinessProfile: React.FC = () => {
     ]);
   };
 
+  /* ---------------- Validation Functions ---------------- */
+  const validateBusinessInfo = (): string | null => {
+    // Business name - required, letters and spaces only
+    if (!name.trim()) {
+      return "Business name cannot be empty.";
+    }
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!nameRegex.test(name.trim())) {
+      return "Business name can only contain letters and spaces.";
+    }
+
+   
+
+    // Email - required and valid format
+    if (!email.trim()) {
+      return "Email cannot be empty.";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return "Please enter a valid email address.";
+    }
+
+    // Phone - required, numbers only (with optional spaces, dashes, parentheses)
+    if (!phone.trim()) {
+      return "Phone number cannot be empty.";
+    }
+    const phoneRegex = /^[\d\s\-\(\)]+$/;
+    if (!phoneRegex.test(phone.trim())) {
+      return "Phone number can only contain numbers, spaces, dashes, and parentheses.";
+    }
+
+    // Address - required
+    if (!address.trim()) {
+      return "Address cannot be empty.";
+    }
+
+    // City - required, letters and spaces only
+    if (!city.trim()) {
+      return "City cannot be empty.";
+    }
+    const cityRegex = /^[A-Za-z\s]+$/;
+    if (!cityRegex.test(city.trim())) {
+      return "City can only contain letters and spaces.";
+    }
+
+    // Description is optional, no validation needed
+
+    return null; // All valid
+  };
+
+  const validateOperatingHours = (): string | null => {
+    for (const dayKey of DAY_KEYS) {
+      const raw = operatingHours[dayKey];
+      const parsed = parseHours(raw);
+
+      // Each day must either be closed or have both open and close times
+      if (!parsed.closed) {
+        if (!parsed.open || !parsed.close) {
+          return `${DAY_LABELS[dayKey]}: Please set both opening and closing times, or mark as closed.`;
+        }
+      }
+    }
+    return null;
+  };
+
+  const validateStaff = (): string | null => {
+    if (staff.length === 0) {
+      return "Please add at least one staff member.";
+    }
+
+    for (let i = 0; i < staff.length; i++) {
+      const member = staff[i];
+
+      // Name - required, letters and spaces only
+      if (!member.name.trim()) {
+        return `Staff member ${i + 1}: Name cannot be empty.`;
+      }
+      const nameRegex = /^[A-Za-z\s]+$/;
+      if (!nameRegex.test(member.name.trim())) {
+        return `Staff member ${i + 1}: Name can only contain letters and spaces.`;
+      }
+
+      // Role - required
+      if (!member.role.trim()) {
+        return `Staff member ${i + 1}: Role cannot be empty.`;
+      }
+
+      // Schedule - at least one working day required
+      const hasWorkingDay = DAY_KEYS.some((dayKey) => {
+        const day = member.schedule[dayKey];
+        return !day.closed && day.open && day.close;
+      });
+
+      if (!hasWorkingDay) {
+        return `Staff member ${i + 1} (${member.name}): Must have at least one working day with hours set.`;
+      }
+
+      // Validate each working day has both times
+      for (const dayKey of DAY_KEYS) {
+        const day = member.schedule[dayKey];
+        if (!day.closed) {
+          if (!day.open || !day.close) {
+            return `Staff member ${i + 1} (${member.name}), ${DAY_LABELS[dayKey]}: Please set both opening and closing times, or mark as off.`;
+          }
+        }
+      }
+    }
+
+    return null;
+  };
+
   /* ---------------- Save Edited Profile ---------------- */
   const handleSave = async () => {
+    // Run all validations
+    const businessError = validateBusinessInfo();
+    if (businessError) {
+      setAlertData({
+        type: "error",
+        title: "Validation Error",
+        message: businessError,
+      });
+      return;
+    }
+
+    const hoursError = validateOperatingHours();
+    if (hoursError) {
+      setAlertData({
+        type: "error",
+        title: "Validation Error",
+        message: hoursError,
+      });
+      return;
+    }
+
+    const staffError = validateStaff();
+    if (staffError) {
+      setAlertData({
+        type: "error",
+        title: "Validation Error",
+        message: staffError,
+      });
+      return;
+    }
+
     try {
       const payload = {
         businessInfo: {
-          name,
-          type,
-          email,
-          phone,
-          address,
-          city,
-          about,
+          name: name.trim(),
+          type: type.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+          city: city.trim(),
+          about: about.trim(), // Optional, can be empty
           imageUrl: imagePreview || business?.imageUrl || null,
         },
         operatingHours,
-        socialLinks,
+        socialLinks: {
+          instagram: socialLinks.instagram?.trim() || "",
+          other: socialLinks.other?.trim() || "",
+        },
         staff: staff.map((m) => ({
-          name: m.name,
-          role: m.role,
+          name: m.name.trim(),
+          role: m.role.trim(),
           schedule: m.schedule,
         })),
         imageUrl: imagePreview || business?.imageUrl || null,
@@ -676,7 +811,13 @@ const BusinessProfile: React.FC = () => {
       hydrateFromBusiness(updatedBusiness);
       localStorage.setItem("business", JSON.stringify(updatedBusiness));
       localStorage.setItem("businessInfo", JSON.stringify(updatedBusiness));
-      setIsEditing(false);
+      
+      // ✅ Reset all editing states
+      setEditingBusinessInfo(false);
+      setEditingOperatingHours(false);
+      setEditingStaff(false);
+      setEditingSocial(false);
+      
       setAlertData({
         type: "success",
         message: "Profile updated successfully.",
@@ -685,6 +826,7 @@ const BusinessProfile: React.FC = () => {
       console.error(err);
       setAlertData({
         type: "error",
+        title: "ERROR",
         message:
           err?.response?.data?.message || "Failed to update profile",
       });
@@ -709,7 +851,7 @@ const BusinessProfile: React.FC = () => {
     formData.append("image", file);
 
     try {
-      // backend: PUT /api/business/me/profile-image  :contentReference[oaicite:2]{index=2}
+      // backend: PUT /api/business/me/profile-image
       const res = await api.put("/business/me/profile-image", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -796,17 +938,6 @@ const BusinessProfile: React.FC = () => {
       <ContentWrapper>
         <TitleRow>
           <Title>Your Profile</Title>
-          <Button
-            onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-            style={{
-              padding: "8px 16px",
-              fontSize: "14px",
-              borderRadius: "8px",
-              width: "auto",
-            }}
-          >
-            {isEditing ? "Save Changes" : "Edit Profile"}
-          </Button>
         </TitleRow>
 
         <HeaderWrapper>
@@ -818,20 +949,6 @@ const BusinessProfile: React.FC = () => {
             stat2={0}
             stat3={0}
           />
-          <ImageControlsWrapper>
-            <ChangeImageButton
-              type="button"
-              onClick={handleChangeImageClick}
-            >
-              {imagePreview ? "Change picture" : "Upload picture"}
-            </ChangeImageButton>
-            <HiddenFileInput
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleImageSelected}
-            />
-          </ImageControlsWrapper>
         </HeaderWrapper>
 
         <Wrapper>
@@ -842,30 +959,31 @@ const BusinessProfile: React.FC = () => {
               <EditButton
                 type="button"
                 onClick={() => {
-                  if (!isEditing) setIsEditing(true);
+                  if (editingBusinessInfo) {
+                    handleSave();
+                  } else {
+                    setEditingBusinessInfo(true);
+                  }
                 }}
               >
-                <FiEdit2 size={14} /> Edit
+                {editingBusinessInfo ? (
+                  <>Save Changes</>
+                ) : (
+                  <>
+                    <FiEdit2 size={14} /> Edit
+                  </>
+                )}
               </EditButton>
             </SectionHeader>
 
             <Row>
-              <HalfWidthBox>
                 <TextBox
                   placeholder="Business Name"
                   value={name}
-                  readOnly={!isEditing}
+                  readOnly={!editingBusinessInfo}
                   onChange={(e: any) => setName(e.target.value)}
                 />
-              </HalfWidthBox>
-              <HalfWidthBox>
-                <TextBox
-                  placeholder="Business Type"
-                  value={type}
-                  readOnly={!isEditing}
-                  onChange={(e: any) => setType(e.target.value)}
-                />
-              </HalfWidthBox>
+              
             </Row>
 
             <Row>
@@ -873,7 +991,7 @@ const BusinessProfile: React.FC = () => {
                 <TextBox
                   placeholder="Email"
                   value={email}
-                  readOnly={!isEditing}
+                  readOnly={!editingBusinessInfo}
                   onChange={(e: any) => setEmail(e.target.value)}
                 />
               </HalfWidthBox>
@@ -881,7 +999,7 @@ const BusinessProfile: React.FC = () => {
                 <TextBox
                   placeholder="Phone Number"
                   value={phone}
-                  readOnly={!isEditing}
+                  readOnly={!editingBusinessInfo}
                   onChange={(e: any) => setPhone(e.target.value)}
                 />
               </HalfWidthBox>
@@ -892,7 +1010,7 @@ const BusinessProfile: React.FC = () => {
                 <TextBox
                   placeholder="Address"
                   value={address}
-                  readOnly={!isEditing}
+                  readOnly={!editingBusinessInfo}
                   onChange={(e: any) => setAddress(e.target.value)}
                 />
               </HalfWidthBox>
@@ -900,7 +1018,7 @@ const BusinessProfile: React.FC = () => {
                 <TextBox
                   placeholder="City"
                   value={city}
-                  readOnly={!isEditing}
+                  readOnly={!editingBusinessInfo}
                   onChange={(e: any) => setCity(e.target.value)}
                 />
               </HalfWidthBox>
@@ -909,7 +1027,7 @@ const BusinessProfile: React.FC = () => {
             <TextArea
               placeholder="Description"
               value={about}
-              readOnly={!isEditing}
+              readOnly={!editingBusinessInfo}
               onChange={(e: any) => setAbout(e.target.value)}
             />
           </Section>
@@ -921,10 +1039,20 @@ const BusinessProfile: React.FC = () => {
               <EditButton
                 type="button"
                 onClick={() => {
-                  if (!isEditing) setIsEditing(true);
+                  if (editingOperatingHours) {
+                    handleSave();
+                  } else {
+                    setEditingOperatingHours(true);
+                  }
                 }}
               >
-                <FiEdit2 size={14} /> Edit
+                {editingOperatingHours ? (
+                  <>Save Changes</>
+                ) : (
+                  <>
+                    <FiEdit2 size={14} /> Edit
+                  </>
+                )}
               </EditButton>
             </SectionHeader>
 
@@ -933,7 +1061,7 @@ const BusinessProfile: React.FC = () => {
                 const raw = operatingHours[dayKey];
                 const parsed = parseHours(raw);
 
-                if (!isEditing) {
+                if (!editingOperatingHours) {
                   return (
                     <TextBox
                       key={dayKey}
@@ -1012,10 +1140,20 @@ const BusinessProfile: React.FC = () => {
               <EditButton
                 type="button"
                 onClick={() => {
-                  if (!isEditing) setIsEditing(true);
+                  if (editingStaff) {
+                    handleSave();
+                  } else {
+                    setEditingStaff(true);
+                  }
                 }}
               >
-                <FiEdit2 size={14} /> Manage
+                {editingStaff ? (
+                  <>Save Changes</>
+                ) : (
+                  <>
+                    <FiEdit2 size={14} /> Manage
+                  </>
+                )}
               </EditButton>
             </SectionHeader>
 
@@ -1023,7 +1161,7 @@ const BusinessProfile: React.FC = () => {
               <StaffList>
                 {staff.map((member, staffIndex) => (
                   <div key={staffIndex}>
-                    {isEditing ? (
+                    {editingStaff ? (
                       <StaffHeaderRow>
                         <TextBox
                           placeholder="Name"
@@ -1078,7 +1216,7 @@ const BusinessProfile: React.FC = () => {
                       </StaffTextRow>
                     )}
 
-                    {isEditing && (
+                    {editingStaff && (
                       <>
                         <div
                           style={{
@@ -1159,7 +1297,7 @@ const BusinessProfile: React.FC = () => {
               <div style={{ color: "#777" }}>No staff added yet</div>
             )}
 
-            {isEditing && (
+            {editingStaff && (
               <div style={{ marginTop: 16 }}>
                 <Button
                   onClick={handleAddStaff}
@@ -1183,10 +1321,20 @@ const BusinessProfile: React.FC = () => {
               <EditButton
                 type="button"
                 onClick={() => {
-                  if (!isEditing) setIsEditing(true);
+                  if (editingSocial) {
+                    handleSave();
+                  } else {
+                    setEditingSocial(true);
+                  }
                 }}
               >
-                <FiEdit2 size={14} /> Edit
+                {editingSocial ? (
+                  <>Save Changes</>
+                ) : (
+                  <>
+                    <FiEdit2 size={14} /> Edit
+                  </>
+                )}
               </EditButton>
             </SectionHeader>
 
@@ -1194,7 +1342,7 @@ const BusinessProfile: React.FC = () => {
               <TextBox
                 placeholder="Instagram"
                 value={socialLinks.instagram || ""}
-                readOnly={!isEditing}
+                readOnly={!editingSocial}
                 onChange={(e: any) =>
                   setSocialLinks((prev) => ({
                     ...prev,
@@ -1205,7 +1353,7 @@ const BusinessProfile: React.FC = () => {
               <TextBox
                 placeholder="Other Link"
                 value={socialLinks.other || ""}
-                readOnly={!isEditing}
+                readOnly={!editingSocial}
                 onChange={(e: any) =>
                   setSocialLinks((prev) => ({
                     ...prev,
@@ -1236,7 +1384,7 @@ const BusinessProfile: React.FC = () => {
         {alertData && (
           <AlertPopup
             type={alertData.type}
-            title={alertData.type === "error" ? "ERROR" : ""}
+            title={alertData.title}
             message={alertData.message}
             onClose={() => setAlertData(null)}
           />

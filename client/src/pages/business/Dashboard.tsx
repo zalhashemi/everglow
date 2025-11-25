@@ -84,6 +84,22 @@ const ContentWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 30px;
+
+  @media (max-width: 1024px) {
+    padding: 32px 0 48px;
+    gap: 24px;
+  }
+
+  @media (max-width: 768px) {
+    width: 95%;
+    padding: 24px 0 40px;
+    gap: 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 0 32px;
+    gap: 16px;
+  }
 `;
 
 const HeaderRow = styled.div`
@@ -92,6 +108,11 @@ const HeaderRow = styled.div`
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const WelcomeText = styled.h1`
@@ -100,8 +121,20 @@ const WelcomeText = styled.h1`
   font-weight: 800;
   color: ${(p) => p.theme.colors.primary || "#0b1c36"};
 
+  @media (max-width: 1024px) {
+    font-size: 36px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 32px;
+  }
+
   @media (max-width: 700px) {
     font-size: 28px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
   }
 `;
 
@@ -110,6 +143,16 @@ const DateAndButton = styled.div`
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+
+  @media (max-width: 600px) {
+    width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 `;
 
 const DateBox = styled.div`
@@ -122,6 +165,16 @@ const DateBox = styled.div`
   font-weight: 500;
   color: #333;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+  @media (max-width: 768px) {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+  }
 `;
 
 const PrimaryButton = styled.button`
@@ -137,6 +190,16 @@ const PrimaryButton = styled.button`
   &:hover {
     opacity: 0.96;
   }
+
+  @media (max-width: 768px) {
+    padding: 9px 16px;
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 10px 18px;
+  }
 `;
 
 const StatsRow = styled.div`
@@ -146,6 +209,7 @@ const StatsRow = styled.div`
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 `;
 
@@ -157,6 +221,15 @@ const StatCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 6px;
+
+  @media (max-width: 768px) {
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 14px;
+  }
 `;
 
 const StatTitle = styled.div`
@@ -164,17 +237,41 @@ const StatTitle = styled.div`
   font-weight: 600;
   color: #7a7a7a;
   letter-spacing: 0.04em;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
 `;
 
 const StatValue = styled.div`
   font-size: 28px;
   font-weight: 800;
   color: #0b1c36;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 22px;
+  }
 `;
 
 const StatSubText = styled.div`
   font-size: 12px;
   color: #999;
+
+  @media (max-width: 768px) {
+    font-size: 11px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
 `;
 
 const SectionGrid = styled.div`
@@ -184,6 +281,7 @@ const SectionGrid = styled.div`
 
   @media (max-width: 980px) {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 `;
 
@@ -192,6 +290,15 @@ const Card = styled.div`
   border-radius: 14px;
   padding: 18px 18px 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -199,6 +306,14 @@ const SectionTitle = styled.h2`
   font-weight: 700;
   color: #0b1c36;
   margin: 0 0 10px 0;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
 `;
 
 /* Appointments list */
@@ -216,6 +331,13 @@ const AppointmentRow = styled.div<{ status: BookingStatus }>`
   margin-bottom: 6px;
   background-color: #f8f8f8;
   font-size: 14px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+  }
 
   .status {
     font-size: 12px;
@@ -241,6 +363,10 @@ const AppointmentRow = styled.div<{ status: BookingStatus }>`
         ? "#ef6c00"
         : "#1565c0"};
     background-color: #ffffff;
+
+    @media (max-width: 768px) {
+      align-self: flex-start;
+    }
   }
 `;
 
@@ -283,6 +409,13 @@ const QuickStatsGrid = styled.div`
 
   @media (max-width: 700px) {
     grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px;
+    gap: 14px;
   }
 `;
 
@@ -297,12 +430,28 @@ const QuickStatLabel = styled.div`
   font-size: 13px;
   color: #7a7a7a;
   text-transform: uppercase;
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
 `;
 
 const QuickStatValue = styled.div`
   font-size: 22px;
   font-weight: 800;
   color: #0b1c36;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 `;
 
 const RatingRow = styled.div`
@@ -336,17 +485,38 @@ const OfferHeaderRow = styled.div`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const OfferTitle = styled.div`
   font-weight: 700;
   font-size: 14px;
   color: #0b1c36;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;
 
 const OfferMeta = styled.div`
   font-size: 12px;
   color: #666;
+
+  @media (max-width: 768px) {
+    font-size: 11px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
 `;
 
 const Chip = styled.span<{ variant?: "active" | "past" }>`
@@ -465,13 +635,35 @@ const PopupCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    gap: 14px;
+  }
+
+  @media (max-width: 480px) {
+    width: 95vw;
+    padding: 18px;
+    gap: 12px;
+    border-radius: 12px;
+  }
 `;
 
 const PopupTitle = styled.h2`
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #0b1c36;
+  color: #4A5074;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const Label = styled.label`
@@ -520,7 +712,7 @@ const ServiceRow = styled.label`
 /* ✅ NEW BUTTON STYLES (fix text bigger than button) */
 
 const SaveButton = styled.button`
-  background: #0b1c36;
+  background: #4A5074;
   border: none;
   color: #ffffff;
   padding: 10px 18px;
@@ -535,6 +727,10 @@ const SaveButton = styled.button`
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
   }
 `;
 
@@ -555,6 +751,10 @@ const CancelButton = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const PopupActions = styled.div`
@@ -562,6 +762,11 @@ const PopupActions = styled.div`
   gap: 10px;
   justify-content: flex-end;
   margin-top: 8px;
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
 `;
 
 /* ---------- OfferPopup Component ---------- */
@@ -756,6 +961,9 @@ const BusinessDashboard: React.FC = () => {
 
   const [showOfferPopup, setShowOfferPopup] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+
+  // ✅ NEW: State for delete confirmation
+  const [deleteConfirmation, setDeleteConfirmation] = useState<Offer | null>(null);
 
   const [services, setServices] = useState<Service[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -952,12 +1160,15 @@ const BusinessDashboard: React.FC = () => {
   };
 
   const handleDeleteOffer = async (offer: Offer) => {
-    const ok = window.confirm(`Delete offer "${offer.title}"?`);
-    if (!ok) return;
+    // ✅ Show confirmation popup instead of window.confirm
+    setDeleteConfirmation(offer);
+  };
+
+  const confirmDeleteOffer = async () => {
+    if (!deleteConfirmation) return;
 
     try {
-      // ✅ delete offer -> /api/offers/:id
-      await api.delete(`/offers/${offer._id}`);
+      await api.delete(`/offers/${deleteConfirmation._id}`);
       await fetchOffers();
       setPopup({
         type: "success",
@@ -969,6 +1180,8 @@ const BusinessDashboard: React.FC = () => {
         type: "error",
         message: err?.response?.data?.message || "Could not delete offer.",
       });
+    } finally {
+      setDeleteConfirmation(null);
     }
   };
 
@@ -1414,6 +1627,19 @@ const BusinessDashboard: React.FC = () => {
           onSaved={fetchOffers}
           services={services}
           existingOffer={editingOffer || undefined}
+        />
+      )}
+
+      {/* ✅ Delete confirmation popup */}
+      {deleteConfirmation && (
+        <AlertPopup
+          type="error"
+          title="Confirm Delete"
+          message={`Are you sure you want to delete the offer "${deleteConfirmation.title}"? This action cannot be undone.`}
+          onConfirm={confirmDeleteOffer}
+          onClose={() => setDeleteConfirmation(null)}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
         />
       )}
 

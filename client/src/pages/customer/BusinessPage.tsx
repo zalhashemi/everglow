@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiMapPin } from "react-icons/fi";
-import { Star } from "react-feather";
+import { Star, Plus, Minus } from "react-feather";
 import TabBar from "../../components/common/TabBar";
 import ServiceTile from "../../components/common/ServiceTile";
 import api from "../../utils/api";
@@ -330,17 +330,34 @@ const BusinessPage: React.FC = () => {
                         <button
                           onClick={() => toggleService(service._id)}
                           style={{
-                            padding: "8px 14px",
-                            borderRadius: "8px",
+                            background: isSelected ? "#ffebee" : "#e8eaf6",
                             border: "none",
                             cursor: "pointer",
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            backgroundColor: isSelected ? "#27374d" : "#f2dcdc",
-                            color: isSelected ? "#ffffff" : "#27374d",
+                            padding: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "50%",
+                            width: "36px",
+                            height: "36px",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = isSelected
+                              ? "#ffcdd2"
+                              : "#c5cae9";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = isSelected
+                              ? "#ffebee"
+                              : "#e8eaf6";
                           }}
                         >
-                          {isSelected ? "Remove" : "Add"}
+                          {isSelected ? (
+                            <Minus size={20} color="#d32f2f" />
+                          ) : (
+                            <Plus size={20} color="#4a5174" />
+                          )}
                         </button>
                       }
                     />

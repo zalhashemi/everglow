@@ -2,10 +2,13 @@ import React, { useEffect } from "react";
 import styled from "styled-components";
 
 interface AlertPopupProps {
-  type?: "error" | "success"; // NEW
-  title?: string;             // optional now
+  type?: "error" | "success";
+  title?: string;
   message: string;
   onClose: () => void;
+  onConfirm?: () => void; // ✅ NEW: Optional confirm handler
+  confirmLabel?: string;   // ✅ NEW: Optional confirm button label
+  cancelLabel?: string;    // ✅ NEW: Optional cancel button label
 }
 
 const Overlay = styled.div`
@@ -47,6 +50,12 @@ const Message = styled.p`
   margin-bottom: 22px;
 `;
 
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+`;
+
 const OkButton = styled.button<{ isError: boolean }>`
   background: ${(p) => (p.isError ? "#d10000" : "#4a5174")};
   color: white;
@@ -56,9 +65,27 @@ const OkButton = styled.button<{ isError: boolean }>`
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  flex: 1;
 
   &:hover {
     background: ${(p) => (p.isError ? "#b30000" : "#3d4464")};
+  }
+`;
+
+const CancelButton = styled.button`
+  background: transparent;
+  color: #666;
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+
+  &:hover {
+    background: #f5f5f5;
+    border-color: #999;
   }
 `;
 
@@ -67,18 +94,31 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
   title,
   message,
   onClose,
+  onConfirm,
+  confirmLabel = "OK",
+  cancelLabel = "Cancel",
 }) => {
 
   const isError = type === "error";
+  const isConfirmation = !!onConfirm;
 
-  // Auto-close in 5 sec
+  // Auto-close in 5 sec (only for non-confirmation alerts)
   useEffect(() => {
+    if (isConfirmation) return; // Don't auto-close confirmation dialogs
+
     const timer = setTimeout(() => {
       onClose();
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [onClose, isConfirmation]);
+
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm();
+    }
+    onClose();
+  };
 
   return (
     <Overlay>
@@ -90,9 +130,20 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
 
         <Message>{message}</Message>
 
-        <OkButton isError={isError} onClick={onClose}>
-          OK
-        </OkButton>
+        {isConfirmation ? (
+          <ButtonRow>
+            <CancelButton onClick={onClose}>
+              {cancelLabel}
+            </CancelButton>
+            <OkButton isError={isError} onClick={handleConfirm}>
+              {confirmLabel}
+            </OkButton>
+          </ButtonRow>
+        ) : (
+          <OkButton isError={isError} onClick={onClose}>
+            OK
+          </OkButton>
+        )}
       </Modal>
     </Overlay>
   );
