@@ -94,10 +94,12 @@ const DotsWrapper = styled.div`
   justify-content: center;
   gap: 8px;
   margin-top: 10px;
+  margin-bottom: 20px;
 
   @media (max-width: 480px) {
     gap: 6px;
     margin-top: 8px;
+    margin-bottom: 16px;
   }
 `;
 
@@ -190,6 +192,25 @@ const HorizontalScroll = styled.div`
       display: none;
     }
   }
+
+  @media (max-width: 480px) {
+    gap: 10px;
+    padding: 0 4px 8px 4px;
+  }
+
+  /* Make cards responsive within scroll container */
+  & > * {
+    @media (max-width: 768px) {
+      min-width: 280px;
+      width: 280px;
+    }
+
+    @media (max-width: 480px) {
+      min-width: calc(100vw - 40px);
+      width: calc(100vw - 40px);
+      max-width: 350px;
+    }
+  }
 `;
 
 const ScrollButton = styled.div<{ side: "left" | "right" }>`
@@ -219,7 +240,15 @@ const ScrollButton = styled.div<{ side: "left" | "right" }>`
   }
 
   @media (max-width: 768px) {
-    display: none;
+    width: 36px;
+    height: 36px;
+    ${(p) => (p.side === "left" ? "left: -18px;" : "right: -18px;")}
+  }
+
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+    ${(p) => (p.side === "left" ? "left: -16px;" : "right: -16px;")}
   }
 `;
 
@@ -235,8 +264,23 @@ const ArrowIcon = ({ direction }: { direction: "left" | "right" }) => (
     style={{
       transform: direction === "left" ? "rotate(180deg)" : "none",
     }}
+    className="arrow-icon"
   >
     <path d="M9 18l6-6-6-6" />
+    <style>{`
+      @media (max-width: 768px) {
+        .arrow-icon {
+          width: 18px;
+          height: 18px;
+        }
+      }
+      @media (max-width: 480px) {
+        .arrow-icon {
+          width: 16px;
+          height: 16px;
+        }
+      }
+    `}</style>
   </svg>
 );
 

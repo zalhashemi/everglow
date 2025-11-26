@@ -15,6 +15,25 @@ const PageWrapper = styled.div`
   justify-content: center;
   align-items: flex-start;
   padding-top: 80px;
+
+  @media (max-width: 1024px) {
+    padding-top: 60px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  @media (max-width: 768px) {
+    padding-top: 40px;
+    padding-left: 16px;
+    padding-right: 16px;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 480px) {
+    padding-top: 24px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 `;
 
 const FormContainer = styled.div`
@@ -22,6 +41,20 @@ const FormContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 18px;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    max-width: 700px;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    gap: 16px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 14px;
+  }
 `;
 
 const Title = styled.h2`
@@ -30,11 +63,26 @@ const Title = styled.h2`
   font-size: 36px;
   font-weight: 600;
   margin-bottom: 12px;
+
+  @media (max-width: 768px) {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
 `;
 
 const Row = styled.div`
   display: flex;
   gap: 10px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+  }
 `;
 
 const Label = styled.label`
@@ -64,7 +112,17 @@ const ButtonRow = styled.div`
   display: flex;
   justify-content: space-between;
   width: 990px;
-  margin-top: 10px; /* increased the space under the title */
+  margin-top: 10px;
+  gap: 10px;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 const Header = styled.header`
   width: 100%;
@@ -75,6 +133,15 @@ const Header = styled.header`
   padding: ${(p) => p.theme.spacing.md} 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   height: 100px;
+
+  @media (max-width: 768px) {
+    height: 80px;
+    padding: ${(p) => p.theme.spacing.sm} 0;
+  }
+
+  @media (max-width: 480px) {
+    height: 70px;
+  }
 `;
 
 const Logo = styled.div`
@@ -92,17 +159,36 @@ const Logo = styled.div`
     max-height: 167px;
     width: auto;
     object-fit: contain;
+
+    @media (max-width: 768px) {
+      max-height: 120px;
+    }
+
+    @media (max-width: 480px) {
+      max-height: 90px;
+    }
   }
 `;
 const SquareButton = styled(Button)`
   width: 48%;
-  height: 80px; /* makes them square-ish tiles */
+  height: 80px;
   font-size: 20px;
   font-weight: 600;
   border-radius: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 70px;
+    font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    height: 60px;
+    font-size: 16px;
+  }
 `;
 
 
@@ -126,22 +212,42 @@ const BottomText = styled.div`
 
 const HalfWidth = styled.div`
   width: 495px;
+
+  @media (max-width: 1024px) {
+    width: calc(50% - 5px);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const FullWidth = styled.div`
   width: 990px;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+  }
 `;
 
 const ErrorText = styled.div`
   color: #b00020;
   font-size: 14px;
   margin-bottom: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const Subtitle = styled.div`
   font-size: 12px;
   margin-top: 4px;
   color: #555;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
 `;
 
 const TogglePassword = styled.span`
@@ -268,10 +374,8 @@ const Signup: React.FC = () => {
 
   return (
     <>
-      {/* Added header with logo */}
       <Header>
         <Logo onClick={() => (window.location.href = "/")}>
-          {/* Replace with your logo file if available */}
           <img src={everglowLogo} alt="EverGlow" />
         </Logo>
       </Header>
@@ -279,34 +383,31 @@ const Signup: React.FC = () => {
       <PageWrapper>
         <FormContainer>
           <Title>Sign Up</Title>
-<p style={{
-  fontFamily: "Inter, sans-serif",
-  color: "#6b6b6b",
-  marginTop: "-10px",
-  marginBottom: "20px",
-  fontSize: "16px"
-}}>
-  Create your Everglow account to start booking your beauty services instantly.
-</p>
+          <p style={{
+            fontFamily: "Inter, sans-serif",
+            color: "#6b6b6b",
+            marginTop: "-10px",
+            marginBottom: "20px",
+            fontSize: "16px"
+          }}>
+            Create your Everglow account to start booking your beauty services instantly.
+          </p>
 
+          <ButtonRow>
+            <SquareButton 
+              backgroundColor="#4a5174"
+              onClick={() => setShowCustomerForm(true)}
+            >
+              I am a Customer
+            </SquareButton>
 
-          {/* Always show both buttons */}
-         <ButtonRow>
-  <SquareButton 
-    backgroundColor="#4a5174"
-    onClick={() => setShowCustomerForm(true)}
-  >
-    I am a Customer
-  </SquareButton>
-
-  <SquareButton
-    backgroundColor="#0B1C36"
-    onClick={handleBusinessSignup}
-  >
-    I am a Business
-  </SquareButton>
-</ButtonRow>
-
+            <SquareButton
+              backgroundColor="#0B1C36"
+              onClick={handleBusinessSignup}
+            >
+              I am a Business
+            </SquareButton>
+          </ButtonRow>
 
           {/* Show customer form only AFTER user clicks "I am a Customer" */}
           {showCustomerForm && (

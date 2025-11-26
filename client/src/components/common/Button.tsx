@@ -33,6 +33,23 @@ const StyledButton = styled.button<ButtonProps>`
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  @media (max-width: 1024px) {
+    width: ${props => props.width || '100%'};
+    max-width: 700px;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 44px;
+    font-size: 15px;
+  }
+
+  @media (max-width: 480px) {
+    height: 42px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
 `;
 
 const Button: React.FC<ButtonProps> = ({

@@ -8,6 +8,15 @@ const PageWrapper = styled.div`
   background: #faf6ea;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+
+  @media (max-width: 768px) {
+    padding: 0 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 12px;
+  }
 `;
 
 const Header = styled.header`
@@ -20,6 +29,16 @@ const Header = styled.header`
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   height: 100px;
   margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    height: 80px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    height: 70px;
+    margin-bottom: 12px;
+  }
 `;
 
 const Logo = styled.div`
@@ -27,6 +46,14 @@ const Logo = styled.div`
     height: 140px;
     object-fit: contain;
     cursor: pointer;
+
+    @media (max-width: 768px) {
+      height: 100px;
+    }
+
+    @media (max-width: 480px) {
+      height: 80px;
+    }
   }
 `;
 
@@ -35,6 +62,12 @@ const ContentWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px 0;
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    padding: 16px 0;
+  }
 `;
 
 const FormContainer = styled.div`
@@ -42,6 +75,16 @@ const FormContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 500px;
+    gap: 14px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
 `;
 
 const Title = styled.h2`
@@ -49,12 +92,26 @@ const Title = styled.h2`
   font-family: "Inter", sans-serif;
   font-size: 28px;
   margin-bottom: 8px;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
 `;
 
 const Label = styled.label`
   font-size: 14px;
   font-family: "Inter", sans-serif;
   font-weight: 500;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const BottomText = styled.div`
@@ -72,6 +129,12 @@ const BottomText = styled.div`
     &:hover {
       text-decoration: underline;
     }
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    padding: 12px;
+    margin-top: 16px;
   }
 `;
 
@@ -103,12 +166,26 @@ const Button = styled.button<{ fullWidth?: boolean }>`
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+    padding: 11px 14px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
 `;
 
 const ErrorText = styled.div`
   color: #b00020;
   font-size: 14px;
   margin-top: -4px;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const ButtonRow = styled.div`
@@ -117,6 +194,12 @@ const ButtonRow = styled.div`
   width: 100%;
   gap: 10px;
   margin-bottom: 16px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
 `;
 
 const RoleToggleButton = styled.button<{ active?: boolean; businessButton?: boolean }>`
@@ -143,6 +226,17 @@ const RoleToggleButton = styled.button<{ active?: boolean; businessButton?: bool
 
   &:hover {
     opacity: 0.9;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+    height: 46px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    height: 44px;
+    width: 100%;
   }
 `;
 
@@ -277,6 +371,8 @@ const LoginPage: React.FC = () => {
               borderRadius: "6px",
               border: "1px solid #ccc",
               fontSize: "16px",
+              width: "100%",
+              boxSizing: "border-box",
             }}
             placeholder="Placeholder"
             value={email}
@@ -292,6 +388,8 @@ const LoginPage: React.FC = () => {
               borderRadius: "6px",
               border: "1px solid #ccc",
               fontSize: "16px",
+              width: "100%",
+              boxSizing: "border-box",
             }}
             placeholder="Placeholder"
             value={password}

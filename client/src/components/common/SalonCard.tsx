@@ -31,6 +31,7 @@ const SalonCard: React.FC<SalonCardProps> = ({
   return (
     <div
       onClick={onClick}
+      className="salon-card"
       style={{
         width: "310px",
         height: "250px",
@@ -53,12 +54,58 @@ const SalonCard: React.FC<SalonCardProps> = ({
           "0 4px 12px rgba(0, 0, 0, 0.12)";
       }}
     >
+      <style>{`
+        @media (max-width: 1024px) {
+          .salon-card {
+            width: 280px !important;
+            height: 230px !important;
+          }
+          .salon-card-image {
+            height: 140px !important;
+          }
+          .salon-card-name {
+            font-size: 15px !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .salon-card {
+            width: 100% !important;
+            max-width: 350px !important;
+            height: 240px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .salon-card {
+            width: 100% !important;
+            height: 220px !important;
+          }
+          .salon-card-image {
+            height: 130px !important;
+          }
+          .salon-card-details {
+            padding: 8px 12px !important;
+          }
+          .salon-card-name {
+            font-size: 14px !important;
+          }
+          .salon-card-rating {
+            font-size: 13px !important;
+          }
+          .salon-card-location {
+            font-size: 12px !important;
+          }
+        }
+      `}</style>
+
       {/* Image */}
       <div style={{ position: "relative" }}>
         <img
           src={imgSrc}
           alt={name}
           onError={() => setImgSrc(errorImage)}
+          className="salon-card-image"
           style={{
             width: "100%",
             height: "150px",
@@ -68,7 +115,7 @@ const SalonCard: React.FC<SalonCardProps> = ({
       </div>
 
       {/* Details */}
-      <div style={{ padding: "10px 14px" }}>
+      <div className="salon-card-details" style={{ padding: "10px 14px" }}>
 
         {/* Name + Rating on right */}
         <div
@@ -80,11 +127,12 @@ const SalonCard: React.FC<SalonCardProps> = ({
             alignItems: "center",
           }}
         >
-          <span>{name}</span>
+          <span className="salon-card-name">{name}</span>
 
           {/* ⭐ Rating (only if exists) */}
           {showRating && (
             <div
+              className="salon-card-rating"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -102,6 +150,7 @@ const SalonCard: React.FC<SalonCardProps> = ({
 
         {/* Location */}
         <div
+          className="salon-card-location"
           style={{
             display: "flex",
             alignItems: "center",
