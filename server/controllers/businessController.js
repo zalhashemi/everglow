@@ -129,13 +129,14 @@ const registerBusiness = async (req, res) => {
       } = businessInfo;
 
       const mappedStaff = (wizardStaffRaw || [])
-        .filter((m) => m?.name || m?.email || m?.role)
-        .map((m) => ({
-          fullName: m.fullName || m.name || "",
-          role: m.role || "",
-          email: m.email || "",
-          phone: m.phone || "",
-        }));
+  .filter((m) => m?.name || m?.email || m?.role)
+  .map((m) => ({
+    fullName: m.fullName || m.name || "",
+    role: m.role || "",
+    email: m.email || "",
+    phone: m.phone || "",
+    schedule: m.schedule || {}, // ✅ ADD THIS LINE
+  }));
 
       // New required fields match the new UI
       if (!email || !name || !type || !phone || !genderTag) {

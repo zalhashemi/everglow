@@ -523,6 +523,35 @@ const BusinessProfile: React.FC = () => {
     return TIME_OPTIONS.slice(openIndex + 1);
   };
 
+  // ✅ ADD THIS FUNCTION
+  const getValidStaffTimes = (dayKey: DayKey, isClosing: boolean, staffOpenTime?: string): string[] => {
+    const businessDay = parseHours(operatingHours[dayKey]);
+    
+    // If business is closed, staff can't work
+    if (businessDay.closed || !businessDay.open || !businessDay.close) {
+      return [];
+    }
+
+    const businessOpenIndex = TIME_OPTIONS.indexOf(businessDay.open);
+    const businessCloseIndex = TIME_OPTIONS.indexOf(businessDay.close);
+
+    if (businessOpenIndex === -1 || businessCloseIndex === -1) {
+      return TIME_OPTIONS;
+    }
+
+    if (isClosing) {
+      // For closing time: must be after staff opening time and not after business closing
+      if (!staffOpenTime) return TIME_OPTIONS.slice(businessOpenIndex + 1, businessCloseIndex + 1);
+      
+      const staffOpenIndex = TIME_OPTIONS.indexOf(staffOpenTime);
+      const startIndex = Math.max(staffOpenIndex + 1, businessOpenIndex);
+      return TIME_OPTIONS.slice(startIndex, businessCloseIndex + 1);
+    } else {
+      // For opening time: must be within business hours
+      return TIME_OPTIONS.slice(businessOpenIndex, businessCloseIndex);
+    }
+  };
+
   const handleBusinessDayChange = (
     dayKey: DayKey,
     field: "open" | "close" | "closed",
@@ -592,6 +621,18 @@ const BusinessProfile: React.FC = () => {
       const staffMember = { ...updated[staffIndex] };
       const schedule = { ...staffMember.schedule };
       const currentDay = { ...schedule[day] };
+
+      // ✅ CHECK: If business is closed on this day, staff must be off
+      const businessDay = parseHours(operatingHours[day]);
+      if (businessDay.closed) {
+        currentDay.closed = true;
+        currentDay.open = "";
+        currentDay.close = "";
+        schedule[day] = currentDay;
+        staffMember.schedule = schedule;
+        updated[staffIndex] = staffMember;
+        return updated;
+      }
 
       // ✅ If changing open time, reset close if it's now invalid
       if (changes.open !== undefined) {
@@ -1226,7 +1267,7 @@ const BusinessProfile: React.FC = () => {
                             marginBottom: "4px",
                           }}
                         >
-                          Work schedule
+                          Work schedule (must be within business operating hours)
                         </div>
                         <HoursGrid>
                           {DAY_KEYS.map((dayKey) => {
@@ -1235,22 +1276,31 @@ const BusinessProfile: React.FC = () => {
                               close: "",
                               closed: false,
                             };
-                            const validStaffClosingTimes = getValidClosingTimes(day.open);
+                            
+                            // ✅ CHECK: Get business hours for this day
+                            const businessDay = parseHours(operatingHours[dayKey]);
+                            const isBusinessClosed = businessDay.closed || !businessDay.open || !businessDay.close;
+                            
+                            // ✅ GET: Valid time options based on business hours
+                            const validStaffOpenTimes = getValidStaffTimes(dayKey, false);
+                            const validStaffCloseTimes = getValidStaffTimes(dayKey, true, day.open);
 
                             return (
                               <DayRow key={dayKey}>
                                 <DayLabel>{DAY_LABELS[dayKey]}</DayLabel>
                                 <HoursSelect
                                   value={day.open}
-                                  disabled={day.closed}
+                                  disabled={day.closed || isBusinessClosed}
                                   onChange={(e) =>
                                     updateStaffDayHours(staffIndex, dayKey, {
                                       open: e.target.value,
                                     })
                                   }
                                 >
-                                  <option value="">From</option>
-                                  {TIME_OPTIONS.map((time) => (
+                                  <option value="">
+                                    {isBusinessClosed ? "Closed" : "From"}
+                                  </option>
+                                  {validStaffOpenTimes.map((time) => (
                                     <option key={time} value={time}>
                                       {time}
                                     </option>
@@ -1258,15 +1308,17 @@ const BusinessProfile: React.FC = () => {
                                 </HoursSelect>
                                 <HoursSelect
                                   value={day.close}
-                                  disabled={day.closed}
+                                  disabled={day.closed || isBusinessClosed}
                                   onChange={(e) =>
                                     updateStaffDayHours(staffIndex, dayKey, {
                                       close: e.target.value,
                                     })
                                   }
                                 >
-                                  <option value="">To</option>
-                                  {validStaffClosingTimes.map((time) => (
+                                  <option value="">
+                                    {isBusinessClosed ? "Closed" : "To"}
+                                  </option>
+                                  {validStaffCloseTimes.map((time) => (
                                     <option key={time} value={time}>
                                       {time}
                                     </option>
@@ -1275,12 +1327,13 @@ const BusinessProfile: React.FC = () => {
                                 <ClosedCheckboxRow>
                                   <input
                                     type="checkbox"
-                                    checked={day.closed}
+                                    checked={day.closed || isBusinessClosed}
                                     onChange={(e) =>
                                       updateStaffDayHours(staffIndex, dayKey, {
                                         closed: e.target.checked,
                                       })
                                     }
+                                    disabled={isBusinessClosed}
                                   />
                                   Off
                                 </ClosedCheckboxRow>
