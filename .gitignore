@@ -21,3 +21,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Never commit node_modules
+client/node_modules/
+client/node_modules/.cache/
+client/.cache/
+node_modules/
