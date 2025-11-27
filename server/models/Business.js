@@ -4,8 +4,6 @@ const staffSchema = new mongoose.Schema(
   {
     fullName: { type: String, default: "" },
     role: { type: String, default: "" },
-    //email: { type: String, default: "" },
-    //phone: { type: String, default: "" },
     // allow per-staff work schedule (we store a generic object)
     schedule: {
       type: Object,
@@ -77,13 +75,10 @@ const LoyaltySchema = new mongoose.Schema(
 
 const businessSchema = new mongoose.Schema(
   {
-    // Old auth-style flow fields
     ownerFirstName: { type: String },
     ownerLastName: { type: String },
-    // ✅ no raw password field; you store a hash instead
     passwordHash: { type: String },
 
-    // Common fields
     email: { type: String, required: true, unique: true },
     phone: { type: String },
 
@@ -95,7 +90,6 @@ const businessSchema = new mongoose.Schema(
 
     description: { type: String, default: "" },
 
-    // ✅ operatingHours matches what the frontend sends
     operatingHours: { type: operatingHoursSchema, default: () => ({}) },
 
     staff: { type: [staffSchema], default: [] },
@@ -104,21 +98,19 @@ const businessSchema = new mongoose.Schema(
 
     imageUrl: {
       type: String,
-      default: null, // e.g. "/uploads/filename.jpg"
+      default: null, 
     },
 
-    // 🌍 Geo location for map / "near me"
     location: {
       type: {
         type: String,
         enum: ["Point"],
       },
       coordinates: {
-        type: [Number], // [lng, lat]
+        type: [Number], 
       },
     },
 
-    // Loyalty configuration stored on the business document
     loyalty: {
       type: LoyaltySchema,
       default: () => ({}),
@@ -128,7 +120,6 @@ const businessSchema = new mongoose.Schema(
       default: false,
     },
 
-    // 🌸 For Her / For Him tag
     genderTag: {
       type: String,
       enum: ["women", "men", "mixed"],
