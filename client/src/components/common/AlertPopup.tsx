@@ -119,9 +119,6 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
     if (onConfirm) {
       onConfirm();
     }
-    if (onClose) { // ✅ Check before calling
-      onClose();
-    }
   };
 
   const handleClose = () => {
@@ -142,7 +139,7 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
 
         {isConfirmation ? (
           <ButtonRow>
-            <CancelButton onClick={handleClose} disabled={confirmDisabled}>
+            <CancelButton onClick={handleClose}>
               {cancelLabel}
             </CancelButton>
             <OkButton isError={isError} onClick={handleConfirm} disabled={confirmDisabled}>
