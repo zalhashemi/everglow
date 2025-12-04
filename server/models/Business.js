@@ -132,4 +132,6 @@ const businessSchema = new mongoose.Schema(
 // 2dsphere index for geospatial queries
 businessSchema.index({ location: "2dsphere" });
 
+
+
 module.exports = mongoose.model("Business", businessSchema);
