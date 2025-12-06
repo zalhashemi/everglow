@@ -3,7 +3,6 @@ const Service = require("../models/Service");
 const CustomerLoyalty = require("../models/CustomerLoyalty");
 const Business = require("../models/Business");
 
-// Map JS getDay() -> schedule keys
 const DAY_KEYS = [
   "sunday",
   "monday",
@@ -14,10 +13,6 @@ const DAY_KEYS = [
   "saturday",
 ];
 
-/* ============================================================
-   CUSTOMER: CREATE BOOKING
-   POST /api/bookings
-============================================================ */
 const createBookingAsCustomer = async (req, res) => {
   try {
     const { businessId, serviceId, startTime, notes, staffIndex } = req.body;
@@ -64,7 +59,6 @@ const createBookingAsCustomer = async (req, res) => {
       return res.status(400).json({ message: "Invalid startTime" });
     }
 
-    // Prevent double booking of the same business + staff + time
     const existing = await Booking.findOne({
       business: businessId,
       staffIndex: index,
@@ -77,7 +71,6 @@ const createBookingAsCustomer = async (req, res) => {
       });
     }
 
-    // IMPORTANT: set `service: serviceId`
     const booking = await Booking.create({
       business: businessId,
       service: serviceId,
@@ -89,7 +82,6 @@ const createBookingAsCustomer = async (req, res) => {
       staffName,
     });
 
-    // Loyalty: +1 point up to max 5
     let loyalty = await CustomerLoyalty.findOne({
       business: businessId,
       customer: req.customer._id,
@@ -116,10 +108,6 @@ const createBookingAsCustomer = async (req, res) => {
   }
 };
 
-/* ============================================================
-   CUSTOMER: GET MY BOOKINGS
-   GET /api/bookings/me
-============================================================ */
 const getBookingsForCustomer = async (req, res) => {
   try {
     const bookings = await Booking.find({ customer: req.customer._id })
@@ -149,10 +137,7 @@ const getBookingsForCustomer = async (req, res) => {
   }
 };
 
-/* ============================================================
-   BUSINESS: GET BOOKINGS
-   GET /api/bookings/business
-============================================================ */
+
 const getBookingsForMyBusiness = async (req, res) => {
   try {
     const business = await Business.findById(req.business._id).select("staff");
@@ -192,10 +177,6 @@ const getBookingsForMyBusiness = async (req, res) => {
   }
 };
 
-/* ============================================================
-   BUSINESS: UPDATE STATUS
-   PATCH /api/bookings/business/:id/status
-============================================================ */
 const updateBookingStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -222,10 +203,6 @@ const updateBookingStatus = async (req, res) => {
   }
 };
 
-/* ============================================================
-   STAFF AVAILABLE FOR SPECIFIC SLOT
-   GET /api/bookings/available-staff?businessId=...&startTime=YYYY-MM-DDTHH:mm
-============================================================ */
 const getAvailableStaffForSlot = async (req, res) => {
   try {
     const { businessId, startTime } = req.query;
@@ -255,7 +232,6 @@ const getAvailableStaffForSlot = async (req, res) => {
     const dayIndex = dateObj.getDay();
     const dayKey = DAY_KEYS[dayIndex];
 
-    // business-level hours
     const businessHoursRaw =
       business.operatingHours && business.operatingHours[dayKey];
 
@@ -337,11 +313,6 @@ const getAvailableStaffForSlot = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-/* ============================================================
-   AVAILABLE TIME SLOTS
-   GET /api/bookings/available-slots/:businessId?date=YYYY-MM-DD&duration=MIN
-============================================================ */
 
 const timeStrToMinutes = (str) => {
   const [h, m] = str.split(":").map(Number);
@@ -442,10 +413,6 @@ const getAvailableSlots = async (req, res) => {
   }
 };
 
-/* ============================================================
-   CUSTOMER: CANCEL BOOKING
-   PATCH /api/bookings/:id/cancel
-============================================================ */
 const cancelBookingAsCustomer = async (req, res) => {
   try {
     const booking = await Booking.findOne({
@@ -470,7 +437,7 @@ const cancelBookingAsCustomer = async (req, res) => {
     const updated = await Booking.findOneAndUpdate(
       { _id: booking._id },
       { status: "cancelled" },
-      { new: true } // validators off by default -> safe even for old docs
+      { new: true } 
     );
 
     return res.json({ message: "Booking cancelled", booking: updated });
@@ -480,10 +447,6 @@ const cancelBookingAsCustomer = async (req, res) => {
   }
 };
 
-/* ============================================================
-   CUSTOMER: RESCHEDULE BOOKING
-   PATCH /api/bookings/:id/reschedule
-============================================================ */
 const rescheduleBookingAsCustomer = async (req, res) => {
   try {
     const { startTime, staffIndex, notes } = req.body;

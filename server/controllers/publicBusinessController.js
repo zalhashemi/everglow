@@ -1,14 +1,9 @@
-// server/controllers/publicBusinessController.js
-
 const Business = require("../models/Business");
 const Service = require("../models/Service");
 const Offer = require("../models/Offer");
 const Review = require("../models/Review");
 const Booking = require("../models/Booking");
 
-/* ============================================================
-   Helper: Attach ratings to business list
-============================================================ */
 async function attachRatings(businesses) {
   if (!businesses || businesses.length === 0) return [];
 
@@ -46,9 +41,6 @@ async function attachRatings(businesses) {
   });
 }
 
-/* ============================================================
-   GET ALL BUSINESSES (used for For Her + For Him)
-============================================================ */
 const getAllBusinesses = async (req, res) => {
   try {
     let businesses = await Business.find().lean();
@@ -61,9 +53,6 @@ const getAllBusinesses = async (req, res) => {
   }
 };
 
-/* ============================================================
-   GET BUSINESS DETAILS (with services + offers)
-============================================================ */
 const getBusinessDetails = async (req, res) => {
   try {
     const business = await Business.findById(req.params.id)
@@ -82,7 +71,7 @@ const getBusinessDetails = async (req, res) => {
       validTo: { $gte: new Date() },
     });
 
-    // Attach rating to the single business
+    
     const [withRating] = await attachRatings([business]);
 
     res.json({
@@ -96,15 +85,12 @@ const getBusinessDetails = async (req, res) => {
   }
 };
 
-/* ============================================================
-   GET HIGHEST RATED (top 8)
-============================================================ */
+
 const getHighestRatedBusinesses = async (req, res) => {
   try {
     let businesses = await Business.find().lean();
     businesses = await attachRatings(businesses);
 
-    // Sort by rating descending, then review count
     businesses.sort((a, b) => {
       if (b.averageRating !== a.averageRating) {
         return b.averageRating - a.averageRating;
@@ -119,9 +105,6 @@ const getHighestRatedBusinesses = async (req, res) => {
   }
 };
 
-/* ============================================================
-   GET TRENDING (most bookings in last 30 days)
-============================================================ */
 const getTrendingBusinesses = async (req, res) => {
   try {
     const now = new Date();

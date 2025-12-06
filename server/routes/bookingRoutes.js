@@ -17,28 +17,16 @@ const { protectBusiness } = require("../middleware/authMiddleware");
 
 const Booking = require("../models/Booking");
 
-/* ============================================================
-   CUSTOMER ROUTES
-============================================================ */
-
-// Available time slots for a business
-// GET /api/bookings/available-slots/:businessId?date=YYYY-MM-DD&duration=MIN
 router.get(
   "/available-slots/:businessId",
   protectCustomer,
   getAvailableSlots
 );
 
-// Staff availability for a given time slot
-// GET /api/bookings/available-staff?businessId=...&startTime=ISO
 router.get("/available-staff", protectCustomer, getAvailableStaffForSlot);
 
-// Customer: my bookings
-// GET /api/bookings/me
 router.get("/me", protectCustomer, getBookingsForCustomer);
 
-// 🔹 New: Get single booking by id for receipt
-// GET /api/bookings/by-id/:id
 router.get("/by-id/:id", protectCustomer, async (req, res) => {
   try {
     const bookingId = req.params.id;
@@ -58,7 +46,6 @@ router.get("/by-id/:id", protectCustomer, async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Match the structure used in getBookingsForCustomer:
     const result = {
       _id: booking._id,
       business: booking.business,
@@ -75,28 +62,14 @@ router.get("/by-id/:id", protectCustomer, async (req, res) => {
   }
 });
 
-// Customer creates booking
-// POST /api/bookings
 router.post("/", protectCustomer, createBookingAsCustomer);
 
-// Customer cancels booking
-// PATCH /api/bookings/:id/cancel
 router.patch("/:id/cancel", protectCustomer, cancelBookingAsCustomer);
 
-// Customer reschedules booking
-// PATCH /api/bookings/:id/reschedule
 router.patch("/:id/reschedule", protectCustomer, rescheduleBookingAsCustomer);
 
-/* ============================================================
-   BUSINESS ROUTES
-============================================================ */
-
-// Business: view bookings
-// GET /api/bookings/business
 router.get("/business", protectBusiness, getBookingsForMyBusiness);
 
-// Business: update booking status
-// PATCH /api/bookings/business/:id/status
 router.patch("/business/:id/status", protectBusiness, updateBookingStatus);
 
 module.exports = router;

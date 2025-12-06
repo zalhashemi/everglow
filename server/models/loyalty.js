@@ -1,4 +1,3 @@
-// server/models/Loyalty.js
 const mongoose = require("mongoose");
 
 const LoyaltySchema = new mongoose.Schema(
@@ -7,7 +6,7 @@ const LoyaltySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Business",
       required: true,
-      unique: true, // one loyalty config per business
+      unique: true, 
     },
     enabled: { type: Boolean, default: false },
     type: {
@@ -34,7 +33,6 @@ const LoyaltySchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-    // We keep these as strings: "Name::Offer"
     rewards: [
       {
         type: String,

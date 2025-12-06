@@ -1,7 +1,6 @@
 const Service = require("../models/Service");
 const Business = require("../models/Business");
 
-// CREATE SERVICE (business)
 const createService = async (req, res) => {
   try {
     const { name, durationMinutes, priceBHD, category, description } = req.body;
@@ -29,7 +28,6 @@ const createService = async (req, res) => {
   }
 };
 
-// GET MY SERVICES (business)
 const getMyServices = async (req, res) => {
   try {
     const services = await Service.find({ business: req.business._id });
@@ -39,7 +37,6 @@ const getMyServices = async (req, res) => {
   }
 };
 
-// UPDATE SERVICE
 const updateService = async (req, res) => {
   try {
     const service = await Service.findOneAndUpdate(
@@ -58,7 +55,6 @@ const updateService = async (req, res) => {
   }
 };
 
-// DELETE SERVICE
 const deleteService = async (req, res) => {
   try {
     const service = await Service.findOneAndDelete({
