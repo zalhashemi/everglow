@@ -1,6 +1,6 @@
 const Review = require("../models/Review");
 
-// CUSTOMER CREATES REVIEW
+
 const createReview = async (req, res) => {
   try {
     const { businessId, rating, comment } = req.body;
@@ -23,7 +23,7 @@ const createReview = async (req, res) => {
   }
 };
 
-// GET ALL REVIEWS FOR A BUSINESS (public)
+
 const getBusinessReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ business: req.params.businessId })
@@ -37,7 +37,7 @@ const getBusinessReviews = async (req, res) => {
   }
 };
 
-// GET REVIEWS FOR LOGGED-IN CUSTOMER
+
 const getMyReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ customer: req.customer._id }).populate(
@@ -52,7 +52,7 @@ const getMyReviews = async (req, res) => {
   }
 };
 
-// UPDATE REVIEW (for logged-in customer)
+
 const updateReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
@@ -78,7 +78,6 @@ const updateReview = async (req, res) => {
   }
 };
 
-// DELETE REVIEW (for logged-in customer)
 const deleteReview = async (req, res) => {
   try {
     const deleted = await Review.findOneAndDelete({
@@ -97,7 +96,6 @@ const deleteReview = async (req, res) => {
   }
 };
 
-// GET REVIEWS FOR LOGGED-IN BUSINESS (for business dashboard)
 const getMyBusinessReviews = async (req, res) => {
   try {
     const businessId = req.business._id;

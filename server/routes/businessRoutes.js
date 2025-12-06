@@ -1,4 +1,3 @@
-// server/routes/businessRoutes.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -16,8 +15,6 @@ const {
 const { protectBusiness } = require("../middleware/authMiddleware");
 const { getMyBusinessReviews } = require("../controllers/reviewController");
 
-
-// ---------- Multer for image uploads ----------
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -29,11 +26,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* ============================================================
-   PUBLIC ROUTES
-============================================================ */
-
-// ✔ GET all businesses (used by homepage + map)
 router.get("/", async (req, res) => {
   try {
     const Business = require("../models/Business");
@@ -49,34 +41,21 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Business: get their own reviews
+
 router.get("/reviews", protectBusiness, getMyBusinessReviews);
 
 
-// ✔ Nearby search
+
 router.get("/nearby", getNearbyBusinesses);
 
-/* ============================================================
-   AUTH ROUTES
-============================================================ */
-
-// Register
 router.post("/register", upload.single("image"), registerBusiness);
 
-// Login
 router.post("/login", loginBusiness);
 
-/* ============================================================
-   BUSINESS (AUTH REQUIRED)
-============================================================ */
-
-// Get profile
 router.get("/me", protectBusiness, getMyBusinessProfile);
 
-// Update profile
 router.put("/me", protectBusiness, upload.single("image"), updateMyBusinessProfile);
 
-// Update ONLY profile image
 router.put(
   "/me/image",
   protectBusiness,
@@ -84,7 +63,6 @@ router.put(
   updateBusinessProfileImage
 );
 
-// Dashboard stats
 router.get("/me/stats", protectBusiness, getBusinessDashboardStats);
 
 module.exports = router;

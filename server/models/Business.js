@@ -4,7 +4,6 @@ const staffSchema = new mongoose.Schema(
   {
     fullName: { type: String, default: "" },
     role: { type: String, default: "" },
-    // allow per-staff work schedule (we store a generic object)
     schedule: {
       type: Object,
       default: {},
@@ -23,7 +22,6 @@ const socialLinksSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// ✅ operatingHours is ONE object with day keys, not an array
 const operatingHoursSchema = new mongoose.Schema(
   {
     monday: { type: String, default: "" },
@@ -42,17 +40,17 @@ const LoyaltySchema = new mongoose.Schema(
     enabled: { type: Boolean, default: false },
     type: {
       type: String,
-      enum: ["points"], // only points now
+      enum: ["points"], 
       default: "points",
     },
     pointsPerBooking: {
       type: Number,
-      default: 1, // 1 point per completed booking
+      default: 1, 
       min: 0,
     },
     rewardThreshold: {
       type: Number,
-      default: 5, // 5 points = full tile
+      default: 5, 
       min: 1,
     },
     rewardDescription: {
@@ -61,12 +59,12 @@ const LoyaltySchema = new mongoose.Schema(
     },
     expiryMonths: {
       type: Number,
-      default: 0, // 0 = never expires
+      default: 0, 
       min: 0,
     },
     rewards: [
       {
-        type: String, // e.g. "Name::Offer"
+        type: String, 
       },
     ],
   },
@@ -129,9 +127,6 @@ const businessSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 2dsphere index for geospatial queries
 businessSchema.index({ location: "2dsphere" });
-
-
 
 module.exports = mongoose.model("Business", businessSchema);

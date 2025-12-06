@@ -2,17 +2,14 @@ const Business = require("../models/Business");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
-const Loyalty = require("../models/loyalty"); // to init default loyalty
+const Loyalty = require("../models/loyalty"); 
 const Booking = require("../models/Booking");
 const Review = require("../models/Review");
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-/**
- * Geo-code address using Mapbox.
- * Returns { lat, lng } or null if failed.
- */
+
 const geocodeAddressWithMapbox = async (fullAddress) => {
   const token = process.env.MAPBOX_ACCESS_TOKEN;
   if (!token || !fullAddress) {
@@ -40,10 +37,6 @@ const geocodeAddressWithMapbox = async (fullAddress) => {
   }
 };
 
-/**
- * Create a brand-new default loyalty config for a business.
- * This ensures EVERY business starts with its own fresh loyalty.
- */
 const createDefaultLoyaltyForBusiness = async (businessId) => {
   try {
     const existing = await Loyalty.findOne({ business: businessId });
@@ -81,12 +74,9 @@ const createDefaultLoyaltyForBusiness = async (businessId) => {
   }
 };
 
-/**
- * REGISTER BUSINESS (Wizard + Legacy)
- */
 const registerBusiness = async (req, res) => {
   try {
-    console.log("🔥 registerBusiness called");
+    console.log("registerBusiness called");
 
     const parseMaybeJson = (value, fallback) => {
       if (!value) return fallback;
@@ -112,7 +102,7 @@ const registerBusiness = async (req, res) => {
       imageUrl = `/uploads/${req.file.filename}`;
     }
 
-    // ---------- NEW WIZARD FLOW ----------
+
     if (isWizardPayload) {
       const {
         name,
@@ -123,7 +113,6 @@ const registerBusiness = async (req, res) => {
         locationLat,
         locationLng,
         genderTag,
-        // address & city may not be sent from the new UI; keep optional
         address,
         city,
       } = businessInfo;
@@ -135,17 +124,16 @@ const registerBusiness = async (req, res) => {
     role: m.role || "",
     email: m.email || "",
     phone: m.phone || "",
-    schedule: m.schedule || {}, // ✅ ADD THIS LINE
+    schedule: m.schedule || {}, 
   }));
 
-      // New required fields match the new UI
+     
       if (!email || !name || !type || !phone || !genderTag) {
         return res.status(400).json({
           message: "Missing required fields",
         });
       }
 
-      // Make sure we have a location (you already validate on frontend, this is just double-safety)
       const hasLocation =
         typeof locationLat === "number" &&
         typeof locationLng === "number" &&
@@ -163,7 +151,6 @@ const registerBusiness = async (req, res) => {
         return res.status(400).json({ message: "Email already registered" });
       }
 
-      // 🔐 NEW: take password from multipart body (set in BusinessDetailsRegistration.tsx)
       const rawPassword = req.body.password;
       if (!rawPassword) {
         return res
@@ -178,7 +165,6 @@ const registerBusiness = async (req, res) => {
         phone,
         businessName: name,
         businessType: type,
-        // address/city kept for schema compatibility; use "N/A" if not provided
         address: address || "N/A",
         city: city || "N/A",
         description: about,
@@ -187,16 +173,14 @@ const registerBusiness = async (req, res) => {
         socialLinks: wizardSocialLinks,
         imageUrl,
         passwordHash,
-        genderTag, // store the tag so you can use it later
+        genderTag, 
       };
 
       let coords = null;
 
-      // 1) Use map location chosen in the wizard (required by new UI)
       if (hasLocation) {
         coords = { lat: locationLat, lng: locationLng };
       } else if (address && city) {
-        // 2) Fallback: try to geocode address+city if ever provided
         const fullAddress = `${address}, ${city}`;
         try {
           coords = await geocodeAddressWithMapbox(fullAddress);
@@ -226,7 +210,6 @@ const registerBusiness = async (req, res) => {
       });
     }
 
-    // ---------- OLD AUTH-STYLE ----------
     const {
       ownerFirstName,
       ownerLastName,
@@ -308,7 +291,6 @@ const registerBusiness = async (req, res) => {
   }
 };
 
-// LOGIN
 const loginBusiness = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -334,7 +316,6 @@ const loginBusiness = async (req, res) => {
   }
 };
 
-// GET PROFILE
 const getMyBusinessProfile = async (req, res) => {
   try {
     const business = await Business.findById(req.business._id);
@@ -348,10 +329,8 @@ const getMyBusinessProfile = async (req, res) => {
   }
 };
 
-// UPDATE PROFILE
 const updateMyBusinessProfile = async (req, res) => {
   try {
-    // helper – same idea as in registerBusiness
     const parseMaybeJson = (value, fallback) => {
       if (!value) return fallback;
       if (typeof value === "string") {
@@ -366,8 +345,6 @@ const updateMyBusinessProfile = async (req, res) => {
 
     const body = req.body;
     const updates = {};
-
-    // 1) Wizard-style payload: { businessInfo, operatingHours, socialLinks, staff }
     const businessInfo = parseMaybeJson(body.businessInfo, null);
     const wizardOperatingHours = parseMaybeJson(body.operatingHours, null);
     const wizardSocialLinks = parseMaybeJson(body.socialLinks, null);
@@ -413,12 +390,10 @@ const updateMyBusinessProfile = async (req, res) => {
           role: m.role || "",
           email: m.email || "",
           phone: m.phone || "",
-          // if frontend sends schedule, keep it; otherwise default {}
           schedule: m.schedule || {},
         }));
     }
 
-    // 2) Legacy / direct fields (for safety, in case something calls PUT with flat fields)
     if (body.businessName !== undefined) updates.businessName = body.businessName;
     if (body.businessType !== undefined) updates.businessType = body.businessType;
     if (body.description !== undefined) updates.description = body.description;
@@ -439,7 +414,6 @@ const updateMyBusinessProfile = async (req, res) => {
       updates.genderTag = body.genderTag;
     }
 
-    // 3) If an image is uploaded with multer on this route, use it too
     if (req.file) {
       updates.imageUrl = `/uploads/${req.file.filename}`;
     }
@@ -465,12 +439,9 @@ const updateMyBusinessProfile = async (req, res) => {
   }
 };
 
-// NEARBY SEARCH
 const getNearbyBusinesses = async (req, res) => {
   try {
     let { lat, lng, radiusKm, search } = req.query;
-
-    // Text search filter (name / city)
     const textFilter = search
       ? {
           $or: [
@@ -482,25 +453,22 @@ const getNearbyBusinesses = async (req, res) => {
 
     const latitude = lat !== undefined ? parseFloat(lat) : NaN;
     const longitude = lng !== undefined ? parseFloat(lng) : NaN;
-    const radius = radiusKm ? parseFloat(radiusKm) : 200; // ✅ BIG default radius: 200km
+    const radius = radiusKm ? parseFloat(radiusKm) : 200; 
 
     let geoFilter = {};
-
-    // ✅ If we have a valid user location → use $near with big radius
     if (!Number.isNaN(latitude) && !Number.isNaN(longitude)) {
       geoFilter = {
         location: {
           $near: {
             $geometry: {
               type: "Point",
-              coordinates: [longitude, latitude], // [lng, lat]
+              coordinates: [longitude, latitude], 
             },
-            $maxDistance: radius * 1000, // meters
+            $maxDistance: radius * 1000, 
           },
         },
       };
     } else {
-      // ✅ No valid lat/lng? Just return ALL businesses that have a location
       geoFilter = {
         "location.coordinates": { $exists: true, $ne: [] },
       };
@@ -520,7 +488,6 @@ const getNearbyBusinesses = async (req, res) => {
   }
 };
 
-// UPDATE ONLY PROFILE IMAGE
 const updateBusinessProfileImage = async (req, res) => {
   try {
     if (!req.file) {
@@ -550,16 +517,13 @@ const updateBusinessProfileImage = async (req, res) => {
   }
 };
 
-// DASHBOARD QUICK STATS FOR LOGGED-IN BUSINESS
 const getBusinessDashboardStats = async (req, res) => {
   try {
     const businessId = req.business._id;
 
-    // Staff count from Business document
     const business = await Business.findById(businessId).select("staff");
     const staffMembers = business?.staff?.length || 0;
 
-    // Total unique clients from bookings
     const distinctCustomers = await Booking.distinct("customer", {
       business: businessId,
     });
@@ -567,7 +531,6 @@ const getBusinessDashboardStats = async (req, res) => {
       ? distinctCustomers.length
       : 0;
 
-    // Average rating from reviews
     const ratingAgg = await Review.aggregate([
       { $match: { business: businessId } },
       {

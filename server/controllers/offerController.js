@@ -1,6 +1,6 @@
 const Offer = require("../models/Offer");
 
-// BUSINESS CREATES OFFER
+
 const createOffer = async (req, res) => {
   try {
     const {
@@ -31,7 +31,6 @@ const createOffer = async (req, res) => {
   }
 };
 
-// BUSINESS GETS THEIR OFFERS
 const getMyOffers = async (req, res) => {
   try {
     const { status } = req.query;
@@ -56,7 +55,6 @@ const getMyOffers = async (req, res) => {
   }
 };
 
-// PUBLIC: GET ACTIVE OFFERS FOR A BUSINESS
 const getPublicOffersForBusiness = async (req, res) => {
   try {
     const offers = await Offer.find({
@@ -71,7 +69,6 @@ const getPublicOffersForBusiness = async (req, res) => {
   }
 };
 
-// UPDATE OFFER (business)
 const updateOffer = async (req, res) => {
   try {
     const { id } = req.params;
@@ -93,7 +90,6 @@ const updateOffer = async (req, res) => {
   }
 };
 
-// DELETE OFFER
 const deleteOffer = async (req, res) => {
   try {
     const { id } = req.params;

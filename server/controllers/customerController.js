@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-// REGISTER CUSTOMER
+
 const registerCustomer = async (req, res) => {
   console.log("Request body:", req.body);
 
@@ -42,7 +42,6 @@ const registerCustomer = async (req, res) => {
   }
 };
 
-// LOGIN CUSTOMER
 const loginCustomer = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -67,13 +66,12 @@ const loginCustomer = async (req, res) => {
   }
 };
 
-// GET MY PROFILE
 const getMyCustomerProfile = async (req, res) => {
   res.json(req.customer);
 };
 
 
-// UPDATE MY PROFILE
+
 const updateMyCustomerProfile = async (req, res) => {
   try {
     const updates = req.body;
@@ -88,7 +86,6 @@ const updateMyCustomerProfile = async (req, res) => {
   }
 };
 
-// GET MY BOOKINGS
 const getMyBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ customer: req.customer._id })
@@ -101,7 +98,6 @@ const getMyBookings = async (req, res) => {
   }
 };
 
-// GET MY REVIEWS
 const getMyReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ customer: req.customer._id })
