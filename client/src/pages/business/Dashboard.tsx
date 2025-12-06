@@ -9,8 +9,7 @@ import { IconFix } from "../../utils/IconFix";
 import api from "../../utils/api";
 import AlertPopup from "../../components/common/AlertPopup";
 
-/* ---------- Types ---------- */
-
+//types
 interface Service {
   _id: string;
   name: string;
@@ -67,7 +66,7 @@ interface Review {
   };
 }
 
-/* ---------- Styled Components ---------- */
+//styled components
 
 const PageWrapper = styled.div`
   background-color: ${(p) => p.theme.colors.background || "#FAF6EA"};
@@ -316,7 +315,6 @@ const SectionTitle = styled.h2`
   }
 `;
 
-/* Appointments list */
 
 const AppointmentContainer = styled.div`
   margin-top: 4px;
@@ -370,7 +368,6 @@ const AppointmentRow = styled.div<{ status: BookingStatus }>`
   }
 `;
 
-/* Popular services chart */
 
 const ProgressBarWrapper = styled.div`
   margin-bottom: 10px;
@@ -461,7 +458,6 @@ const RatingRow = styled.div`
   color: #f5c518;
 `;
 
-/* ---------- Offers List ---------- */
 
 const OfferList = styled.div`
   display: flex;
@@ -562,7 +558,6 @@ const OfferServicesText = styled.div`
   color: #555;
 `;
 
-/* ---------- Reviews ---------- */
 
 const ReviewList = styled.ul`
   list-style: none;
@@ -607,7 +602,6 @@ const ReviewComment = styled.div`
   white-space: pre-wrap;
 `;
 
-/* ---------- Offer Popup Component ---------- */
 
 interface OfferPopupProps {
   onClose: () => void;
@@ -709,7 +703,6 @@ const ServiceRow = styled.label`
   }
 `;
 
-/* ✅ NEW BUTTON STYLES (fix text bigger than button) */
 
 const SaveButton = styled.button`
   background: #4A5074;
@@ -769,7 +762,6 @@ const PopupActions = styled.div`
   }
 `;
 
-/* ---------- OfferPopup Component ---------- */
 
 const OfferPopup: React.FC<OfferPopupProps> = ({
   onClose,
@@ -795,9 +787,8 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
   });
   const [saving, setSaving] = useState(false);
 
-  // inline validation error under title
   const [validationError, setValidationError] = useState("");
-  // popup for API error
+  
   const [popup, setPopup] = useState<{
     type: "error" | "success";
     message: string;
@@ -815,7 +806,6 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
       return;
     }
 
-    // ✅ Validate that end date is after start date
     const startDate = new Date(start);
     const endDate = new Date(end);
 
@@ -837,10 +827,8 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
     try {
       setSaving(true);
       if (existingOffer?._id) {
-        // ✅ UPDATE OFFER -> /api/offers/:id
         await api.put(`/offers/${existingOffer._id}`, payload);
       } else {
-        // ✅ CREATE OFFER -> /api/offers
         await api.post("/offers", payload);
       }
       onSaved();
@@ -954,7 +942,7 @@ const OfferPopup: React.FC<OfferPopupProps> = ({
   );
 };
 
-/* ---------- Main Dashboard ---------- */
+//main dashboard
 
 const BusinessDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -962,7 +950,6 @@ const BusinessDashboard: React.FC = () => {
   const [showOfferPopup, setShowOfferPopup] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
 
-  // ✅ NEW: State for delete confirmation
   const [deleteConfirmation, setDeleteConfirmation] = useState<Offer | null>(null);
 
   const [services, setServices] = useState<Service[]>([]);
@@ -973,17 +960,14 @@ const BusinessDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
 
-  // Quick stats (from /business/dashboard-stats)
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [totalClients, setTotalClients] = useState<number | null>(null);
   const [staffMembers, setStaffMembers] = useState<number | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
-  // Reviews
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
-  // Global popup for this dashboard
   const [popup, setPopup] = useState<{
     type: "error" | "success";
     message: string;
@@ -996,7 +980,6 @@ const BusinessDashboard: React.FC = () => {
     year: "numeric",
   });
 
-  // 1) BOOKINGS
   const fetchBookings = useCallback(async () => {
     try {
       setLoadingBookings(true);
@@ -1066,11 +1049,9 @@ const BusinessDashboard: React.FC = () => {
       ? (completedBookingsCount / todaysBookingsCount) * 100
       : 0;
 
-  // 2) SERVICES
   const fetchServices = async () => {
     try {
       setLoadingServices(true);
-      // ✅ business services -> /api/services (protected, "my services")
       const res = await api.get("/services");
       setServices(res.data || []);
     } catch (err) {
@@ -1084,7 +1065,6 @@ const BusinessDashboard: React.FC = () => {
   const fetchOffers = async () => {
     try {
       setLoadingOffers(true);
-      // ✅ business offers -> /api/offers/my
       const res = await api.get("/offers/my");
       setOffers(res.data || []);
     } catch (err) {
@@ -1094,7 +1074,6 @@ const BusinessDashboard: React.FC = () => {
     }
   };
 
-  // 4) QUICK STATS
   const fetchQuickStats = async () => {
     try {
       setLoadingStats(true);
@@ -1117,7 +1096,6 @@ const BusinessDashboard: React.FC = () => {
     }
   };
 
-  // 5) REVIEWS
   const fetchReviews = async () => {
     try {
       setLoadingReviews(true);
@@ -1140,7 +1118,6 @@ const BusinessDashboard: React.FC = () => {
     fetchReviews();
   }, [fetchBookings]);
 
-  // 🔁 Poll bookings so today's section reflects customer changes
   useEffect(() => {
     const id = setInterval(() => {
       fetchBookings();
@@ -1160,7 +1137,6 @@ const BusinessDashboard: React.FC = () => {
   };
 
   const handleDeleteOffer = async (offer: Offer) => {
-    // ✅ Show confirmation popup instead of window.confirm
     setDeleteConfirmation(offer);
   };
 
@@ -1200,11 +1176,7 @@ const BusinessDashboard: React.FC = () => {
     });
   };
 
-  // ✅ Names for services attached to offers,
-  // using populated servicesAppliedOn from backend first,
-  // then falling back to the local services list.
   const getOfferServiceNames = (offer: Offer) => {
-    // 1) Use populated docs if available
     const populatedNames =
       offer.servicesAppliedOn
         ?.filter(
@@ -1219,7 +1191,6 @@ const BusinessDashboard: React.FC = () => {
       } more`;
     }
 
-    // 2) Fallback: use IDs with local services list
     if (!offer.servicesAppliedOn || !services.length)
       return "All included services";
 
@@ -1273,7 +1244,6 @@ const BusinessDashboard: React.FC = () => {
         <TabBar type="business" />
 
         <ContentWrapper>
-          {/* Header */}
           <HeaderRow>
             <WelcomeText>Welcome Back!</WelcomeText>
 
@@ -1289,7 +1259,6 @@ const BusinessDashboard: React.FC = () => {
             </DateAndButton>
           </HeaderRow>
 
-          {/* Top stats */}
           <StatsRow>
             <StatCard>
               <StatTitle>TODAY&apos;S BOOKINGS</StatTitle>
@@ -1317,7 +1286,6 @@ const BusinessDashboard: React.FC = () => {
             </StatCard>
           </StatsRow>
 
-          {/* Appointments + Popular services */}
           <SectionGrid>
             <Card>
               <SectionTitle>Today&apos;s Appointments</SectionTitle>
@@ -1401,7 +1369,6 @@ const BusinessDashboard: React.FC = () => {
             </Card>
           </SectionGrid>
 
-          {/* Quick stats */}
           <Card>
             <SectionTitle>Quick Stats</SectionTitle>
 
@@ -1438,7 +1405,6 @@ const BusinessDashboard: React.FC = () => {
             )}
           </Card>
 
-          {/* Recent Reviews */}
           <Card>
             <SectionTitle>Recent Reviews</SectionTitle>
 
@@ -1478,7 +1444,6 @@ const BusinessDashboard: React.FC = () => {
             )}
           </Card>
 
-          {/* Offers management */}
           <Card>
             <SectionTitle>
               Offers{" "}
@@ -1500,7 +1465,6 @@ const BusinessDashboard: React.FC = () => {
               </div>
             ) : (
               <>
-                {/* Active offers */}
                 {activeOffers.length > 0 && (
                   <>
                     <div
@@ -1565,7 +1529,6 @@ const BusinessDashboard: React.FC = () => {
                   </>
                 )}
 
-                {/* Past offers */}
                 {pastOffers.length > 0 && (
                   <>
                     <div
@@ -1630,7 +1593,6 @@ const BusinessDashboard: React.FC = () => {
         />
       )}
 
-      {/* ✅ Delete confirmation popup */}
       {deleteConfirmation && (
         <AlertPopup
           type="error"

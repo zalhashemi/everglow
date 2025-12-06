@@ -1,4 +1,3 @@
-// src/pages/auth/Login.tsx
 import React, { useState } from "react";
 import styled from "styled-components";
 import everglowLogo from "../../images/everglowLogo.png";
@@ -240,29 +239,6 @@ const RoleToggleButton = styled.button<{ active?: boolean; businessButton?: bool
   }
 `;
 
-const RoleToggle = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 14px;
-  align-items: center;
-`;
-
-const RoleButton = styled.button<{ active?: boolean }>`
-  border-radius: 999px;
-  padding: 6px 12px;
-  border: 1px solid ${(p) => (p.active ? "#4a5174" : "#ccc")};
-  background: ${(p) => (p.active ? "#4a5174" : "transparent")};
-  color: ${(p) => (p.active ? "#fff" : "#333")};
-  cursor: pointer;
-  font-size: 13px;
-  font-family: "Inter", sans-serif;
-
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
 type LoginMode = "customer" | "business";
 
 const LoginPage: React.FC = () => {
@@ -304,7 +280,6 @@ const LoginPage: React.FC = () => {
       }
 
       if (mode === "customer") {
-        // Save customer auth
         if (data.token) localStorage.setItem("customerToken", data.token);
         if (data.customer) {
           localStorage.setItem("customer", JSON.stringify(data.customer));
@@ -312,15 +287,12 @@ const LoginPage: React.FC = () => {
 
         window.location.href = "/home";
       } else {
-        // BUSINESS LOGIN
         if (data.token) localStorage.setItem("businessToken", data.token);
         if (data.business) {
           localStorage.setItem("businessInfo", JSON.stringify(data.business));
           // used by loyalty & dashboard
           localStorage.setItem("businessId", data.business._id);
         }
-
-        // 🔁 match where business registration sends them
         window.location.href = "/business/dashboard";
       }
     } catch (err) {

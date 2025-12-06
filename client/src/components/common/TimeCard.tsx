@@ -3,8 +3,8 @@ import styled from "styled-components";
 
 interface TimeCardProps {
   day: string;
-  startTime: string; // "9:00 AM"
-  endTime: string;   // "7:00 PM"
+  startTime: string;
+  endTime: string;  
 }
 
 const Card = styled.div`

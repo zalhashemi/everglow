@@ -7,9 +7,9 @@ import errorImage from "../../images/errorLoading.png";
 interface BookingTileProps {
   id: number | string;
   date: Date | string;
-  image?: string;                // final computed image passed from parent
-  imageUrl?: string;             // backend field
-  profileImageUrl?: string;      // legacy field
+  image?: string;                
+  imageUrl?: string;          
+  profileImageUrl?: string;    
   salonName?: string;
   businessName?: string;
   services?: string[] | string;
@@ -23,7 +23,7 @@ interface BookingTileProps {
   hasReview?: boolean;
 }
 
-/* ---- STYLED COMPONENTS ---- */
+// styled components
 const Tile = styled.div`
   width: 1200px;
   background-color: #ffffff;
@@ -125,7 +125,7 @@ const RatingButton = styled(SecondaryButton)`
   max-width: 90%;
 `;
 
-/* ---- COMPONENT ---- */
+//main componentt
 const BookingTile: React.FC<BookingTileProps> = ({
   date,
   image,
@@ -145,7 +145,7 @@ const BookingTile: React.FC<BookingTileProps> = ({
 }) => {
   const displayName = salonName || businessName || "Salon";
 
-  // Final image decision
+
   const computedImage =
     imageUrl
       ? `http://localhost:5000${imageUrl}`

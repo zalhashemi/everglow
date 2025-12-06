@@ -4,7 +4,7 @@ import styled from "styled-components";
 interface AlertPopupProps {
   type: "success" | "error";
   title?: string;
-  message: string | React.ReactNode; // ✅ Allow ReactNode
+  message: string | React.ReactNode; 
   onClose?: () => void;
   onConfirm?: () => void;
   confirmLabel?: string;

@@ -84,7 +84,7 @@ const AvatarWrapper = styled.div`
   align-items: center;
 `;
 
-/* -------- INITIALS CIRCLE (USED FOR CUSTOMERS + BUSINESSES WITH NO IMAGE) -------- */
+
 const InitialsCircle = styled.div`
   width: 120px;
   height: 120px;
@@ -239,7 +239,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   coverImage,
   stats,
 }) => {
-  // Generate initials (first 2 letters)
+ 
   const initials =
     name
       ?.trim()
@@ -248,7 +248,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       .slice(0, 2)
       .join("") || "C";
 
-  // Determine if business has a real image
+
   const hasBusinessImage =
     type === "business" && image && image !== "" && image !== null;
 
@@ -265,10 +265,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <Content>
         <ProfileSection>
           <AvatarWrapper>
-            {/* CUSTOMER → initials only */}
+           
             {type === "customer" && <InitialsCircle>{initials}</InitialsCircle>}
 
-            {/* BUSINESS → show image if exists, else initials */}
+        
             {type === "business" &&
               (hasBusinessImage ? (
                 <ProfileImage src={image} alt="Profile" />
@@ -282,7 +282,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </InfoColumn>
         </ProfileSection>
 
-        {/* Only show stats for customers */}
+  
         {type === "customer" && (
           <StatsRow>
             {stats && stats.length > 0 ? (

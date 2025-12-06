@@ -8,9 +8,9 @@ interface StaffCardProps {
   image?: string;
   specialties: string[];
   rating: number;
-  reviews?: number; // ✅ made optional
+  reviews?: number; 
   onEdit?: () => void;
-  onClick?: () => void; // ✅ added for business page
+  onClick?: () => void; 
   selected?: boolean;
 }
 

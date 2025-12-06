@@ -1,12 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-// 🔐 Auth Pages
+// auth pages
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import BusinessDetailsRegistration from './pages/auth/BusinessDetailsRegistration';
 
-// 👥 Customer Pages
+// customer pages
 import LandingPage from './pages/customer/LandingPage';
 import Homepage from './pages/customer/Homepage';
 import BusinessPage from './pages/customer/BusinessPage';
@@ -18,7 +18,7 @@ import BookingSummaryPage from "./pages/customer/BookingSummaryPage";
 import BookingReceiptPage from "./pages/customer/BookingReceiptPage"; 
 
 
-// 💼 Business Pages
+// business pages
 import BusinessDashboard from './pages/business/Dashboard';
 import BusinessServices from './pages/business/Services';
 import BusinessBookings from './pages/business/Bookings';

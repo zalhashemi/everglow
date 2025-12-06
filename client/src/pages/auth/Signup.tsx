@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
-import SecondaryButton from "../../components/common/SecondaryButton";
 import TextBox from "../../components/common/TextBox";
 import TermsPopup from "../../components/common/TermsPopup";
 import everglowLogo from "../../images/everglowLogo.png";
@@ -261,7 +260,6 @@ const TogglePassword = styled.span`
 const Signup: React.FC = () => {
   const navigate = useNavigate();
 
-  // NEW: Controls whether the customer form is shown
   const [showCustomerForm, setShowCustomerForm] = useState(false);
 
   const [firstName, setFirstName] = useState("");
@@ -279,7 +277,6 @@ const Signup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ===================== VALIDATION =======================
   const validateFields = () => {
     const nameRegex = /^[A-Za-z]+$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -324,7 +321,6 @@ const Signup: React.FC = () => {
     return true;
   };
 
-  // ===================== CUSTOMER SIGNUP =======================
   const handleCustomerSignup = async () => {
     setError(null);
 
@@ -367,7 +363,6 @@ const Signup: React.FC = () => {
     }
   };
 
-  // ===================== BUSINESS SIGNUP =======================
   const handleBusinessSignup = () => {
     navigate("/register/business-details");
   };
@@ -409,7 +404,6 @@ const Signup: React.FC = () => {
             </SquareButton>
           </ButtonRow>
 
-          {/* Show customer form only AFTER user clicks "I am a Customer" */}
           {showCustomerForm && (
             <>
               {error && <ErrorText>{error}</ErrorText>}

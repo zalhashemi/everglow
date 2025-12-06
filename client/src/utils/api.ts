@@ -1,11 +1,9 @@
-// src/api.ts
 import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 
-// Automatically attach correct token based on active route
 api.interceptors.request.use(
   (config) => {
     const path = window.location.pathname;
@@ -13,9 +11,7 @@ api.interceptors.request.use(
     const businessToken = localStorage.getItem("businessToken");
     const customerToken = localStorage.getItem("customerToken");
 
-    // ==============================
-    // 1️⃣ BUSINESS DASHBOARD ROUTES
-    // ==============================
+   //business dashboard routes
     if (path.startsWith("/business")) {
       if (businessToken) {
         config.headers = config.headers || {};
@@ -24,9 +20,7 @@ api.interceptors.request.use(
       return config;
     }
 
-    // ==============================
-    // 2️⃣ CUSTOMER BOOKING ROUTES
-    // ==============================
+    //customer booking routes
     const customerBookingPaths = [
       "/book",
       "/booking",
@@ -47,9 +41,7 @@ api.interceptors.request.use(
       return config;
     }
 
-    // ==============================
-    // 3️⃣ DEFAULT PRIORITY: CUSTOMER FIRST
-    // ==============================
+    //default to checking both tokens
     if (customerToken) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${customerToken}`;

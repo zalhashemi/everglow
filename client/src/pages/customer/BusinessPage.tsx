@@ -1,4 +1,3 @@
-// src/pages/customer/BusinessPage.tsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiMapPin } from "react-icons/fi";
@@ -9,8 +8,8 @@ import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
 import AlertPopup from "../../components/common/AlertPopup";
 
-/* ---------- TYPES ---------- */
 
+//types
 type StaffRaw = {
   _id?: string;
   id?: string;
@@ -36,7 +35,6 @@ type Business = {
   socialLinks?: any;
   imageUrl?: string | null;
 
-  // different possible backend field names
   staff?: StaffRaw[];
   staffMembers?: StaffRaw[];
   employees?: StaffRaw[];
@@ -70,7 +68,7 @@ type Review = {
   };
 };
 
-/* ---------- COMPONENT ---------- */
+//component
 
 const BusinessPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -96,8 +94,6 @@ const BusinessPage: React.FC = () => {
     message: string;
   } | null>(null);
 
-  /* ---------- FETCH BUSINESS + SERVICES + OFFERS ---------- */
-
   useEffect(() => {
     if (!id) return;
 
@@ -118,7 +114,6 @@ const BusinessPage: React.FC = () => {
             : errorImage
         );
 
-        // --------- derive staff list in a robust way ---------
         const rawStaff: StaffRaw[] =
           business?.staff ||
           business?.staffMembers ||
@@ -149,7 +144,6 @@ const BusinessPage: React.FC = () => {
     fetchBusiness();
   }, [id]);
 
-  /* ---------- FETCH REVIEWS ---------- */
 
   useEffect(() => {
     if (!id) return;
@@ -166,7 +160,6 @@ const BusinessPage: React.FC = () => {
     fetchReviews();
   }, [id]);
 
-  /* ---------- SELECTED SERVICES ---------- */
 
   const selectedServices = useMemo(
     () => services.filter((s) => selectedServiceIds.includes(s._id)),
@@ -205,13 +198,11 @@ const BusinessPage: React.FC = () => {
         selectedServices,
         totalDurationMinutes,
         totalPrice,
-        // ⭐ pass staff to the date/time page
         staffList,
       },
     });
   };
 
-  /* ---------- LOADING / NOT FOUND ---------- */
 
   if (loading) {
     return <div style={{ padding: 20 }}>Loading...</div>;
@@ -221,7 +212,6 @@ const BusinessPage: React.FC = () => {
     return <div style={{ padding: 20 }}>Salon not found.</div>;
   }
 
-  /* ---------- RENDER ---------- */
 
   return (
     <div
@@ -244,7 +234,6 @@ const BusinessPage: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        {/* Cover Image */}
         <img
           src={imgSrc}
           alt={business.businessName}
@@ -274,7 +263,6 @@ const BusinessPage: React.FC = () => {
             {business.city}
           </div>
 
-          {/* Tabs */}
           <div
             style={{
               display: "flex",
@@ -307,9 +295,7 @@ const BusinessPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Tab content */}
           <div style={{ marginTop: "20px" }}>
-            {/* SERVICES */}
             {activeTab === "Services" && (
               <>
                 {services.length === 0 && (
@@ -366,7 +352,6 @@ const BusinessPage: React.FC = () => {
               </>
             )}
 
-            {/* OFFERS */}
             {activeTab === "Offers" && (
               <>
                 {offers.length === 0 && (
@@ -395,7 +380,6 @@ const BusinessPage: React.FC = () => {
               </>
             )}
 
-            {/* REVIEWS */}
             {activeTab === "Reviews" && (
               <>
                 {reviews.length === 0 && (
@@ -443,7 +427,6 @@ const BusinessPage: React.FC = () => {
             )}
           </div>
 
-          {/* Footer: selected services + next button */}
           {activeTab === "Services" && (
             <div
               style={{

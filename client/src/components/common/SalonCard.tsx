@@ -9,8 +9,8 @@ interface SalonCardProps {
   name: string;
   distance?: string;
   location: string;
-  rating?: number;   // ⭐ average rating
-  reviews?: number;  // number of reviews
+  rating?: number;   
+  reviews?: number; 
   onClick: () => void;
 }
 
@@ -99,7 +99,7 @@ const SalonCard: React.FC<SalonCardProps> = ({
         }
       `}</style>
 
-      {/* Image */}
+ 
       <div style={{ position: "relative" }}>
         <img
           src={imgSrc}
@@ -114,10 +114,8 @@ const SalonCard: React.FC<SalonCardProps> = ({
         />
       </div>
 
-      {/* Details */}
       <div className="salon-card-details" style={{ padding: "10px 14px" }}>
 
-        {/* Name + Rating on right */}
         <div
           style={{
             display: "flex",
@@ -129,7 +127,6 @@ const SalonCard: React.FC<SalonCardProps> = ({
         >
           <span className="salon-card-name">{name}</span>
 
-          {/* ⭐ Rating (only if exists) */}
           {showRating && (
             <div
               className="salon-card-rating"
@@ -148,7 +145,6 @@ const SalonCard: React.FC<SalonCardProps> = ({
           )}
         </div>
 
-        {/* Location */}
         <div
           className="salon-card-location"
           style={{

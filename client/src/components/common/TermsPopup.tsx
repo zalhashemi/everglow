@@ -46,7 +46,7 @@ const CloseButton = styled.button`
 interface Props {
   open: boolean;
   onClose: () => void;
-  filePath: string;   // ✅ REQUIRED
+  filePath: string;  
 }
 
 const TermsPopup: React.FC<Props> = ({ open, onClose, filePath }) => {

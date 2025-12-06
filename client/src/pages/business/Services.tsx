@@ -7,11 +7,9 @@ import ServiceTile from "../../components/common/ServiceTile";
 import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
 import errorImage from "../../images/errorLoading.png";
-import oliviaSalon from "../../images/oliviaSalon.jpg";
 import api from "../../utils/api";
 import AlertPopup from "../../components/common/AlertPopup";
 
-/* ------------ Types that match your backend ------------ */
 interface Service {
   _id: string;
   name: string;
@@ -45,20 +43,16 @@ interface DashboardStats {
 }
 
 const BusinessServices: React.FC = () => {
-  // ------------ BUSINESS HEADER ------------
   const [business, setBusiness] = useState<BusinessHeader | null>(null);
-  const [imgSrc, setImgSrc] = useState<string>(oliviaSalon);
+  const [imgSrc, setImgSrc] = useState<string>("");
 
-  // Ratings / reviews
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [reviewCount, setReviewCount] = useState<number>(0);
 
-  // ------------ SERVICES ------------
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ------------ UI STATE ------------
   const [alertData, setAlertData] = useState<{
     type: "error" | "success";
     title?: string;
@@ -77,13 +71,11 @@ const BusinessServices: React.FC = () => {
     description: "",
   });
 
-  // Delete confirmation state
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     serviceId: string;
     serviceName: string;
   } | null>(null);
 
-  // --- Derive categories from services (for tabs + quick-select) ---
   const categories = useMemo(() => {
     const set = new Set<string>();
     services.forEach((s) => {
@@ -102,14 +94,12 @@ const BusinessServices: React.FC = () => {
     return services.filter((s) => s.category === activeTab);
   }, [services, activeTab]);
 
-  // ------------ LOAD BUSINESS + SERVICES + STATS ------------
   useEffect(() => {
     const fetchEverything = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // 1) Business profile
         try {
           const res = await api.get<BusinessHeader>("/business/me");
           const b = res.data;
@@ -119,10 +109,9 @@ const BusinessServices: React.FC = () => {
             const fullUrl = `http://localhost:5000${b.imageUrl}`;
             setImgSrc(fullUrl);
           } else {
-            setImgSrc(oliviaSalon);
+            setImgSrc(errorImage);
           }
         } catch (e) {
-          // fallback: maybe stored in localStorage after registration
           const stored = localStorage.getItem("business");
           if (stored) {
             const b = JSON.parse(stored);
@@ -138,7 +127,7 @@ const BusinessServices: React.FC = () => {
               const fullUrl = `http://localhost:5000${b.imageUrl}`;
               setImgSrc(fullUrl);
             } else {
-              setImgSrc(oliviaSalon);
+              setImgSrc(errorImage);
             }
           } else {
             setBusiness({
@@ -148,15 +137,13 @@ const BusinessServices: React.FC = () => {
               description: "",
               imageUrl: undefined,
             });
-            setImgSrc(oliviaSalon);
+            setImgSrc(errorImage);
           }
         }
 
-        // 2) Services for this business
         const svcRes = await api.get<Service[]>("/services");
         setServices(svcRes.data);
 
-        // 3) Dashboard stats -> ratings & reviews
         try {
           const statsRes = await api.get<DashboardStats>(
             "/business/dashboard/stats"
@@ -170,7 +157,6 @@ const BusinessServices: React.FC = () => {
           );
         } catch (statsErr) {
           console.error("Failed to load dashboard stats", statsErr);
-          // don't block page if stats fail
         }
 
         setError(null);
@@ -188,7 +174,6 @@ const BusinessServices: React.FC = () => {
     fetchEverything();
   }, []);
 
-  // ------------ MODAL HANDLERS ------------
   const openAddModal = () => {
     setSelectedService(null);
     setFormData({
@@ -213,13 +198,11 @@ const BusinessServices: React.FC = () => {
     setShowModal(true);
   };
 
-  // ------------ HELPER FUNCTION FOR CAPITALIZATION ------------
   const capitalizeFirst = (text: string): string => {
     if (!text) return text;
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   };
 
-  // ------------ VALIDATION + SUBMIT ------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -238,7 +221,6 @@ const BusinessServices: React.FC = () => {
       return;
     }
 
-    // Check for duplicate service name (case-insensitive)
     const isDuplicateName = services.some(
       (s) =>
         s.name.toLowerCase() === trimmedName.toLowerCase() &&
@@ -300,7 +282,6 @@ const BusinessServices: React.FC = () => {
 
     try {
       if (selectedService) {
-        // UPDATE
         const res = await api.put<{ message: string; service: Service }>(
           `/services/${selectedService._id}`,
           payload
@@ -315,7 +296,6 @@ const BusinessServices: React.FC = () => {
           setActiveTab(payload.category);
         }
       } else {
-        // CREATE
         const res = await api.post<{ message: string; service: Service }>(
           "/services",
           payload
@@ -342,7 +322,6 @@ const BusinessServices: React.FC = () => {
     }
   };
 
-  // ------------ DELETE HANDLER ------------
   const handleDelete = (id: string) => {
     const serviceToDelete = services.find((s) => s._id === id);
     setDeleteConfirmation({
@@ -374,7 +353,6 @@ const BusinessServices: React.FC = () => {
     }
   };
 
-  // ------------ HEADER TEXT FROM BUSINESS ------------
   const headerName = business?.businessName || "Glamour Beauty Salon";
   const headerLocation = business
     ? [business.address, business.city].filter(Boolean).join(", ") ||
@@ -386,7 +364,6 @@ const BusinessServices: React.FC = () => {
 
   const hasRating = avgRating !== null && avgRating > 0;
 
-  // ------------ RENDER ------------
   return (
     <div
       style={{
@@ -408,7 +385,6 @@ const BusinessServices: React.FC = () => {
           overflow: "hidden",
         }}
       >
-        {/* Salon Header */}
         <img
           src={imgSrc || errorImage}
           alt={headerName}
@@ -423,7 +399,6 @@ const BusinessServices: React.FC = () => {
         <div style={{ padding: "24px" }}>
           <h2 style={{ fontSize: "24px", fontWeight: 700 }}>{headerName}</h2>
 
-          {/* Location */}
           <div
             style={{
               display: "flex",
@@ -441,7 +416,6 @@ const BusinessServices: React.FC = () => {
           </div>
 
 
-          {/* Rating – dynamic */}
           <div
             style={{
               display: "flex",
@@ -473,12 +447,10 @@ const BusinessServices: React.FC = () => {
             )}
           </div>
 
-          {/* Description */}
           <p style={{ marginTop: "12px", color: "#555", fontSize: "14px" }}>
             {headerDescription}
           </p>
 
-          {/* Tabs */}
           <div
             style={{
               display: "flex",
@@ -509,7 +481,6 @@ const BusinessServices: React.FC = () => {
             ))}
           </div>
 
-          {/* Services List */}
           <div style={{ marginTop: "20px" }}>
             {loading && <p>Loading services...</p>}
 
@@ -556,7 +527,6 @@ const BusinessServices: React.FC = () => {
               </div>
             ))}
 
-            {/* Add New Service Button */}
             <div
               style={{
                 textAlign: "center",
@@ -581,7 +551,6 @@ const BusinessServices: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal for Add/Edit */}
       {showModal && (
         <div
           style={{

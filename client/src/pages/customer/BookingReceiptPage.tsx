@@ -1,4 +1,3 @@
-// src/pages/customer/BookingReceiptPage.tsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
@@ -15,7 +14,6 @@ const BookingReceiptPage: React.FC = () => {
   useEffect(() => {
     const loadBooking = async () => {
       try {
-        // 🔥 use the new backend route
         const res = await api.get(`/bookings/by-id/${id}`);
         setBooking(res.data);
       } catch (err) {
@@ -93,7 +91,6 @@ const BookingReceiptPage: React.FC = () => {
           {booking.business?.businessName || "Unknown Salon"}
         </p>
 
-        {/* Image */}
         <img
           src={
             booking.business?.imageUrl || booking.business?.profileImageUrl
@@ -113,7 +110,6 @@ const BookingReceiptPage: React.FC = () => {
           }}
         />
 
-        {/* Date/time/staff */}
         <div
           style={{
             marginTop: "20px",
@@ -135,7 +131,6 @@ const BookingReceiptPage: React.FC = () => {
           )}
         </div>
 
-        {/* Services */}
         <div style={{ marginTop: "24px" }}>
           <h4 style={{ marginBottom: "10px" }}>Services</h4>
           {(booking.services || []).map((s: any) => (
@@ -159,7 +154,6 @@ const BookingReceiptPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Totals + Payment Note */}
         <div
           style={{
             marginTop: "28px",
@@ -194,7 +188,6 @@ const BookingReceiptPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Back button */}
         <div
           style={{
             marginTop: "30px",

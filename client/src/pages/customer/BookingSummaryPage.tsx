@@ -1,4 +1,3 @@
-// src/pages/customer/BookingSummaryPage.tsx
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
@@ -19,8 +18,8 @@ type LocationState = {
   selectedServices: SelectedService[];
   totalDurationMinutes: number;
   totalPrice: number;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:mm
+  date: string; 
+  time: string; 
   isReschedule?: boolean;
   bookingId?: string;
 
@@ -74,8 +73,6 @@ const BookingSummaryPage: React.FC = () => {
       setSubmitting(true);
       const isoStart = `${date}T${time}:00`;
 
-      // If you later add reschedule PATCH, you can handle it here.
-      // For now we always create a new booking.
       await api.post("/bookings", {
         businessId,
         serviceId: mainService._id,
@@ -135,7 +132,6 @@ const BookingSummaryPage: React.FC = () => {
           {businessName}
         </p>
 
-        {/* Date, Time & Staff */}
         <div
           style={{
             marginTop: "16px",
@@ -157,7 +153,6 @@ const BookingSummaryPage: React.FC = () => {
           )}
         </div>
 
-        {/* Services */}
         <div style={{ marginTop: "24px" }}>
           <h4 style={{ marginBottom: "10px" }}>Services</h4>
           {selectedServices.map((s) => (
@@ -181,7 +176,6 @@ const BookingSummaryPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Totals */}
         <div
           style={{
             marginTop: "20px",
@@ -198,7 +192,6 @@ const BookingSummaryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Note */}
           <div
             style={{
               marginTop: "26px",
@@ -215,7 +208,6 @@ const BookingSummaryPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Buttons */}
         <div
           style={{
             marginTop: "28px",
