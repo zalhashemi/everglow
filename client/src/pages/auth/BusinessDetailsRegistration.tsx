@@ -1,4 +1,3 @@
-// src/pages/auth/BusinessDetailsRegistration.tsx
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -7,9 +6,7 @@ import type { LeafletMouseEvent } from "leaflet";
 import AlertPopup from "../../components/common/AlertPopup";
 import TextBox from "../../components/common/TextBox";
 
-/* ===========================
-   Styled Components
-=========================== */
+//styled components
 const PageContainer = styled.div`
   background: ${(p) => p.theme.colors.background};
   min-height: 100vh;
@@ -59,7 +56,6 @@ const SectionHeader = styled.h2`
   margin-bottom: ${(p) => p.theme.spacing.md};
 `;
 
-/** Stack fields vertically */
 const FieldStack = styled.div`
   display: flex;
   flex-direction: column;
@@ -191,7 +187,6 @@ const LocationInfo = styled.div`
   color: #555;
 `;
 
-/* --------- Operating Hours --------- */
 
 const HoursGrid = styled.div`
   display: flex;
@@ -253,7 +248,6 @@ const ClosedToggle = styled.label`
   }
 `;
 
-/* --------- File Input --------- */
 
 const FileInputWrapper = styled.div`
   margin-top: ${(p) => p.theme.spacing.sm};
@@ -297,7 +291,6 @@ const PasswordToggle = styled.button`
   }
 `;
 
-/** Salon type select (women/men/mixed) */
 const SalonTypeSelect = styled.select`
   width: 100%;
   padding: ${(p) => p.theme.spacing.sm};
@@ -312,9 +305,7 @@ const SalonTypeSelect = styled.select`
   }
 `;
 
-/* ===========================
-   Types & Constants
-=========================== */
+//constants
 
 const DEFAULT_CENTER = {
   lat: 26.2285,
@@ -407,9 +398,7 @@ type StaffMember = {
   schedule: Record<DayKey, DayHours>;
 };
 
-/* ===========================
-   Component
-=========================== */
+//main component
 
 const BusinessRegistration: React.FC = () => {
   const navigate = useNavigate();
@@ -420,10 +409,10 @@ const BusinessRegistration: React.FC = () => {
     type: "Salon",
     email: "",
     phone: "",
-    address: "", // added back
-    city: "", // added back
+    address: "", 
+    city: "", 
     about: "",
-    genderTag: "", // women / men / mixed
+    genderTag: "", 
   });
 
   const [accountPassword, setAccountPassword] = useState("");
@@ -495,7 +484,6 @@ const BusinessRegistration: React.FC = () => {
     };
   }, []);
 
-  /* ==== Staff helpers ==== */
 
   const handleStaffFieldChange = (
     index: number,
@@ -520,10 +508,8 @@ const BusinessRegistration: React.FC = () => {
       const schedule = { ...staff.schedule };
       const currentDay = { ...schedule[day] };
       
-      // ✅ Check if business is operating on this day
       const businessDay = hoursSelection[day];
       if (businessDay.closed) {
-        // If business is closed, staff must be off
         currentDay.closed = true;
         currentDay.open = "";
         currentDay.close = "";
@@ -533,7 +519,6 @@ const BusinessRegistration: React.FC = () => {
         return updated;
       }
 
-      // ✅ If opening time changed, reset close time if it's now invalid
       if (changes.open !== undefined) {
         currentDay.open = changes.open;
         if (currentDay.close) {
@@ -581,12 +566,10 @@ const BusinessRegistration: React.FC = () => {
     }
   };
 
-  /* ==== Helper to get valid closing times based on opening time ==== */
   const getValidClosingTimes = (openTime: string): string[] => {
     if (!openTime) return TIME_OPTIONS;
     const openIndex = TIME_OPTIONS.indexOf(openTime);
     if (openIndex === -1) return TIME_OPTIONS;
-    // Return only times after the opening time
     return TIME_OPTIONS.slice(openIndex + 1);
   };
 
@@ -594,7 +577,6 @@ const BusinessRegistration: React.FC = () => {
     setHoursSelection((prev) => {
       const updatedDay: DayHours = { ...prev[day], ...changes };
       
-      // ✅ If opening time changed, reset close time if it's now invalid
       if (changes.open !== undefined && updatedDay.close) {
         const openIndex = TIME_OPTIONS.indexOf(updatedDay.open);
         const closeIndex = TIME_OPTIONS.indexOf(updatedDay.close);
@@ -607,11 +589,9 @@ const BusinessRegistration: React.FC = () => {
     });
   };
 
-  /* ==== NEW: Helper to get valid staff times based on business hours ==== */
   const getValidStaffTimes = (dayKey: DayKey, isClosing: boolean, staffOpenTime?: string): string[] => {
     const businessDay = hoursSelection[dayKey];
     
-    // If business is closed, staff can't work
     if (businessDay.closed || !businessDay.open || !businessDay.close) {
       return [];
     }
@@ -624,20 +604,17 @@ const BusinessRegistration: React.FC = () => {
     }
 
     if (isClosing) {
-      // For closing time: must be after staff opening time and not after business closing
       if (!staffOpenTime) return TIME_OPTIONS.slice(businessOpenIndex + 1, businessCloseIndex + 1);
       
       const staffOpenIndex = TIME_OPTIONS.indexOf(staffOpenTime);
       const startIndex = Math.max(staffOpenIndex + 1, businessOpenIndex);
       return TIME_OPTIONS.slice(startIndex, businessCloseIndex + 1);
     } else {
-      // For opening time: must be within business hours
       return TIME_OPTIONS.slice(businessOpenIndex, businessCloseIndex);
     }
   };
 
-  /* ==== Validation ==== */
-
+//validation functions
   const validateAccountSection = (): boolean => {
     const name = businessInfo.name.trim();
     const email = businessInfo.email.trim();
@@ -710,7 +687,6 @@ const BusinessRegistration: React.FC = () => {
       return false;
     }
 
-    // Location must be chosen
     if (!manualLocation) {
       setError("Location on Map: Please select your salon location.");
       return false;
@@ -736,7 +712,6 @@ const BusinessRegistration: React.FC = () => {
     return true;
   };
 
-  /* ==== NEW: Validate staff schedules against business hours ==== */
   const validateStaffSchedules = (): boolean => {
     for (let i = 0; i < staffList.length; i++) {
       const staff = staffList[i];
@@ -745,10 +720,8 @@ const BusinessRegistration: React.FC = () => {
         const staffDay = staff.schedule[dayKey];
         const businessDay = hoursSelection[dayKey];
 
-        // Skip if staff is off
         if (staffDay.closed) continue;
 
-        // If staff is working but business is closed, that's invalid
         if (businessDay.closed && (staffDay.open || staffDay.close)) {
           setError(
             `Staff member ${i + 1} (${staff.name || 'unnamed'}): Cannot work on ${DAY_LABELS[dayKey]} - business is closed.`
@@ -756,14 +729,12 @@ const BusinessRegistration: React.FC = () => {
           return false;
         }
 
-        // If staff has working hours
         if (staffDay.open && staffDay.close) {
           const businessOpenIndex = TIME_OPTIONS.indexOf(businessDay.open);
           const businessCloseIndex = TIME_OPTIONS.indexOf(businessDay.close);
           const staffOpenIndex = TIME_OPTIONS.indexOf(staffDay.open);
           const staffCloseIndex = TIME_OPTIONS.indexOf(staffDay.close);
 
-          // Staff opening time must be >= business opening time
           if (staffOpenIndex < businessOpenIndex) {
             setError(
               `Staff member ${i + 1} (${staff.name || 'unnamed'}), ${DAY_LABELS[dayKey]}: Cannot start before business opens (${businessDay.open}).`
@@ -771,7 +742,6 @@ const BusinessRegistration: React.FC = () => {
             return false;
           }
 
-          // Staff closing time must be <= business closing time
           if (staffCloseIndex > businessCloseIndex) {
             setError(
               `Staff member ${i + 1} (${staff.name || 'unnamed'}), ${DAY_LABELS[dayKey]}: Cannot work after business closes (${businessDay.close}).`
@@ -784,8 +754,6 @@ const BusinessRegistration: React.FC = () => {
 
     return true;
   };
-
-  /* ==== Submit ==== */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -808,7 +776,6 @@ const BusinessRegistration: React.FC = () => {
     const okHours = validateOperatingHours();
     if (!okHours) return;
 
-    // ✅ NEW: Validate staff schedules
     const okStaff = validateStaffSchedules();
     if (!okStaff) return;
 
@@ -846,7 +813,6 @@ const BusinessRegistration: React.FC = () => {
       formData.append("socialLinks", JSON.stringify(socialLinks));
       formData.append("staff", JSON.stringify(staffList));
 
-      // login credentials for business
       formData.append("email", businessInfo.email);
       formData.append("password", accountPassword);
 
@@ -891,10 +857,6 @@ const BusinessRegistration: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-
-  /* ===========================
-     Render
-  ============================ */
 
   return (
     <PageContainer>

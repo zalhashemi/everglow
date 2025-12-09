@@ -1,4 +1,3 @@
-// src/pages/business/Profile.tsx
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import TextBox from "../../components/common/TextBox";
@@ -11,7 +10,7 @@ import placeholderImage from "../../images/errorLoading.png";
 import AlertPopup from "../../components/common/AlertPopup";
 import api from "../../utils/api";
 
-/* ---- Styled Components ---- */
+//styled components
 const PageContainer = styled.div`
   background: ${(p) => p.theme.colors.background};
   min-height: 100vh;
@@ -128,7 +127,6 @@ const TextArea = styled.textarea`
   }
 `;
 
-/* STAFF LIST */
 const StaffList = styled.div`
   display: flex;
   flex-direction: column;
@@ -168,7 +166,6 @@ const StaffText = styled.span`
   color: #444;
 `;
 
-/* SOCIAL */
 const SocialGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -176,7 +173,6 @@ const SocialGrid = styled.div`
   margin-top: 8px;
 `;
 
-/* Logout button */
 const LogoutButton = styled.button`
   background: #7a0000;
   color: #ffffff;
@@ -196,7 +192,6 @@ const LogoutButton = styled.button`
   }
 `;
 
-/* Working hours UI */
 const HoursGrid = styled.div`
   display: flex;
   flex-direction: column;
@@ -253,7 +248,6 @@ const ClosedCheckboxRow = styled.label`
   }
 `;
 
-/* Picture upload */
 const ImageControlsWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -264,7 +258,6 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
-/* ---------- Types ---------- */
 
 type DayKey =
   | "monday"
@@ -351,13 +344,12 @@ type StaffMember = {
   schedule: Record<DayKey, DayHours>;
 };
 
-/* -------- Component -------- */
+//main component
 const BusinessProfile: React.FC = () => {
   const [business, setBusiness] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const [name, setName] = useState("");
-  const [type, setType] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -376,9 +368,6 @@ const BusinessProfile: React.FC = () => {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [isEditing, setIsEditing] = useState(false);
-
-  // ✅ NEW: Individual section editing states
   const [editingBusinessInfo, setEditingBusinessInfo] = useState(false);
   const [editingOperatingHours, setEditingOperatingHours] = useState(false);
   const [editingStaff, setEditingStaff] = useState(false);
@@ -394,7 +383,6 @@ const BusinessProfile: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  /* -------- helper to hydrate from backend/local -------- */
   const hydrateFromBusiness = (raw: any) => {
     const b = raw.business || raw;
     const info = b.businessInfo || b;
@@ -445,11 +433,9 @@ const BusinessProfile: React.FC = () => {
     }
   };
 
-  /* ---------------- Load Business Data ---------------- */
   useEffect(() => {
     const loadBusiness = async () => {
       try {
-        // 1) Try localStorage first
         const storedStr =
           localStorage.getItem("business") ||
           localStorage.getItem("businessInfo");
@@ -462,7 +448,6 @@ const BusinessProfile: React.FC = () => {
           }
         }
 
-        // 2) Then try real API (protected: /api/business/me)
         try {
           const res = await api.get("/business/me");
           hydrateFromBusiness(res.data);
@@ -471,7 +456,6 @@ const BusinessProfile: React.FC = () => {
           localStorage.setItem("businessInfo", JSON.stringify(payloadToStore));
         } catch (err) {
           console.error("Failed to fetch /business/me", err);
-          // don't block UI on error
         }
       } finally {
         setLoading(false);
@@ -481,7 +465,6 @@ const BusinessProfile: React.FC = () => {
     loadBusiness();
   }, []);
 
-  /* ---------------- Business hours helpers ---------------- */
   const parseHours = (value?: string): DayHours => {
     if (!value) return { open: "", close: "", closed: false };
 
@@ -515,7 +498,6 @@ const BusinessProfile: React.FC = () => {
     return "";
   };
 
-  // ✅ Helper to get filtered closing time options based on opening time
   const getValidClosingTimes = (openTime: string): string[] => {
     if (!openTime) return TIME_OPTIONS;
     const openIndex = TIME_OPTIONS.indexOf(openTime);
@@ -523,11 +505,9 @@ const BusinessProfile: React.FC = () => {
     return TIME_OPTIONS.slice(openIndex + 1);
   };
 
-  // ✅ ADD THIS FUNCTION
   const getValidStaffTimes = (dayKey: DayKey, isClosing: boolean, staffOpenTime?: string): string[] => {
     const businessDay = parseHours(operatingHours[dayKey]);
     
-    // If business is closed, staff can't work
     if (businessDay.closed || !businessDay.open || !businessDay.close) {
       return [];
     }
@@ -540,14 +520,12 @@ const BusinessProfile: React.FC = () => {
     }
 
     if (isClosing) {
-      // For closing time: must be after staff opening time and not after business closing
       if (!staffOpenTime) return TIME_OPTIONS.slice(businessOpenIndex + 1, businessCloseIndex + 1);
       
       const staffOpenIndex = TIME_OPTIONS.indexOf(staffOpenTime);
       const startIndex = Math.max(staffOpenIndex + 1, businessOpenIndex);
       return TIME_OPTIONS.slice(startIndex, businessCloseIndex + 1);
     } else {
-      // For opening time: must be within business hours
       return TIME_OPTIONS.slice(businessOpenIndex, businessCloseIndex);
     }
   };
@@ -567,7 +545,6 @@ const BusinessProfile: React.FC = () => {
 
       if (field === "open") {
         updated.open = value as string;
-        // ✅ Reset close time if it's now before the new open time
         if (updated.close && updated.open) {
           const openIndex = TIME_OPTIONS.indexOf(updated.open);
           const closeIndex = TIME_OPTIONS.indexOf(updated.close);
@@ -598,7 +575,6 @@ const BusinessProfile: React.FC = () => {
     return value;
   };
 
-  /* ---------------- Staff helpers ---------------- */
   const handleStaffFieldChange = (
     index: number,
     field: keyof StaffMember,
@@ -622,7 +598,6 @@ const BusinessProfile: React.FC = () => {
       const schedule = { ...staffMember.schedule };
       const currentDay = { ...schedule[day] };
 
-      // ✅ CHECK: If business is closed on this day, staff must be off
       const businessDay = parseHours(operatingHours[day]);
       if (businessDay.closed) {
         currentDay.closed = true;
@@ -634,7 +609,6 @@ const BusinessProfile: React.FC = () => {
         return updated;
       }
 
-      // ✅ If changing open time, reset close if it's now invalid
       if (changes.open !== undefined) {
         currentDay.open = changes.open;
         if (currentDay.close && currentDay.open) {
@@ -676,9 +650,7 @@ const BusinessProfile: React.FC = () => {
     ]);
   };
 
-  /* ---------------- Validation Functions ---------------- */
   const validateBusinessInfo = (): string | null => {
-    // Business name - required, letters and spaces only
     if (!name.trim()) {
       return "Business name cannot be empty.";
     }
@@ -688,8 +660,6 @@ const BusinessProfile: React.FC = () => {
     }
 
    
-
-    // Email - required and valid format
     if (!email.trim()) {
       return "Email cannot be empty.";
     }
@@ -698,7 +668,6 @@ const BusinessProfile: React.FC = () => {
       return "Please enter a valid email address.";
     }
 
-    // Phone - required, numbers only (with optional spaces, dashes, parentheses)
     if (!phone.trim()) {
       return "Phone number cannot be empty.";
     }
@@ -707,12 +676,10 @@ const BusinessProfile: React.FC = () => {
       return "Phone number can only contain numbers, spaces, dashes, and parentheses.";
     }
 
-    // Address - required
     if (!address.trim()) {
       return "Address cannot be empty.";
     }
 
-    // City - required, letters and spaces only
     if (!city.trim()) {
       return "City cannot be empty.";
     }
@@ -721,9 +688,7 @@ const BusinessProfile: React.FC = () => {
       return "City can only contain letters and spaces.";
     }
 
-    // Description is optional, no validation needed
-
-    return null; // All valid
+    return null; 
   };
 
   const validateOperatingHours = (): string | null => {
@@ -731,7 +696,6 @@ const BusinessProfile: React.FC = () => {
       const raw = operatingHours[dayKey];
       const parsed = parseHours(raw);
 
-      // Each day must either be closed or have both open and close times
       if (!parsed.closed) {
         if (!parsed.open || !parsed.close) {
           return `${DAY_LABELS[dayKey]}: Please set both opening and closing times, or mark as closed.`;
@@ -749,7 +713,6 @@ const BusinessProfile: React.FC = () => {
     for (let i = 0; i < staff.length; i++) {
       const member = staff[i];
 
-      // Name - required, letters and spaces only
       if (!member.name.trim()) {
         return `Staff member ${i + 1}: Name cannot be empty.`;
       }
@@ -758,12 +721,10 @@ const BusinessProfile: React.FC = () => {
         return `Staff member ${i + 1}: Name can only contain letters and spaces.`;
       }
 
-      // Role - required
       if (!member.role.trim()) {
         return `Staff member ${i + 1}: Role cannot be empty.`;
       }
 
-      // Schedule - at least one working day required
       const hasWorkingDay = DAY_KEYS.some((dayKey) => {
         const businessDay = parseHours(operatingHours[dayKey]);
         // Skip if business is closed on this day
@@ -795,9 +756,7 @@ const BusinessProfile: React.FC = () => {
     return null;
   };
 
-  /* ---------------- Save Edited Profile ---------------- */
   const handleSave = async () => {
-    // Run all validations
     const businessError = validateBusinessInfo();
     if (businessError) {
       setAlertData({
@@ -832,12 +791,11 @@ const BusinessProfile: React.FC = () => {
       const payload = {
         businessInfo: {
           name: name.trim(),
-          type: type.trim(),
           email: email.trim(),
           phone: phone.trim(),
           address: address.trim(),
           city: city.trim(),
-          about: about.trim(), // Optional, can be empty
+          about: about.trim(), 
           imageUrl: imagePreview || business?.imageUrl || null,
         },
         operatingHours,
@@ -861,7 +819,6 @@ const BusinessProfile: React.FC = () => {
       localStorage.setItem("business", JSON.stringify(updatedBusiness));
       localStorage.setItem("businessInfo", JSON.stringify(updatedBusiness));
       
-      // ✅ Reset all editing states
       setEditingBusinessInfo(false);
       setEditingOperatingHours(false);
       setEditingStaff(false);
@@ -882,7 +839,6 @@ const BusinessProfile: React.FC = () => {
     }
   };
 
-  /* ---------------- Picture upload ---------------- */
   const handleChangeImageClick = () => {
     fileInputRef.current?.click();
   };
@@ -900,7 +856,6 @@ const BusinessProfile: React.FC = () => {
     formData.append("image", file);
 
     try {
-      // backend: PUT /api/business/me/profile-image
       const res = await api.put("/business/me/profile-image", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -926,7 +881,6 @@ const BusinessProfile: React.FC = () => {
     }
   };
 
-  /* ---------------- Logout Logic ---------------- */
   const handleLogout = () => {
     localStorage.removeItem("business");
     localStorage.removeItem("businessInfo");
@@ -950,7 +904,6 @@ const BusinessProfile: React.FC = () => {
     business?.businessInfo?.image ||
     placeholderImage;
 
-  /* ---------------- RENDER ---------------- */
 
   if (loading) {
     return (
@@ -1001,7 +954,6 @@ const BusinessProfile: React.FC = () => {
         </HeaderWrapper>
 
         <Wrapper>
-          {/* BUSINESS INFO */}
           <Section>
             <SectionHeader>
               <SectionTitle>Business Information</SectionTitle>
@@ -1081,7 +1033,6 @@ const BusinessProfile: React.FC = () => {
             />
           </Section>
 
-          {/* OPERATING HOURS */}
           <Section>
             <SectionHeader>
               <SectionTitle>Operating Hours</SectionTitle>
@@ -1182,7 +1133,6 @@ const BusinessProfile: React.FC = () => {
             </HoursGrid>
           </Section>
 
-          {/* STAFF MEMBERS */}
           <Section>
             <SectionHeader>
               <SectionTitle>Staff Members</SectionTitle>
@@ -1285,11 +1235,9 @@ const BusinessProfile: React.FC = () => {
                               closed: false,
                             };
                             
-                            // ✅ CHECK: Get business hours for this day
                             const businessDay = parseHours(operatingHours[dayKey]);
                             const isBusinessClosed = businessDay.closed || !businessDay.open || !businessDay.close;
                             
-                            // ✅ GET: Valid time options based on business hours
                             const validStaffOpenTimes = getValidStaffTimes(dayKey, false);
                             const validStaffCloseTimes = getValidStaffTimes(dayKey, true, day.open);
 
@@ -1375,7 +1323,6 @@ const BusinessProfile: React.FC = () => {
             )}
           </Section>
 
-          {/* SOCIAL MEDIA */}
           <Section>
             <SectionHeader>
               <SectionTitle>Social Media & Website</SectionTitle>
@@ -1426,7 +1373,6 @@ const BusinessProfile: React.FC = () => {
           </Section>
         </Wrapper>
 
-        {/* Logout button + popup */}
         <LogoutButton onClick={() => setShowLogoutPopup(true)}>
           Log Out
         </LogoutButton>

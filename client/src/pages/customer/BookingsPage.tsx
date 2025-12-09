@@ -1,4 +1,3 @@
-// src/pages/customer/BookingsPage.tsx
 import React, { useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -8,9 +7,7 @@ import AlertPopup from "../../components/common/AlertPopup";
 import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
 
-/* ============================================================
-   Styled Components
-============================================================ */
+//styled components
 const PageWrapper = styled.div`
   background-color: #faf6ea;
   min-height: 100vh;
@@ -237,9 +234,7 @@ const ReviewTextArea = styled.textarea`
   }
 `;
 
-/* ============================================================
-   Types
-============================================================ */
+//types
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
 
 type BookingApiBusiness = {
@@ -247,8 +242,8 @@ type BookingApiBusiness = {
   businessName: string;
   address?: string;
   city?: string;
-  imageUrl?: string;          // ⭐ backend field
-  profileImageUrl?: string;   // legacy fallback
+  imageUrl?: string;        
+  profileImageUrl?: string;   
 };
 
 
@@ -270,8 +265,8 @@ type BookingApi = {
 type BookingCard = {
   id: string;
   businessId: string;
-  startTime: string; // ISO
-  date: string; // formatted for display
+  startTime: string; 
+  date: string; 
   image: string;
   salonName: string;
   location: string;
@@ -281,14 +276,12 @@ type BookingCard = {
 };
 
 type AvailableStaff = {
-  index: number; // staffIndex
+  index: number; 
   fullName: string;
   role: string;
 };
 
-/* ============================================================
-   Component
-============================================================ */
+//component
 const BookingsPage: React.FC = () => {
   const navigate = useNavigate();
 
@@ -298,7 +291,6 @@ const BookingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Edit popup state
   const [editBooking, setEditBooking] = useState<BookingCard | null>(null);
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
@@ -311,23 +303,19 @@ const BookingsPage: React.FC = () => {
   const [staffIndex, setStaffIndex] = useState<number | null>(null);
   const [loadingStaff, setLoadingStaff] = useState(false);
 
-  // Review popup state
   const [reviewBooking, setReviewBooking] = useState<BookingCard | null>(null);
   const [reviewRating, setReviewRating] = useState<number>(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  // Alert popup for success/error messages
   const [alertPopup, setAlertPopup] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
-  // ✅ Cancel confirmation state
   const [cancelBooking, setCancelBooking] = useState<BookingCard | null>(null);
 
-  /* ---------------- Load bookings (shared helper) ---------------- */
   const loadBookings = useCallback(async (withSpinner: boolean = true) => {
     try {
       if (withSpinner) setLoading(true);
@@ -379,7 +367,6 @@ const BookingsPage: React.FC = () => {
           totalDuration,
         };
 
-        // Separate cancelled bookings into their own list
         if (b.status === "cancelled") {
           cancelledTmp.push(card);
           return;
@@ -407,10 +394,8 @@ const BookingsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // initial load
     loadBookings(true);
 
-    // 🔁 Poll every 10 seconds so business changes reflect on customer side
     const id = setInterval(() => {
       loadBookings(false);
     }, 10000);
@@ -418,12 +403,8 @@ const BookingsPage: React.FC = () => {
     return () => clearInterval(id);
   }, [loadBookings]);
 
-  /* ============================================================
-     Handlers: Cancel & Reschedule
-  ============================================================ */
 
   const handleCancel = (booking: BookingCard) => {
-    // ✅ Show confirmation popup instead of window.confirm
     setCancelBooking(booking);
   };
 
@@ -434,14 +415,14 @@ const BookingsPage: React.FC = () => {
       setError(null);
       await api.patch(`/bookings/${cancelBooking.id}/cancel`);
       await loadBookings(false);
-      setCancelBooking(null); // ✅ Close confirmation popup
+      setCancelBooking(null); 
       setAlertPopup({
         type: "success",
         message: "Booking cancelled successfully.",
       });
     } catch (err: any) {
       console.error("Error cancelling booking", err);
-      setCancelBooking(null); // ✅ Close confirmation popup
+      setCancelBooking(null); 
       setAlertPopup({
         type: "error",
         message: err?.response?.data?.message || "Failed to cancel booking.",
@@ -449,18 +430,15 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  // ✅ Helper to get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().slice(0, 10);
   };
 
-  // ✅ Check if selected date is today
   const isToday = (dateString: string) => {
     return dateString === getTodayDate();
   };
 
-  // ✅ Filter out past times if date is today
   const getFilteredSlots = (slots: string[], dateStr: string): string[] => {
     if (!isToday(dateStr)) {
       return slots;
@@ -481,7 +459,6 @@ const BookingsPage: React.FC = () => {
     });
   };
 
-  // ✅ Fetch available time slots when date changes
   const fetchAvailableSlots = async (booking: BookingCard, dateStr: string) => {
     if (!booking.businessId || !dateStr) {
       setAvailableSlots([]);
@@ -531,7 +508,6 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  // 🔧 MAKE THIS MATCH SelectDatePage EXACTLY
   const fetchAvailableStaff = async (
     booking: BookingCard,
     dateStr: string,
@@ -547,11 +523,8 @@ const BookingsPage: React.FC = () => {
       setLoadingStaff(true);
       setEditError(null);
 
-      // 🔹 Exactly the same format used in SelectDatePage:
-      // const startTimeIso = `${selectedDate}T${selectedSlot}:00`;
       const rawStart = `${dateStr}T${timeStr}:00`;
 
-      // optional: validate date
       const start = new Date(rawStart);
       if (isNaN(start.getTime())) {
         setAvailableStaff([]);
@@ -563,7 +536,7 @@ const BookingsPage: React.FC = () => {
       const res = await api.get("/bookings/available-staff", {
         params: {
           businessId: booking.businessId,
-          startTime: rawStart, // ✅ no .toISOString(), same as SelectDatePage
+          startTime: rawStart, 
         },
       });
 
@@ -660,7 +633,6 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  // ✅ Validate that the selected date/time is not in the past
   const isValidDateTime = (dateStr: string, timeStr: string): boolean => {
     if (!dateStr || !timeStr) return false;
 
@@ -729,9 +701,7 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  /* ============================================================
-     Review Handlers
-  ============================================================ */
+
 
   const handleOpenReview = (booking: BookingCard) => {
     setReviewBooking(booking);
@@ -785,16 +755,12 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  /* ============================================================
-     Render
-  ============================================================ */
 
   return (
     <PageWrapper>
       <TabBar type="customer" />
 
       <ContentWrapper>
-        {/* UPCOMING */}
         <Section>
           <SectionTitle>Upcoming Bookings</SectionTitle>
 
@@ -823,7 +789,6 @@ const BookingsPage: React.FC = () => {
           </TilesContainer>
         </Section>
 
-        {/* PAST */}
         <Section>
           <SectionTitle>Past Bookings</SectionTitle>
 
@@ -849,7 +814,6 @@ const BookingsPage: React.FC = () => {
           </TilesContainer>
         </Section>
 
-        {/* CANCELLED */}
         <Section>
           <SectionTitle>Cancelled Bookings</SectionTitle>
 
@@ -868,14 +832,12 @@ const BookingsPage: React.FC = () => {
                 location={b.location}
                 services={b.services}
                 status={b.status}
-                // No callbacks = no buttons shown for cancelled bookings
               />
             ))}
           </TilesContainer>
         </Section>
       </ContentWrapper>
 
-      {/* ===== Cancel Confirmation Popup ===== */}
       {cancelBooking && (
         <AlertPopup
           type="error"
@@ -888,7 +850,6 @@ const BookingsPage: React.FC = () => {
         />
       )}
 
-      {/* ===== Reschedule Popup (using AlertPopup) ===== */}
       {editBooking && (
         <AlertPopup
           type="success"
@@ -985,7 +946,6 @@ const BookingsPage: React.FC = () => {
         />
       )}
 
-      {/* ===== Review Popup (using AlertPopup) ===== */}
       {reviewBooking && (
         <AlertPopup
           type="success"
@@ -1036,7 +996,6 @@ const BookingsPage: React.FC = () => {
         />
       )}
 
-      {/* ===== Success/Error Alert ===== */}
       {alertPopup && (
         <AlertPopup
           type={alertPopup.type}

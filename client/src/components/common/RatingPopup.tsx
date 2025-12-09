@@ -122,7 +122,6 @@ const RatingPopup: React.FC<Props> = ({
   const [rating, setRating] = useState<number>(initialRating ?? 0);
   const [comment, setComment] = useState(initialComment);
 
-  // New: error state for missing stars
   const [error, setError] = useState("");
 
   const isEditing = (initialRating ?? 0) > 0;
@@ -138,14 +137,14 @@ const RatingPopup: React.FC<Props> = ({
             : "Please rate this salon out of 5 stars."}
         </Description>
 
-        {/* STAR SELECTION */}
+   
         <StarsRow>
           {[1, 2, 3, 4, 5].map((num) => {
             const active = num <= rating;
             return (
               <StarButton key={num} onClick={() => {
                 setRating(num);
-                setError(""); // clear error once user selects stars
+                setError(""); 
               }}>
                 <Star
                   size={35}
@@ -157,7 +156,7 @@ const RatingPopup: React.FC<Props> = ({
           })}
         </StarsRow>
 
-        {/* ⭐ ERROR UNDER STARS */}
+   
         {error && <ErrorText>{error}</ErrorText>}
 
         <TextArea
@@ -188,7 +187,7 @@ const RatingPopup: React.FC<Props> = ({
                 setError("Please select at least 1 star");
                 return;
               }
-              setError(""); // clear before submitting
+              setError(""); 
               onSubmit(rating, comment);
             }}
           >

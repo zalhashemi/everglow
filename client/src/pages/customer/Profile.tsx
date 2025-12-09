@@ -9,7 +9,7 @@ import Popup from "../../components/common/Popup";
 import AlertPopup from "../../components/common/AlertPopup";
 
 
-/* ---- Styled Wrappers ---- */
+//styled wrappers
 const PageWrapper = styled.div`
   background-color: ${({ theme }) => theme.colors.background};
   min-height: 100vh;
@@ -109,7 +109,6 @@ const LoyaltyList = styled.div`
   }
 `;
 
-/* 🔥 LOGOUT BUTTON STYLES */
 const LogoutButton = styled.button`
   background: #7a0000;
   color: #ffffff;
@@ -161,7 +160,6 @@ const FullWidthField = styled.div`
   }
 `;
 
-// Helper to parse "Name::Offer" strings coming from loyalty
 const parseRewardString = (value: string) => {
   if (!value) return { name: "", offer: "" };
   const parts = value.split("::");
@@ -184,7 +182,6 @@ const ProfilePage: React.FC = () => {
 
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
-  // NEW — loyalty programs + stats
   const [loyaltyPrograms, setLoyaltyPrograms] = useState<any[]>([]);
   const [totalBookings, setTotalBookings] = useState(0);
   const [visitedSalons, setVisitedSalons] = useState(0);
@@ -195,7 +192,6 @@ const ProfilePage: React.FC = () => {
     message: string;
   } | null>(null);
 
-  /* ---------------- Load User Data + Stats + Loyalty ---------------- */
   useEffect(() => {
     const stored = localStorage.getItem("customer");
     if (stored) {
@@ -209,7 +205,6 @@ const ProfilePage: React.FC = () => {
     const token = localStorage.getItem("customerToken");
     if (!token) return;
 
-    // Fetch profile
     fetch("http://localhost:5000/api/customers/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -222,7 +217,6 @@ const ProfilePage: React.FC = () => {
         localStorage.setItem("customer", JSON.stringify(data));
       });
 
-    // Fetch bookings to calculate stats
     fetch("http://localhost:5000/api/bookings/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -235,7 +229,6 @@ const ProfilePage: React.FC = () => {
         setVisitedSalons(uniqueSalonIds.size);
       });
 
-    // Fetch loyalty programs
     fetch("http://localhost:5000/api/loyalty/customer/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -249,22 +242,17 @@ const ProfilePage: React.FC = () => {
 
   if (!customer) return <div style={{ padding: 40 }}>Loading...</div>;
 
-  /* ---------------- Validation Functions ---------------- */
   const validateName = (name: string): boolean => {
-    // Only letters and spaces allowed, must not be empty
     const nameRegex = /^[A-Za-z\s]+$/;
     return name.trim().length > 0 && nameRegex.test(name.trim());
   };
 
   const validateEmail = (email: string): boolean => {
-    // Standard email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return email.trim().length > 0 && emailRegex.test(email.trim());
   };
 
-  /* ---------------- Save Edited Profile ---------------- */
   const handleSave = async () => {
-    // Validation checks
     if (!firstName.trim()) {
       setAlertData({
         type: "error",
@@ -356,7 +344,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  /* ---------------- Logout Logic ---------------- */
   const handleLogout = () => {
     localStorage.removeItem("customer");
     localStorage.removeItem("customerToken");
@@ -365,10 +352,9 @@ const ProfilePage: React.FC = () => {
 
   return (
     <PageWrapper>
-      <TabBar type="customer" /> {/* ✔ TOP BAR remains unchanged */}
+      <TabBar type="customer" /> 
 
       <ContentWrapper>
-        {/* ---------- Profile Header (stats now real) ---------- */}
         <ProfileHeader
           type="customer"
           name={`${firstName} ${lastName}`}
@@ -377,7 +363,6 @@ const ProfilePage: React.FC = () => {
           stat3={loyaltyPrograms.length}
         />
 
-        {/* ---------- Personal Info ---------- */}
         <Card>
           <HeaderRow>
             <SectionTitle>Personal Information</SectionTitle>
@@ -421,7 +406,6 @@ const ProfilePage: React.FC = () => {
           </PersonalInfoGrid>
         </Card>
 
-        {/* ---------- Loyalty Programs (DB-linked) ---------- */}
         <Card>
           <SectionTitle>My Loyalty Programs</SectionTitle>
           <LoyaltyList>
@@ -429,7 +413,6 @@ const ProfilePage: React.FC = () => {
               <div style={{ color: "#999" }}>No loyalty programs yet</div>
             ) : (
               loyaltyPrograms.map((entry: any) => {
-                // Prefer the first reward string, then fallback to rewardDescription
                 const rawReward =
                   entry.business?.loyalty?.rewards?.[0] ||
                   entry.business?.loyalty?.rewardDescription ||
@@ -458,12 +441,10 @@ const ProfilePage: React.FC = () => {
           </LoyaltyList>
         </Card>
 
-        {/* ---------- Logout Button ---------- */}
         <LogoutButton onClick={() => setShowLogoutPopup(true)}>
           Log Out
         </LogoutButton>
 
-        {/* ---------- Popup Component ---------- */}
         {showLogoutPopup && (
           <Popup
             title="Log Out?"

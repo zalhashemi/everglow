@@ -1,4 +1,3 @@
-// src/utils/IconFix.tsx
 import React from "react";
 
 export function IconFix(

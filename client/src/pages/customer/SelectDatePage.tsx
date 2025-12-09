@@ -160,25 +160,21 @@ const SelectDatePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [staffError, setStaffError] = useState<string | null>(null);
 
-  // Guard: if we somehow got here without required state, go back
   useEffect(() => {
     if (!businessId || !selectedServices || !selectedServices.length) {
       navigate(-1);
     }
   }, [businessId, selectedServices, navigate]);
 
-  // ✅ Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().slice(0, 10);
   };
 
-  // ✅ Check if selected date is today
   const isToday = (dateString: string) => {
     return dateString === getTodayDate();
   };
 
-  // ✅ Filter out past times if date is today
   const getFilteredSlots = (slots: string[]): string[] => {
     if (!isToday(selectedDate)) {
       return slots;
@@ -193,14 +189,12 @@ const SelectDatePage: React.FC = () => {
       const slotHour = parseInt(hourStr, 10);
       const slotMinute = parseInt(minuteStr, 10);
 
-      // Only show times after current time
       if (slotHour > currentHour) return true;
       if (slotHour === currentHour && slotMinute > currentMinute) return true;
       return false;
     });
   };
 
-  // Load available time slots
   useEffect(() => {
     if (!businessId || !totalDurationMinutes || !selectedDate) return;
 
@@ -219,7 +213,6 @@ const SelectDatePage: React.FC = () => {
           }
         );
 
-        // ✅ Filter slots to remove past times if today
         const rawSlots = res.data || [];
         const filteredSlots = getFilteredSlots(rawSlots);
 
@@ -243,7 +236,6 @@ const SelectDatePage: React.FC = () => {
     loadSlots();
   }, [businessId, totalDurationMinutes, selectedDate]);
 
-  // Load available staff
   useEffect(() => {
     if (!businessId || !selectedDate || !selectedSlot) {
       setAvailableStaff([]);
@@ -293,7 +285,6 @@ const SelectDatePage: React.FC = () => {
       return;
     }
 
-    // ✅ Additional validation: ensure date is not in the past
     if (selectedDate < getTodayDate()) {
       setError("Cannot book appointments in the past.");
       return;
@@ -382,7 +373,6 @@ const SelectDatePage: React.FC = () => {
             </Label>
           </FormRow>
 
-          {/* Staff selection */}
           <FormRow style={{ marginBottom: 8 }}>
             <Label>
               Staff Member

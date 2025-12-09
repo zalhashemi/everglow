@@ -7,7 +7,6 @@ import salon2 from "../../images/salon2.jpg";
 import b2 from "../../images/barber2.jpg";
 import everglowLogo from "../../images/everglowLogo.png";
 
-//const everglowLogo = "/images/everglowLogo.png";
 
 const Container = styled.div`
   display: flex;
@@ -146,7 +145,6 @@ const LandingPage: React.FC = () => {
     <Container>
       <Header>
         <Logo onClick={() => navigate("/")}>
-          {/* Replace with your logo file if available */}
           <img src={everglowLogo} alt="EverGlow" />
         </Logo>
       </Header>

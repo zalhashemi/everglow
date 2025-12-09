@@ -2,9 +2,9 @@ import React from "react";
 import styled from "styled-components";
 
 interface LoyaltyTileProps {
-  name?: string;          // reward name
-  offer?: string;         // reward offer
-  salon?: string;         // salon name
+  name?: string;          
+  offer?: string;        
+  salon?: string;        
   filledCircles?: number;
   totalCircles?: number;
 }

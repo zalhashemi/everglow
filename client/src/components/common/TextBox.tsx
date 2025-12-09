@@ -27,7 +27,7 @@ const StyledInput = styled.input<{ $hasError?: boolean }>`
   border: 1px solid
     ${props =>
       props.$hasError
-        ? '#C85050' // warm muted red for error
+        ? '#C85050' 
         : props.theme.colors.gray.medium};
   border-radius: ${props => props.theme.borderRadius.medium};
   background-color: ${props => props.theme.colors.gray.light};

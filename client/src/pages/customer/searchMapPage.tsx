@@ -1,4 +1,3 @@
-// src/pages/customer/searchMapPage.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -355,7 +354,6 @@ const SearchMapPage: React.FC = () => {
   const userMarkerRef = useRef<L.Marker | null>(null);
   const businessLayerRef = useRef<L.LayerGroup | null>(null);
 
-  /* -------------------- Init map -------------------- */
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
       const map = L.map(mapContainerRef.current).setView(
@@ -377,10 +375,8 @@ const SearchMapPage: React.FC = () => {
         mapRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* -------------------- User location -------------------- */
   useEffect(() => {
     if (!navigator.geolocation) return;
 
@@ -398,12 +394,11 @@ const SearchMapPage: React.FC = () => {
     );
   }, []);
 
-  /* -------------------- Fetch businesses -------------------- */
   useEffect(() => {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        setError(null); // reset previous error
+        setError(null); 
         const res = await api.get<Business[]>("/business");
         setBusinesses(res.data || []);
       } catch (err) {
@@ -439,13 +434,11 @@ const SearchMapPage: React.FC = () => {
     });
   }, [businessesWithCoords, searchTerm]);
 
-  /* -------------------- Update map center -------------------- */
   useEffect(() => {
     if (mapRef.current)
       mapRef.current.setView([mapCenter.lat, mapCenter.lng], mapCenter.zoom);
   }, [mapCenter]);
 
-  /* -------------------- User marker -------------------- */
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -468,7 +461,6 @@ const SearchMapPage: React.FC = () => {
     }
   }, [userLocation]);
 
-  /* -------------------- Business markers -------------------- */
   useEffect(() => {
     if (!mapRef.current || !businessLayerRef.current) return;
 

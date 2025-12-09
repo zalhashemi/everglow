@@ -1,4 +1,3 @@
-// src/pages/customer/Homepage.tsx
 import React, { useRef, useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
@@ -8,9 +7,7 @@ import PromoBanner from "../../components/common/PromoBanner";
 import errorLoading from "../../images/errorLoading.png";
 import Footer from "../../components/common/Footer";
 
-/* ============================================================
-   Styled Components
-============================================================ */
+//styled components
 const PageWrapper = styled.div`
   background-color: #faf6ea;
   min-height: 100vh;
@@ -57,7 +54,6 @@ const WelcomeText = styled.h1`
   }
 `;
 
-/* ===== Offers Carousel ===== */
 const OfferCarouselWrapper = styled.div`
   width: 100%;
   max-width: 1600px;
@@ -117,7 +113,6 @@ const Dot = styled.button<{ active: boolean }>`
   }
 `;
 
-/* ===== Salon Category Styling ===== */
 const CategoryHeader = styled.div`
   background-color: #fff;
   display: inline-block;
@@ -284,11 +279,8 @@ const ArrowIcon = ({ direction }: { direction: "left" | "right" }) => (
   </svg>
 );
 
-/* ============================================================
-   Component
-============================================================ */
+//main component
 
-// Order matters: Trending first, then Highest Rated, then For Her / For Him
 const CATEGORIES = [
   { title: "Trending Now", key: "trending" as const },
   { title: "Highest Rated", key: "highestRated" as const },
@@ -298,7 +290,7 @@ const CATEGORIES = [
 
 type CategoryKey = (typeof CATEGORIES)[number]["key"];
 
-const CARD_WIDTH = 310 + 18; // card + gap
+const CARD_WIDTH = 310 + 18; 
 const SCROLL_CARDS = 4;
 const SCROLL_AMOUNT = CARD_WIDTH * SCROLL_CARDS;
 
@@ -310,13 +302,12 @@ type Salon = {
   imageUrl?: string | null;
   averageRating?: number;
   reviewCount?: number;
-  genderTag?: string; // "women" | "men" | "mixed" | undefined
+  genderTag?: string; 
 };
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
-  // All salons (used for all categories)
   const [allSalons, setAllSalons] = useState<Salon[]>([]);
   const [trendingSalons, setTrendingSalons] = useState<Salon[]>([]);
   const [highestRatedSalons, setHighestRatedSalons] = useState<Salon[]>([]);
@@ -332,13 +323,9 @@ const HomePage: React.FC = () => {
     CATEGORIES.map(() => ({ atStart: true, atEnd: false }))
   );
 
-  /* ============================================================
-     Fetch salons from public businesses API
-============================================================ */
   useEffect(() => {
     const fetchSalons = async () => {
       try {
-        // Using public business routes :contentReference[oaicite:0]{index=0}
         const res = await fetch("http://localhost:5000/api/public/businesses");
         if (!res.ok) {
           throw new Error(`Failed /api/public/businesses: ${res.status}`);
@@ -352,13 +339,11 @@ const HomePage: React.FC = () => {
 
         setAllSalons(list);
 
-        // Highest rated derived here
         const highest = [...list].sort(
           (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
         );
         setHighestRatedSalons(highest);
 
-        // Simple trending: use full list (you can change later)
         setTrendingSalons(list);
       } catch (err) {
         console.error("Error fetching salons:", err);
@@ -370,9 +355,6 @@ const HomePage: React.FC = () => {
     fetchSalons();
   }, []);
 
-  /* ============================================================
-     Fetch offers
-============================================================ */
   useEffect(() => {
     const fetchOffers = async () => {
       try {
@@ -392,9 +374,6 @@ const HomePage: React.FC = () => {
     fetchOffers();
   }, []);
 
-  /* ============================================================
-     Auto-slide carousel
-============================================================ */
   useEffect(() => {
     if (offers.length === 0) return;
 
@@ -405,9 +384,6 @@ const HomePage: React.FC = () => {
     return () => clearInterval(interval);
   }, [offers.length]);
 
-  /* ============================================================
-     Scroll handling (max 4 cards at a time)
-============================================================ */
   const handleScroll = (index: number, direction: "left" | "right") => {
     const container = scrollRefs.current[index];
     if (!container) return;
@@ -430,9 +406,6 @@ const HomePage: React.FC = () => {
     }, 350);
   };
 
-  /* ============================================================
-     Attach scroll listeners
-============================================================ */
   useEffect(() => {
     const elements = scrollRefs.current;
     const listeners: Array<() => void> = [];
@@ -461,9 +434,6 @@ const HomePage: React.FC = () => {
     };
   }, [allSalons]);
 
-  /* ============================================================
-     Helper: which salons to show for each category
-============================================================ */
   const getSalonsForCategory = (key: CategoryKey): Salon[] => {
     switch (key) {
       case "trending":
@@ -471,12 +441,10 @@ const HomePage: React.FC = () => {
       case "highestRated":
         return highestRatedSalons;
       case "forHer":
-        // ✅ ONLY salons explicitly tagged women
         return allSalons.filter(
           (salon) => salon.genderTag?.toLowerCase() === "women"
         );
       case "forHis":
-        // ✅ ONLY salons explicitly tagged men
         return allSalons.filter(
           (salon) => salon.genderTag?.toLowerCase() === "men"
         );
@@ -485,9 +453,6 @@ const HomePage: React.FC = () => {
     }
   };
 
-  /* ============================================================
-     Loading Screen
-============================================================ */
   if (loadingSalons) {
     return (
       <PageWrapper>
@@ -499,9 +464,6 @@ const HomePage: React.FC = () => {
     );
   }
 
-  /* ============================================================
-     Page UI
-============================================================ */
   return (
     <PageWrapper>
       <TabBar type="customer" />
@@ -509,7 +471,6 @@ const HomePage: React.FC = () => {
       <ContentWrapper>
         <WelcomeText>Welcome Back!</WelcomeText>
 
-        {/* ====== OFFERS CAROUSEL ====== */}
         {!loadingOffers && offers.length > 0 && (
           <>
             <OfferCarouselWrapper>
@@ -548,14 +509,12 @@ const HomePage: React.FC = () => {
           </>
         )}
 
-        {/* ===== SALON CATEGORIES ===== */}
         {CATEGORIES.map((category, index) => {
           const salonsForCategory = getSalonsForCategory(category.key).slice(
             0,
             13
           );
 
-          // If there are no salons for this category, skip rendering it
           if (salonsForCategory.length === 0) {
             return null;
           }
@@ -567,7 +526,6 @@ const HomePage: React.FC = () => {
               </CategoryHeader>
 
               <ScrollWrapper>
-                {/* LEFT ARROW (only show if not at start) */}
                 {!scrollInfo[index].atStart && (
                   <ScrollButton
                     side="left"
@@ -601,7 +559,6 @@ const HomePage: React.FC = () => {
                   ))}
                 </HorizontalScroll>
 
-                {/* RIGHT ARROW (only show if not at end) */}
                 {!scrollInfo[index].atEnd && (
                   <ScrollButton
                     side="right"

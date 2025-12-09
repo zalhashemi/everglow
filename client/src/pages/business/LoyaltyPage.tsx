@@ -109,7 +109,7 @@ interface RewardFormRow {
 
 interface LoyaltyFormState {
   enabled: boolean;
-  rewards: RewardFormRow[]; // we'll only ever use index 0
+  rewards: RewardFormRow[]; 
 }
 
 const parseRewardString = (value: string): RewardFormRow => {
@@ -134,10 +134,9 @@ const LoyaltyPage: React.FC = () => {
 
   const [form, setForm] = useState<LoyaltyFormState>({
     enabled: false,
-    rewards: [{ name: "", offer: "" }], // single program
+    rewards: [{ name: "", offer: "" }], 
   });
 
-  // 🔹 On mount: ask backend "who am I?" then load that business's loyalty
   useEffect(() => {
     const fetchBusinessAndLoyalty = async () => {
       try {
@@ -145,7 +144,6 @@ const LoyaltyPage: React.FC = () => {
         setError("");
         setSuccess("");
 
-        // 1) get current logged-in business from token
         const meRes = await api.get("/business/me");
         const biz = meRes.data;
         if (!biz || !biz._id) {
@@ -157,7 +155,6 @@ const LoyaltyPage: React.FC = () => {
         const id = biz._id as string;
         setBusinessId(id);
 
-        // 2) get loyalty for THIS business only
         const res = await api.get(`/loyalty/${id}`);
 
         if (res.data) {
@@ -170,7 +167,6 @@ const LoyaltyPage: React.FC = () => {
             .map((r: string) => parseRewardString(r))
             .filter((row: RewardFormRow) => row.name || row.offer);
 
-          // ✅ only one program allowed → keep just the first one
           const firstRow =
             parsedList[0] || ({ name: "", offer: "" } as RewardFormRow);
 
@@ -199,7 +195,6 @@ const LoyaltyPage: React.FC = () => {
     field: keyof RewardFormRow,
     value: string
   ) => {
-    // We only care about index 0, but keep signature
     setForm((prev) => {
       const rewards = [...prev.rewards];
       const safeIndex = 0;
@@ -214,7 +209,6 @@ const LoyaltyPage: React.FC = () => {
   };
 
   const handleToggleEnabled = (checked: boolean) => {
-    // ✅ Prevent enabling if no reward name
     if (checked) {
       const singleRow = form.rewards[0] || { name: "", offer: "" };
       if (!singleRow.name.trim()) {
@@ -246,7 +240,6 @@ const LoyaltyPage: React.FC = () => {
         offer: singleRow.offer.trim(),
       };
 
-      // Ensure there is at least something if enabled
       const hasContent = cleaned.name || cleaned.offer;
 
       const cleanedRewardString = hasContent

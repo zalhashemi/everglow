@@ -8,8 +8,6 @@ interface ServiceTileProps {
   description?: string;
   onClick?: () => void;
   selected?: boolean;
-
-  // NEW: multiple icons (edit + delete)
   actions?: React.ReactNode;
 }
 
@@ -33,7 +31,6 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
         padding: "16px 12px",
       }}
     >
-      {/* LEFT SECTION */}
       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
         <h4
           style={{
@@ -74,7 +71,6 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
         )}
       </div>
 
-      {/* RIGHT SIDE → ACTION ICONS */}
       <div
         style={{
           display: "flex",
@@ -82,7 +78,6 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
           alignItems: "center",
         }}
       >
-        {actions /* edit + delete icons passed from parent */}
       </div>
     </div>
   );

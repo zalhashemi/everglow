@@ -1,12 +1,7 @@
-// server/controllers/loyaltyController.js
-
 const Loyalty = require("../models/loyalty");
 const Business = require("../models/Business");
 const CustomerLoyalty = require("../models/CustomerLoyalty");
 
-/* -------------------------------------------------------------------
-   Helper: ensure there is a Loyalty doc for a business
-------------------------------------------------------------------- */
 const getOrCreateLoyaltyForBusiness = async (businessId) => {
   let loyalty = await Loyalty.findOne({ business: businessId });
 
@@ -27,10 +22,6 @@ const getOrCreateLoyaltyForBusiness = async (businessId) => {
   return loyalty;
 };
 
-/* -------------------------------------------------------------------
-   GET loyalty settings for a business
-   Route: GET /api/loyalty/:businessId
-------------------------------------------------------------------- */
 const getBusinessLoyalty = async (req, res) => {
   try {
     const { businessId } = req.params;
@@ -47,20 +38,6 @@ const getBusinessLoyalty = async (req, res) => {
   }
 };
 
-/* -------------------------------------------------------------------
-   UPDATE loyalty settings for a business
-   Route: PUT /api/loyalty/:businessId
-   Body (from frontend):
-   {
-     enabled: boolean,
-     type: "points",
-     pointsPerBooking: number,
-     rewardThreshold: number,
-     rewardDescription: string, // first "Name::Offer"
-     expiryMonths: number,
-     rewards: string[]          // ["Name::Offer", ...]
-   }
-------------------------------------------------------------------- */
 const updateBusinessLoyalty = async (req, res) => {
   try {
     const { businessId } = req.params;
@@ -86,7 +63,6 @@ const updateBusinessLoyalty = async (req, res) => {
       rewards,
     } = req.body;
 
-    // Update fields on Loyalty doc
     if (typeof enabled === "boolean") loyalty.enabled = enabled;
     if (type) loyalty.type = type;
     if (typeof pointsPerBooking === "number")
@@ -98,13 +74,10 @@ const updateBusinessLoyalty = async (req, res) => {
     if (typeof expiryMonths === "number") loyalty.expiryMonths = expiryMonths;
 
     if (Array.isArray(rewards)) {
-      // They are strings like "Name::Offer"
       loyalty.rewards = rewards;
     }
 
     await loyalty.save();
-
-    // Mirror minimal config into Business.loyalty for quick access
     business.loyalty = {
       enabled: loyalty.enabled,
       type: loyalty.type,
@@ -124,10 +97,7 @@ const updateBusinessLoyalty = async (req, res) => {
   }
 };
 
-/* -------------------------------------------------------------------
-   GET all loyalty programs for logged-in customer
-   Route: GET /api/loyalty/customer/me
-------------------------------------------------------------------- */
+
 const getMyLoyaltyPrograms = async (req, res) => {
   try {
     const customerId = req.customer.id;
@@ -139,7 +109,6 @@ const getMyLoyaltyPrograms = async (req, res) => {
       })
       .lean();
 
-    // Optional: only show if that business has loyalty enabled
     const filtered = entries.filter(
       (entry) => entry.business && entry.business.loyaltyEnabled
     );
@@ -151,9 +120,6 @@ const getMyLoyaltyPrograms = async (req, res) => {
   }
 };
 
-/* -------------------------------------------------------------------
-   EXPORTS
-------------------------------------------------------------------- */
 module.exports = {
   getBusinessLoyalty,
   updateBusinessLoyalty,

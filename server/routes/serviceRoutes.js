@@ -9,7 +9,6 @@ const {
 } = require("../controllers/serviceController");
 const { protectBusiness } = require("../middleware/authMiddleware");
 
-// All routes require authenticated business
 router.post("/", protectBusiness, createService);
 router.get("/", protectBusiness, getMyServices);
 router.put("/:id", protectBusiness, updateService);

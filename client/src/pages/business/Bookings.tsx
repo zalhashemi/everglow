@@ -10,7 +10,7 @@ import AlertPopup from "../../components/common/AlertPopup";
 
 type CalendarValue = Date | Date[] | [Date | null, Date | null] | null;
 
-/* ---------------------- Styled Components ---------------------- */
+//style components
 const PageContainer = styled.div`
   min-height: 100vh;
   background-color: #faf6ea;
@@ -221,8 +221,8 @@ const SaveButton = styled(Button)`
   color: #fff;
 `;
 
-/* ---------------------- Types ---------------------- */
 
+//types
 type RawBookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
 type RawBooking = {
@@ -264,9 +264,7 @@ const statusLabel: Record<RawBookingStatus, string> = {
   completed: "COMPLETED",
 };
 
-/* ================================================================
-                            MAIN COMPONENT
-   ================================================================ */
+//main component
 
 const BusinessBookings: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -282,10 +280,8 @@ const BusinessBookings: React.FC = () => {
     message: string;
   } | null>(null);
 
-  // NEW: staff filter (string is staffName, or "all")
   const [staffFilter, setStaffFilter] = useState<string>("all");
 
-  /* ------- Load bookings from API ------- */
   const loadBookings = useCallback(async () => {
     try {
       setLoading(true);
@@ -336,10 +332,8 @@ const BusinessBookings: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // initial load
     loadBookings();
 
-    // 🔁 Poll every 10 seconds so customer changes reflect on business side
     const id = setInterval(() => {
       loadBookings();
     }, 10000);
@@ -347,7 +341,6 @@ const BusinessBookings: React.FC = () => {
     return () => clearInterval(id);
   }, [loadBookings]);
 
-  /* ------- Calendar handler ------- */
   const handleDateChange = (value: CalendarValue) => {
     if (!value) return;
     if (value instanceof Date) setSelectedDate(value);
@@ -359,7 +352,6 @@ const BusinessBookings: React.FC = () => {
 
   const selectedKey = formatDateKey(selectedDate);
 
-  // All staff names that appear in bookings (for any date)
   const staffOptions = Array.from(
     new Set(
       bookings
@@ -368,14 +360,12 @@ const BusinessBookings: React.FC = () => {
     )
   );
 
-  // Bookings for selected day, optionally filtered by staff
   const selectedDayBookings = bookings.filter((b) => {
     if (b.dateKey !== selectedKey) return false;
     if (staffFilter === "all") return true;
     return (b.staffName || "").trim() === staffFilter;
   });
 
-  /* ------- Edit / Cancel Modal ------- */
 
   const handleEditClick = (booking: UiBooking) => {
     setEditingBooking(booking);
@@ -435,14 +425,11 @@ const BusinessBookings: React.FC = () => {
     }
   };
 
-  /* ------- Render ------- */
-
   return (
     <PageContainer>
       <TabBar type="business" />
 
       <Layout>
-        {/* LEFT: Calendar */}
         <CalendarContainer>
           <h2
             style={{
@@ -479,7 +466,6 @@ const BusinessBookings: React.FC = () => {
           )}
         </CalendarContainer>
 
-        {/* RIGHT: List of Bookings + Staff filter */}
         <Sidebar>
           <SidebarHeaderRow>
             <SidebarTitle>
@@ -551,7 +537,6 @@ const BusinessBookings: React.FC = () => {
         </Sidebar>
       </Layout>
 
-      {/* MODAL */}
       {showModal && editingBooking && (
         <Overlay>
           <Modal>
@@ -601,7 +586,6 @@ const BusinessBookings: React.FC = () => {
         </Overlay>
       )}
 
-      {/* POPUP */}
       {popup && (
         <AlertPopup
           type={popup.type}
