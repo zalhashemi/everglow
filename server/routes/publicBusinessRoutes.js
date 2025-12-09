@@ -21,4 +21,4 @@ router.get("/:businessId/offers", getPublicOffersForBusiness);
 
 router.get("/:id", getBusinessDetails);
 
-module.exports = roter;
+module.exports = router;

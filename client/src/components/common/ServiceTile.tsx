@@ -78,6 +78,7 @@ const ServiceTile: React.FC<ServiceTileProps> = ({
           alignItems: "center",
         }}
       >
+        {actions}
       </div>
     </div>
   );
