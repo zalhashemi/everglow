@@ -765,6 +765,10 @@ const BusinessProfile: React.FC = () => {
 
       // Schedule - at least one working day required
       const hasWorkingDay = DAY_KEYS.some((dayKey) => {
+        const businessDay = parseHours(operatingHours[dayKey]);
+        // Skip if business is closed on this day
+        if (businessDay.closed) return false;
+        
         const day = member.schedule[dayKey];
         return !day.closed && day.open && day.close;
       });
@@ -773,8 +777,12 @@ const BusinessProfile: React.FC = () => {
         return `Staff member ${i + 1} (${member.name}): Must have at least one working day with hours set.`;
       }
 
-      // Validate each working day has both times
+      // Validate each working day has both times (only for days the business is open)
       for (const dayKey of DAY_KEYS) {
+        const businessDay = parseHours(operatingHours[dayKey]);
+        // Skip validation if business is closed on this day
+        if (businessDay.closed) continue;
+        
         const day = member.schedule[dayKey];
         if (!day.closed) {
           if (!day.open || !day.close) {
