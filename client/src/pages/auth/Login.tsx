@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import everglowLogo from "../../images/everglowLogo.png";
+import { API_BASE } from "../../utils/config";
 
 const PageWrapper = styled.div`
   width: 100vw;

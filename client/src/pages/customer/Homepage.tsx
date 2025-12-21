@@ -6,6 +6,8 @@ import TabBar from "../../components/common/TabBar";
 import PromoBanner from "../../components/common/PromoBanner";
 import errorLoading from "../../images/errorLoading.png";
 import Footer from "../../components/common/Footer";
+import { API_BASE } from "../../utils/config";
+
 
 //styled components
 const PageWrapper = styled.div`

@@ -7,7 +7,7 @@ import TextBox from "../../components/common/TextBox";
 import Button from "../../components/common/Button";
 import Popup from "../../components/common/Popup";
 import AlertPopup from "../../components/common/AlertPopup";
-
+import { API_BASE } from "../../utils/config";
 
 //styled wrappers
 const PageWrapper = styled.div`

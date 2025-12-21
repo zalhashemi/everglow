@@ -7,7 +7,7 @@ import ServiceTile from "../../components/common/ServiceTile";
 import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
 import AlertPopup from "../../components/common/AlertPopup";
-
+import { API_BASE } from "../../utils/config";
 
 //types
 type StaffRaw = {

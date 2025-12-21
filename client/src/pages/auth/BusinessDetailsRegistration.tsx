@@ -5,6 +5,7 @@ import L from "../../leafletSetup";
 import type { LeafletMouseEvent } from "leaflet";
 import AlertPopup from "../../components/common/AlertPopup";
 import TextBox from "../../components/common/TextBox";
+import { API_BASE } from "../../utils/config";
 
 //styled components
 const PageContainer = styled.div`

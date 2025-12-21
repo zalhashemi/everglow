@@ -3,6 +3,7 @@ import styled from "styled-components";
 import Button from "./Button";
 import SecondaryButton from "./SecondaryButton";
 import errorImage from "../../images/errorLoading.png";
+import { API_BASE } from "../../utils/config";
 
 interface BookingTileProps {
   id: number | string;

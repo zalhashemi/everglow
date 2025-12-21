@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import TabBar from "../../components/common/TabBar";
 import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
+import { API_BASE } from "../../utils/config";
 
 const BookingReceiptPage: React.FC = () => {
   const { id } = useParams();

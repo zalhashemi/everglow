@@ -356,9 +356,9 @@ const BookingsPage: React.FC = () => {
           startTime: b.startTime,
           date: formattedDate,
           image: b.business?.imageUrl
-  ? `process.env.REACT_APP_API_URL || "http://localhost:5000"${b.business.imageUrl}`
+  ? `${API_BASE}${b.business.imageUrl}`
   : b.business?.profileImageUrl
-  ? `process.env.REACT_APP_API_URL || "http://localhost:5000"${b.business.profileImageUrl}`
+  ? `${API_BASE}${b.business.profileImageUrl}`
   : errorImage,
 
           salonName: b.business?.businessName || "Unknown Salon",

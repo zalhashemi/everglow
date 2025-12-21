@@ -9,6 +9,7 @@ import Button from "../../components/common/Button";
 import errorImage from "../../images/errorLoading.png";
 import api from "../../utils/api";
 import AlertPopup from "../../components/common/AlertPopup";
+import { API_BASE } from "../../utils/config";
 
 interface Service {
   _id: string;
