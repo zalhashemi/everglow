@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/everglow/static/css/main.9024b219.css",
+    "main.js": "/everglow/static/js/main.f93307a8.js",
+    "static/js/453.964d4b06.chunk.js": "/everglow/static/js/453.964d4b06.chunk.js",
+    "static/media/barber2.jpg": "/everglow/static/media/barber2.88b7c4cab7529d66a37e.jpg",
+    "static/media/barber1.jpg": "/everglow/static/media/barber1.f51ff786d860e6895c04.jpg",
+    "static/media/everglowLogo.png": "/everglow/static/media/everglowLogo.41f08859bc1ebb198cc1.png",
+    "static/media/salon1.jpg": "/everglow/static/media/salon1.a194b9222642e0194d38.jpg",
+    "static/media/salon2.jpg": "/everglow/static/media/salon2.6bcc89ed758653f798a2.jpg",
+    "index.html": "/everglow/index.html",
+    "main.9024b219.css.map": "/everglow/static/css/main.9024b219.css.map",
+    "main.f93307a8.js.map": "/everglow/static/js/main.f93307a8.js.map",
+    "453.964d4b06.chunk.js.map": "/everglow/static/js/453.964d4b06.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9024b219.css",
+    "static/js/main.f93307a8.js"
+  ]
+}
