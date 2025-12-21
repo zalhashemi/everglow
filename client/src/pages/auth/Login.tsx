@@ -261,24 +261,25 @@ const LoginPage: React.FC = () => {
       setLoading(true);
 
       const endpoint =
-        mode === "customer"
-          ? "${API_BASE}/api/customers/login"
-          : "${API_BASE}/api/business/login";
+  mode === "customer"
+    ? `${API_BASE}/api/customers/login`
+    : `${API_BASE}/api/business/login`;
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+const res = await fetch(endpoint, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password }),
+});
 
-      const data = await res.json();
+// Safely parse JSON (some errors return empty body)
+const text = await res.text();
+const data = text ? JSON.parse(text) : {};
 
-      if (!res.ok) {
-        setError(data.message || "Invalid email or password.");
-        return;
-      }
+if (!res.ok) {
+  setError(data.message || "Invalid email or password.");
+  return;
+}
+
 
       if (mode === "customer") {
         if (data.token) localStorage.setItem("customerToken", data.token);
