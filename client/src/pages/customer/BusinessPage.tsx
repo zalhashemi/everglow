@@ -110,7 +110,7 @@ const BusinessPage: React.FC = () => {
 
         setImgSrc(
           business?.imageUrl
-            ? `http://localhost:5000${business.imageUrl}`
+            ? `${API_BASE}${business.imageUrl}`
             : errorImage
         );
 

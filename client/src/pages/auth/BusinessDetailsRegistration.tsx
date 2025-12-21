@@ -820,7 +820,7 @@ const BusinessRegistration: React.FC = () => {
         formData.append("image", imageFile);
       }
 
-      const res = await fetch("http://localhost:5000/api/business/register", {
+      const res = await fetch("${API_BASE}/api/business/register", {
         method: "POST",
         body: formData,
       });

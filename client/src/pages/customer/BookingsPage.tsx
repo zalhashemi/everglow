@@ -6,6 +6,8 @@ import BookingTile from "../../components/common/BookingTile";
 import AlertPopup from "../../components/common/AlertPopup";
 import api from "../../utils/api";
 import errorImage from "../../images/errorLoading.png";
+import { API_BASE } from "../../utils/config";
+
 
 //styled components
 const PageWrapper = styled.div`
@@ -353,9 +355,9 @@ const BookingsPage: React.FC = () => {
           startTime: b.startTime,
           date: formattedDate,
           image: b.business?.imageUrl
-  ? `http://localhost:5000${b.business.imageUrl}`
+  ? `${API_BASE}${b.business.imageUrl}`
   : b.business?.profileImageUrl
-  ? `http://localhost:5000${b.business.profileImageUrl}`
+  ? `${API_BASE}${b.business.profileImageUrl}`
   : errorImage,
 
           salonName: b.business?.businessName || "Unknown Salon",

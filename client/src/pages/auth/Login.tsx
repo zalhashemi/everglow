@@ -261,8 +261,8 @@ const LoginPage: React.FC = () => {
 
       const endpoint =
         mode === "customer"
-          ? "http://localhost:5000/api/customers/login"
-          : "http://localhost:5000/api/business/login";
+          ? "${API_BASE}/api/customers/login"
+          : "${API_BASE}/api/business/login";
 
       const res = await fetch(endpoint, {
         method: "POST",

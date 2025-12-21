@@ -94,7 +94,7 @@ const BookingReceiptPage: React.FC = () => {
         <img
           src={
             booking.business?.imageUrl || booking.business?.profileImageUrl
-              ? `http://localhost:5000${
+              ? `${API_BASE}${
                   booking.business.imageUrl ||
                   booking.business.profileImageUrl
                 }`

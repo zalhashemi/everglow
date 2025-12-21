@@ -122,7 +122,7 @@ npm run seed
 ```bash
 npm run dev
 ```
-Server should start at `http://localhost:5000`
+Server should start at `${API_BASE}`
 
 ---
 
@@ -153,7 +153,7 @@ Create a `.env` file in the `client` directory:
 
 ```bash
 # c:\Users\zhalh\Desktop\webEngProject\everglow\client\.env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=${API_BASE}/api
 VITE_APP_NAME=Everglow
 ```
 
@@ -180,7 +180,7 @@ Application should start at `http://localhost:5173`
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `VITE_API_URL` | Backend API URL | `http://localhost:5000/api` |
+| `VITE_API_URL` | Backend API URL | `${API_BASE}/api` |
 | `VITE_APP_NAME` | Application name | `Everglow` |
 
 ---
@@ -211,8 +211,8 @@ npm run dev
 
 ### Access the Application
 - **Frontend**: [http://localhost:5173](http://localhost:5173)
-- **Backend API**: [http://localhost:5000](http://localhost:5000)
-- **API Documentation**: [http://localhost:5000/api-docs](http://localhost:5000/api-docs) (if Swagger is configured)
+- **Backend API**: [${API_BASE}](${API_BASE})
+- **API Documentation**: [${API_BASE}/api-docs](${API_BASE}/api-docs) (if Swagger is configured)
 
 ---
 

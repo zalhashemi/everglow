@@ -148,9 +148,9 @@ const BookingTile: React.FC<BookingTileProps> = ({
 
   const computedImage =
     imageUrl
-      ? `http://localhost:5000${imageUrl}`
+      ? `${API_BASE}${imageUrl}`
       : profileImageUrl
-      ? `http://localhost:5000${profileImageUrl}`
+      ? `${API_BASE}${profileImageUrl}`
       : image
       ? image
       : errorImage;

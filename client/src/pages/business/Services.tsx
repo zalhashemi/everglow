@@ -106,7 +106,7 @@ const BusinessServices: React.FC = () => {
           setBusiness(b);
 
           if (b.imageUrl) {
-            const fullUrl = `http://localhost:5000${b.imageUrl}`;
+            const fullUrl = `${API_BASE}${b.imageUrl}`;
             setImgSrc(fullUrl);
           } else {
             setImgSrc(errorImage);
@@ -124,7 +124,7 @@ const BusinessServices: React.FC = () => {
             });
 
             if (b.imageUrl) {
-              const fullUrl = `http://localhost:5000${b.imageUrl}`;
+              const fullUrl = `${API_BASE}${b.imageUrl}`;
               setImgSrc(fullUrl);
             } else {
               setImgSrc(errorImage);

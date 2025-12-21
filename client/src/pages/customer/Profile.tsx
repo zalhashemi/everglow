@@ -205,7 +205,7 @@ const ProfilePage: React.FC = () => {
     const token = localStorage.getItem("customerToken");
     if (!token) return;
 
-    fetch("http://localhost:5000/api/customers/me", {
+    fetch("${API_BASE}/api/customers/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -217,7 +217,7 @@ const ProfilePage: React.FC = () => {
         localStorage.setItem("customer", JSON.stringify(data));
       });
 
-    fetch("http://localhost:5000/api/bookings/me", {
+    fetch("${API_BASE}/api/bookings/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -229,7 +229,7 @@ const ProfilePage: React.FC = () => {
         setVisitedSalons(uniqueSalonIds.size);
       });
 
-    fetch("http://localhost:5000/api/loyalty/customer/me", {
+    fetch("${API_BASE}/api/loyalty/customer/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -316,7 +316,7 @@ const ProfilePage: React.FC = () => {
       email: email.trim() 
     };
 
-    const res = await fetch("http://localhost:5000/api/customers/me", {
+    const res = await fetch("${API_BASE}/api/customers/me", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

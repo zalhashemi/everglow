@@ -326,7 +326,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchSalons = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/public/businesses");
+        const res = await fetch("${API_BASE}/api/public/businesses");
         if (!res.ok) {
           throw new Error(`Failed /api/public/businesses: ${res.status}`);
         }
@@ -358,7 +358,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/public/offers");
+        const res = await fetch("${API_BASE}/api/public/offers");
         if (!res.ok) {
           throw new Error(`Failed offers: ${res.status}`);
         }
@@ -484,7 +484,7 @@ const HomePage: React.FC = () => {
                     key={offer._id}
                     image={
                       offer.business?.imageUrl
-                        ? `http://localhost:5000${offer.business.imageUrl}`
+                        ? `${API_BASE}${offer.business.imageUrl}`
                         : errorLoading
                     }
                     title={offer.title}
@@ -546,7 +546,7 @@ const HomePage: React.FC = () => {
                       id={salon._id}
                       image={
                         salon.imageUrl
-                          ? `http://localhost:5000${salon.imageUrl}`
+                          ? `${API_BASE}${salon.imageUrl}`
                           : errorLoading
                       }
                       name={salon.businessName}
