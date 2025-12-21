@@ -9,6 +9,7 @@ import errorImage from "../../images/errorLoading.png";
 import { API_BASE } from "../../utils/config";
 
 
+
 //styled components
 const PageWrapper = styled.div`
   background-color: #faf6ea;
