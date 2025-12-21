@@ -106,7 +106,7 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
 
   // Auto-close in 5 sec (only for non-confirmation alerts)
   useEffect(() => {
-    if (isConfirmation || !onClose) return; // ✅ Check if onClose exists
+    if (isConfirmation || !onClose) return; 
 
     const timer = setTimeout(() => {
       onClose();
@@ -122,7 +122,7 @@ const AlertPopup: React.FC<AlertPopupProps> = ({
   };
 
   const handleClose = () => {
-    if (onClose) { // ✅ Check before calling
+    if (onClose) { 
       onClose();
     }
   };
