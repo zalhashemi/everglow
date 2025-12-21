@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import everglowLogo from "../../images/everglowLogo.png";
 import { API_BASE } from "../../utils/config";
+import { useNavigate } from "react-router-dom";
 
 const PageWrapper = styled.div`
   width: 100vw;
@@ -202,7 +203,10 @@ const ButtonRow = styled.div`
   }
 `;
 
-const RoleToggleButton = styled.button<{ active?: boolean; businessButton?: boolean }>`
+const RoleToggleButton = styled.button<{
+  active?: boolean;
+  businessButton?: boolean;
+}>`
   flex: 1;
   height: 50px;
   font-size: 16px;
@@ -213,13 +217,8 @@ const RoleToggleButton = styled.button<{ active?: boolean; businessButton?: bool
   align-items: center;
   cursor: pointer;
   border: none;
-  background: ${(p) => 
-    p.active
-      ? p.businessButton 
-        ? "#0B1C36" 
-        : "#4a5174"
-      : "#e5e5e5"
-  };
+  background: ${(p) =>
+    p.active ? (p.businessButton ? "#0B1C36" : "#4a5174") : "#e5e5e5"};
   color: ${(p) => (p.active ? "#fff" : "#333")};
   font-family: "Inter", sans-serif;
   transition: all 0.2s ease;
@@ -243,6 +242,7 @@ const RoleToggleButton = styled.button<{ active?: boolean; businessButton?: bool
 type LoginMode = "customer" | "business";
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate(); // ✅ added
   const [mode, setMode] = useState<LoginMode>("customer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -261,25 +261,24 @@ const LoginPage: React.FC = () => {
       setLoading(true);
 
       const endpoint =
-  mode === "customer"
-    ? `${API_BASE}/api/customers/login`
-    : `${API_BASE}/api/business/login`;
+        mode === "customer"
+          ? `${API_BASE}/api/customers/login`
+          : `${API_BASE}/api/business/login`;
 
-const res = await fetch(endpoint, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password }),
-});
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-// Safely parse JSON (some errors return empty body)
-const text = await res.text();
-const data = text ? JSON.parse(text) : {};
+      // Safely parse JSON (some errors return empty body)
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
 
-if (!res.ok) {
-  setError(data.message || "Invalid email or password.");
-  return;
-}
-
+      if (!res.ok) {
+        setError(data.message || "Invalid email or password.");
+        return;
+      }
 
       if (mode === "customer") {
         if (data.token) localStorage.setItem("customerToken", data.token);
@@ -287,7 +286,7 @@ if (!res.ok) {
           localStorage.setItem("customer", JSON.stringify(data.customer));
         }
 
-        window.location.href = "/home";
+        navigate("/home"); // ✅ changed
       } else {
         if (data.token) localStorage.setItem("businessToken", data.token);
         if (data.business) {
@@ -295,7 +294,8 @@ if (!res.ok) {
           // used by loyalty & dashboard
           localStorage.setItem("businessId", data.business._id);
         }
-        window.location.href = "/business/dashboard";
+
+        navigate("/business/dashboard"); // ✅ changed
       }
     } catch (err) {
       console.error(err);
@@ -308,7 +308,8 @@ if (!res.ok) {
   return (
     <PageWrapper>
       <Header>
-        <Logo onClick={() => (window.location.href = "/")}>
+        <Logo onClick={() => navigate("/")}>
+          {/* ✅ changed */}
           <img src={everglowLogo} alt="EverGlow" />
         </Logo>
       </Header>
@@ -338,7 +339,9 @@ if (!res.ok) {
 
           {error && <ErrorText>{error}</ErrorText>}
 
-          <Label>{mode === "business" ? "Business Email Address" : "Email Address"}</Label>
+          <Label>
+            {mode === "business" ? "Business Email Address" : "Email Address"}
+          </Label>
           <input
             style={{
               padding: "10px",
@@ -380,12 +383,8 @@ if (!res.ok) {
 
           <BottomText>
             No account yet?{" "}
-            <span
-              onClick={() =>
-                (window.location.href =
-                  mode === "customer" ? "/signup" : "/signup")
-              }
-            >
+            <span onClick={() => navigate("/signup")}>
+              {/* ✅ simplified, same behavior */}
               {mode === "customer" ? "Sign Up" : "Register your business"}
             </span>
           </BottomText>
