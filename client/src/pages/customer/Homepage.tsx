@@ -328,7 +328,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchSalons = async () => {
       try {
-        const res = await fetch("${API_BASE}/api/public/businesses");
+        const res = await fetch(`${API_BASE}/api/public/businesses`);
         if (!res.ok) {
           throw new Error(`Failed /api/public/businesses: ${res.status}`);
         }
@@ -360,7 +360,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const res = await fetch("${API_BASE}/api/public/offers");
+        const res = await fetch(`${API_BASE}/api/public/offers`);
         if (!res.ok) {
           throw new Error(`Failed offers: ${res.status}`);
         }
